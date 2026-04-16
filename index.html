@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yarışma Kayıt Formu</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ee;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --ok: #065f46;
+      --ok-bg: #ecfdf5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .hero {
+      padding: 32px 28px 18px;
+      background: linear-gradient(135deg, #eff6ff, #ffffff);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .content {
+      padding: 26px 28px 32px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .full { grid-column: 1 / -1; }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 15px;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(29,78,216,0.16);
+      border-color: var(--accent);
+    }
+    .checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .check input {
+      width: auto;
+      margin: 0;
+    }
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    button {
+      appearance: none;
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-hover); }
+    .notice {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--ok-bg);
+      color: var(--ok);
+      display: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .footnote {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .wrap { margin: 20px auto; padding: 12px; }
+      .hero, .content { padding: 20px; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="hero">
+        <h1>6–7 Haziran Yarışma Kayıt Formu</h1>
+        <p class="sub">
+          Lütfen kayıt bilgilerinizi eksiksiz doldurunuz. Birden fazla kategoriye katılacaksanız ilgili seçenekleri işaretleyebilirsiniz.
+        </p>
+      </div>
+
+      <div class="content">
+        <form name="yarisma-kayit" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="registrationForm">
+          <input type="hidden" name="form-name" value="yarisma-kayit" />
+          <input type="hidden" name="bot-field" />
+
+          <div class="grid">
+            <div>
+              <label for="firstName">Ad</label>
+              <input id="firstName" name="Ad" type="text" required />
+            </div>
+
+            <div>
+              <label for="lastName">Soyad</label>
+              <input id="lastName" name="Soyad" type="text" required />
+            </div>
+
+            <div class="full">
+              <label for="email">E-posta</label>
+              <input id="email" name="Eposta" type="email" required />
+            </div>
+
+            <div class="full">
+              <label>Kategori / Kategoriler</label>
+              <div class="checkboxes">
+                <label class="check"><input type="checkbox" name="Kategori" value="F1A" /> F1A</label>
+                <label class="check"><input type="checkbox" name="Kategori" value="F1B" /> F1B</label>
+                <label class="check"><input type="checkbox" name="Kategori" value="F1C" /> F1C</label>
+                <label class="check"><input type="checkbox" name="Kategori" value="F1G" /> F1G</label>
+                <label class="check"><input type="checkbox" name="Kategori" value="F1H" /> F1H</label>
+                <label class="check"><input type="checkbox" name="Kategori" value="P30" /> P30</label>
+              </div>
+              <div class="hint">İstersen bu kategori listesini ben senin yarışmana göre revize ederim.</div>
+            </div>
+
+            <div>
+              <label for="fai">FAI Lisans Kodu</label>
+              <input id="fai" name="FAI_Lisans_Kodu" type="text" required />
+            </div>
+
+            <div>
+              <label for="thsf">THSF Lisans Numarası</label>
+              <input id="thsf" name="THSF_Lisans_No" type="text" required />
+            </div>
+
+            <div class="full">
+              <label for="banquet">Bankete katılacak mı?</label>
+              <select id="banquet" name="Banket_Katilim" required>
+                <option value="">Seçiniz</option>
+                <option value="Evet">Evet</option>
+                <option value="Hayır">Hayır</option>
+              </select>
+            </div>
+
+            <div class="full">
+              <label for="note">Ek Not</label>
+              <textarea id="note" name="Ek_Not" rows="4" placeholder="Varsa eklemek istediğiniz notları yazabilirsiniz."></textarea>
+            </div>
+
+            <div class="full">
+              <button type="submit">Kaydı Gönder</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="notice" id="successBox">
+          Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.
+        </div>
+
+        <div class="footnote">
+          Bu sayfa ücretsiz statik site olarak Netlify veya Cloudflare Pages üzerinde yayınlanabilir. Netlify üzerinde form gönderimleri otomatik toplanabilir.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registrationForm');
+    const successBox = document.getElementById('successBox');
+
+    function serialize(form) {
+      const formData = new FormData(form);
+      return new URLSearchParams(formData).toString();
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const selectedCategories = form.querySelectorAll('input[name="Kategori"]:checked');
+      if (selectedCategories.length === 0) {
+        alert('Lütfen en az bir kategori seçiniz.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: serialize(form)
+        });
+
+        if (response.ok) {
+          form.reset();
+          successBox.style.display = 'block';
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        } else {
+          alert('Gönderim sırasında bir sorun oluştu. Lütfen tekrar deneyiniz.');
+        }
+      } catch (err) {
+        alert('Bağlantı hatası oluştu. Lütfen tekrar deneyiniz.');
+      }
+    });
+  </script>
+</body>
+</html>
