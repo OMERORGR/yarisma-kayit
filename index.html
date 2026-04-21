@@ -24,7 +24,7 @@
       color: var(--text);
     }
     .wrap {
-      max-width: 860px;
+      max-width: 920px;
       margin: 40px auto;
       padding: 20px;
     }
@@ -40,6 +40,14 @@
       background: linear-gradient(135deg, #eff6ff, #ffffff);
       border-bottom: 1px solid var(--line);
     }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
     h1 {
       margin: 0 0 10px;
       font-size: 30px;
@@ -50,6 +58,59 @@
       color: var(--muted);
       font-size: 15px;
       line-height: 1.6;
+    }
+    .lang-switch {
+      display: inline-flex;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 6px;
+      border-radius: 12px;
+    }
+    .lang-switch button {
+      background: transparent;
+      color: var(--text);
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .lang-switch button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .bullet-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    .bullet-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .primary-link,
+    .secondary-link {
+      display: inline-block;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .primary-link {
+      background: var(--accent);
+      color: #fff;
+    }
+    .secondary-link {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
     }
     .content {
       padding: 26px 28px 32px;
@@ -102,8 +163,9 @@
       margin-top: 8px;
       font-size: 12px;
       color: var(--muted);
+      line-height: 1.6;
     }
-    button {
+    .submit-btn {
       appearance: none;
       border: 0;
       background: var(--accent);
@@ -114,7 +176,7 @@
       font-weight: 700;
       cursor: pointer;
     }
-    button:hover { background: var(--accent-hover); }
+    .submit-btn:hover { background: var(--accent-hover); }
     .notice {
       margin-top: 16px;
       padding: 14px 16px;
@@ -129,13 +191,17 @@
       margin-top: 18px;
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
+    [data-lang-group] { display: none; }
+    [data-lang-group].active { display: flex; }
+    .hidden { display: none; }
     @media (max-width: 700px) {
       .grid { grid-template-columns: 1fr; }
       .wrap { margin: 20px auto; padding: 12px; }
       .hero, .content { padding: 20px; }
       h1 { font-size: 24px; }
+      .topbar { align-items: flex-start; }
     }
   </style>
 </head>
@@ -143,83 +209,123 @@
   <div class="wrap">
     <div class="card">
       <div class="hero">
-        <h1>6–7 Haziran Yarışma Kayıt Formu</h1>
-        <p class="sub">
-          Lütfen kayıt bilgilerinizi eksiksiz doldurunuz. Birden fazla kategoriye katılacaksanız ilgili seçenekleri işaretleyebilirsiniz.
-        </p>
+        <div class="topbar">
+          <div>
+            <h1 id="heroTitle">6–7 Haziran Yarışma Kayıt Formu</h1>
+            <p class="sub" id="heroSub">Lütfen kayıt bilgilerinizi eksiksiz doldurunuz. Birden fazla kategoriye katılacaksanız ilgili seçenekleri işaretleyebilirsiniz.</p>
+          </div>
+          <div class="lang-switch" aria-label="Language switcher">
+            <button type="button" class="active" data-lang-btn="tr">TR</button>
+            <button type="button" data-lang-btn="en">EN</button>
+          </div>
+        </div>
+
+        <div class="bullet-box">
+          <strong id="bulletTitle" style="display:block; margin-bottom:6px;">Yarışma Bülteni</strong>
+          <span id="bulletSub" style="color:var(--muted); font-size:14px; line-height:1.6; display:block;">Yarışma bültenini görüntüleyebilir veya indirebilirsiniz. Türkçe ve İngilizce dosyalar ayrı ayrı sunulabilir.</span>
+
+          <div class="bullet-actions active" data-lang-group="tr">
+            <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-tr.pdf" target="_blank" rel="noopener" class="primary-link">PDF'i Görüntüle (TR)</a>
+            <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-tr.pdf" download class="secondary-link">PDF'i İndir (TR)</a>
+          </div>
+
+          <div class="bullet-actions" data-lang-group="en">
+            <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-en.pdf" target="_blank" rel="noopener" class="primary-link">View Bulletin PDF (EN)</a>
+            <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-en.pdf" download class="secondary-link">Download PDF (EN)</a>
+          </div>
+        </div>
       </div>
 
       <div class="content">
         <form name="yarisma-kayit" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="registrationForm">
           <input type="hidden" name="form-name" value="yarisma-kayit" />
           <input type="hidden" name="bot-field" />
+          <input type="hidden" name="Form_Dili" id="formLanguage" value="TR" />
 
           <div class="grid">
             <div>
-              <label for="firstName">Ad</label>
-              <input id="firstName" name="Ad" type="text" required />
+              <label for="firstName" id="labelFirstName">Ad</label>
+              <input id="firstName" name="Ad_First_Name" type="text" required />
             </div>
 
             <div>
-              <label for="lastName">Soyad</label>
-              <input id="lastName" name="Soyad" type="text" required />
+              <label for="lastName" id="labelLastName">Soyad</label>
+              <input id="lastName" name="Soyad_Last_Name" type="text" required />
             </div>
 
             <div class="full">
-              <label for="email">E-posta</label>
-              <input id="email" name="Eposta" type="email" required />
+              <label for="email" id="labelEmail">E-posta</label>
+              <input id="email" name="Email" type="email" required />
             </div>
 
             <div class="full">
-              <label>Kategori / Kategoriler</label>
+              <label for="roleType" id="labelRoleType">Kayıt Türü</label>
+              <select id="roleType" name="Kayit_Turu_Registration_Type" required>
+                <option value="" id="optionSelect">Seçiniz</option>
+                <option value="Competitor" id="optionCompetitor">Yarışmacı</option>
+                <option value="Timekeeper" id="optionTimekeeper">Hakem / Timekeeper</option>
+              </select>
+              <div class="hint" id="roleHint">Hakem kaydını ayrı ve net takip etmek için seçim alanı eklendi.</div>
+            </div>
+
+            <div class="full" id="categorySection">
+              <label id="labelCategories">Kategori / Kategoriler</label>
               <div class="checkboxes">
-                <label class="check"><input type="checkbox" name="Kategori" value="F1A" /> F1A</label>
-                <label class="check"><input type="checkbox" name="Kategori" value="F1B" /> F1B</label>
-                <label class="check"><input type="checkbox" name="Kategori" value="F1C" /> F1C</label>
-                <label class="check"><input type="checkbox" name="Kategori" value="F1G" /> F1G</label>
-                <label class="check"><input type="checkbox" name="Kategori" value="F1H" /> F1H</label>
-                <label class="check"><input type="checkbox" name="Kategori" value="P30" /> P30</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1A" /> F1A</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1B" /> F1B</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1C" /> F1C</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1G" /> F1G</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1H" /> F1H</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="F1Q" /> F1Q</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="P30" /> P30</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="Timekeeper" /> Timekeeper</label>
               </div>
-              <div class="hint">İstersen bu kategori listesini ben senin yarışmana göre revize ederim.</div>
+              <div class="hint" id="categoryHint">F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Timekeeper seçeneği de bulunur.</div>
             </div>
 
             <div>
-              <label for="fai">FAI Lisans Kodu</label>
-              <input id="fai" name="FAI_Lisans_Kodu" type="text" required />
+              <label for="country" id="labelCountry">Ülke</label>
+              <input id="country" name="Country" type="text" />
             </div>
 
             <div>
-              <label for="thsf">THSF Lisans Numarası</label>
-              <input id="thsf" name="THSF_Lisans_No" type="text" required />
+              <label for="club" id="labelClub">Kulüp / Takım</label>
+              <input id="club" name="Club_Team" type="text" />
+            </div>
+
+            <div>
+              <label for="fai" id="labelFai">FAI Lisans Kodu</label>
+              <input id="fai" name="FAI_License_Code" type="text" />
+            </div>
+
+            <div>
+              <label for="thsf" id="labelThsf">THSF Lisans Numarası</label>
+              <input id="thsf" name="THSF_License_Number" type="text" />
             </div>
 
             <div class="full">
-              <label for="banquet">Bankete katılacak mı?</label>
-              <select id="banquet" name="Banket_Katilim" required>
-                <option value="">Seçiniz</option>
-                <option value="Evet">Evet</option>
-                <option value="Hayır">Hayır</option>
+              <label for="banquet" id="labelBanquet">Bankete katılacak mı?</label>
+              <select id="banquet" name="Banquet_Attendance" required>
+                <option value="" id="optionBanquetSelect">Seçiniz</option>
+                <option value="Yes" id="optionYes">Evet</option>
+                <option value="No" id="optionNo">Hayır</option>
               </select>
             </div>
 
             <div class="full">
-              <label for="note">Ek Not</label>
-              <textarea id="note" name="Ek_Not" rows="4" placeholder="Varsa eklemek istediğiniz notları yazabilirsiniz."></textarea>
+              <label for="note" id="labelNote">Ek Not</label>
+              <textarea id="note" name="Additional_Note" rows="4" placeholder="Varsa eklemek istediğiniz notları yazabilirsiniz."></textarea>
             </div>
 
             <div class="full">
-              <button type="submit">Kaydı Gönder</button>
+              <button type="submit" class="submit-btn" id="submitButton">Kaydı Gönder</button>
             </div>
           </div>
         </form>
 
-        <div class="notice" id="successBox">
-          Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.
-        </div>
+        <div class="notice" id="successBox">Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.</div>
 
-        <div class="footnote">
-          Bu sayfa ücretsiz statik site olarak Netlify veya Cloudflare Pages üzerinde yayınlanabilir. Netlify üzerinde form gönderimleri otomatik toplanabilir.
-        </div>
+        <div class="footnote" id="footnoteText">PDF dosyalarının sitede görünmesi için Türkçe ve İngilizce PDF dosyalarını index.html ile aynı klasöre yüklemen yeterlidir.</div>
       </div>
     </div>
   </div>
@@ -227,17 +333,176 @@
   <script>
     const form = document.getElementById('registrationForm');
     const successBox = document.getElementById('successBox');
+    const roleType = document.getElementById('roleType');
+    const categorySection = document.getElementById('categorySection');
+    const formLanguage = document.getElementById('formLanguage');
+    const langButtons = document.querySelectorAll('[data-lang-btn]');
+    const langGroups = document.querySelectorAll('[data-lang-group]');
+    const faiInput = document.getElementById('fai');
+    const thsfInput = document.getElementById('thsf');
+    const noteInput = document.getElementById('note');
 
-    function serialize(form) {
-      const formData = new FormData(form);
+    const t = {
+      tr: {
+        heroTitle: '6–7 Haziran Yarışma Kayıt Formu',
+        heroSub: 'Lütfen kayıt bilgilerinizi eksiksiz doldurunuz. Birden fazla kategoriye katılacaksanız ilgili seçenekleri işaretleyebilirsiniz.',
+        bulletTitle: 'Yarışma Bülteni',
+        bulletSub: 'Yarışma bültenini görüntüleyebilir veya indirebilirsiniz. Türkçe ve İngilizce dosyalar ayrı ayrı sunulabilir.',
+        firstName: 'Ad',
+        lastName: 'Soyad',
+        email: 'E-posta',
+        roleType: 'Kayıt Türü',
+        select: 'Seçiniz',
+        competitor: 'Yarışmacı',
+        timekeeper: 'Hakem / Timekeeper',
+        roleHint: 'Hakem kaydını ayrı ve net takip etmek için seçim alanı eklendi.',
+        categories: 'Kategori / Kategoriler',
+        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Timekeeper seçeneği de bulunur.',
+        country: 'Ülke',
+        club: 'Kulüp / Takım',
+        fai: 'FAI Lisans Kodu',
+        thsf: 'THSF Lisans Numarası',
+        banquet: 'Bankete katılacak mı?',
+        yes: 'Evet',
+        no: 'Hayır',
+        note: 'Ek Not',
+        notePlaceholder: 'Varsa eklemek istediğiniz notları yazabilirsiniz.',
+        submit: 'Kaydı Gönder',
+        success: 'Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.',
+        footnote: 'PDF dosyalarının sitede görünmesi için Türkçe ve İngilizce PDF dosyalarını index.html ile aynı klasöre yüklemen yeterlidir.',
+        categoryRequired: 'Lütfen en az bir kategori seçiniz.',
+        faiRequired: 'Yarışmacılar için FAI Lisans Kodu alanı zorunludur.',
+        thsfRequired: 'Yarışmacılar için THSF Lisans Numarası alanı zorunludur.',
+        timekeeperOnly: 'Timekeeper seçeneği yarışmacı kategorileriyle birlikte işaretlenemez.',
+        submitError: 'Gönderim sırasında bir sorun oluştu. Lütfen tekrar deneyiniz.',
+        connectionError: 'Bağlantı hatası oluştu. Lütfen tekrar deneyiniz.'
+      },
+      en: {
+        heroTitle: '6–7 June Competition Registration Form',
+        heroSub: 'Please complete all registration details. If you will participate in more than one category, you may select multiple options.',
+        bulletTitle: 'Competition Bulletin',
+        bulletSub: 'You can view or download the competition bulletin. Turkish and English PDF files can be provided separately.',
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        email: 'Email',
+        roleType: 'Registration Type',
+        select: 'Select',
+        competitor: 'Competitor',
+        timekeeper: 'Judge / Timekeeper',
+        roleHint: 'A separate field was added so Timekeeper registrations can be tracked clearly.',
+        categories: 'Category / Categories',
+        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q and P30 were added. A Timekeeper option is also available.',
+        country: 'Country',
+        club: 'Club / Team',
+        fai: 'FAI License Code',
+        thsf: 'THSF License Number',
+        banquet: 'Will you attend the banquet?',
+        yes: 'Yes',
+        no: 'No',
+        note: 'Additional Note',
+        notePlaceholder: 'You can write any additional note here.',
+        submit: 'Submit Registration',
+        success: 'Your registration has been submitted successfully. Thank you.',
+        footnote: 'To show the PDFs on the website, upload the Turkish and English PDF files into the same folder as index.html.',
+        categoryRequired: 'Please select at least one category.',
+        faiRequired: 'FAI License Code is required for competitors.',
+        thsfRequired: 'THSF License Number is required for competitors.',
+        timekeeperOnly: 'The Timekeeper option cannot be selected together with competitor categories.',
+        submitError: 'A problem occurred during submission. Please try again.',
+        connectionError: 'A connection error occurred. Please try again.'
+      }
+    };
+
+    let currentLang = 'tr';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      formLanguage.value = lang.toUpperCase();
+
+      document.getElementById('heroTitle').textContent = t[lang].heroTitle;
+      document.getElementById('heroSub').textContent = t[lang].heroSub;
+      document.getElementById('bulletTitle').textContent = t[lang].bulletTitle;
+      document.getElementById('bulletSub').textContent = t[lang].bulletSub;
+      document.getElementById('labelFirstName').textContent = t[lang].firstName;
+      document.getElementById('labelLastName').textContent = t[lang].lastName;
+      document.getElementById('labelEmail').textContent = t[lang].email;
+      document.getElementById('labelRoleType').textContent = t[lang].roleType;
+      document.getElementById('optionSelect').textContent = t[lang].select;
+      document.getElementById('optionCompetitor').textContent = t[lang].competitor;
+      document.getElementById('optionTimekeeper').textContent = t[lang].timekeeper;
+      document.getElementById('roleHint').textContent = t[lang].roleHint;
+      document.getElementById('labelCategories').textContent = t[lang].categories;
+      document.getElementById('categoryHint').textContent = t[lang].categoryHint;
+      document.getElementById('labelCountry').textContent = t[lang].country;
+      document.getElementById('labelClub').textContent = t[lang].club;
+      document.getElementById('labelFai').textContent = t[lang].fai;
+      document.getElementById('labelThsf').textContent = t[lang].thsf;
+      document.getElementById('labelBanquet').textContent = t[lang].banquet;
+      document.getElementById('optionBanquetSelect').textContent = t[lang].select;
+      document.getElementById('optionYes').textContent = t[lang].yes;
+      document.getElementById('optionNo').textContent = t[lang].no;
+      document.getElementById('labelNote').textContent = t[lang].note;
+      noteInput.placeholder = t[lang].notePlaceholder;
+      document.getElementById('submitButton').textContent = t[lang].submit;
+      document.getElementById('footnoteText').textContent = t[lang].footnote;
+      successBox.textContent = t[lang].success;
+
+      langButtons.forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-lang-btn') === lang);
+      });
+
+      langGroups.forEach(function(group) {
+        group.classList.toggle('active', group.getAttribute('data-lang-group') === lang);
+      });
+    }
+
+    function serialize(formElement) {
+      const formData = new FormData(formElement);
       return new URLSearchParams(formData).toString();
     }
 
+    function toggleRoleUI() {
+      const isTimekeeper = roleType.value === 'Timekeeper';
+      faiInput.required = !isTimekeeper;
+      thsfInput.required = !isTimekeeper;
+    }
+
+    roleType.addEventListener('change', toggleRoleUI);
+
+    langButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        setLanguage(btn.getAttribute('data-lang-btn'));
+      });
+    });
+
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-      const selectedCategories = form.querySelectorAll('input[name="Kategori"]:checked');
+
+      const selectedCategories = Array.from(document.querySelectorAll('input[name="Kategori_Category"]:checked')).map(function(el) {
+        return el.value;
+      });
+      const isTimekeeper = roleType.value === 'Timekeeper';
+
       if (selectedCategories.length === 0) {
-        alert('Lütfen en az bir kategori seçiniz.');
+        alert(t[currentLang].categoryRequired);
+        return;
+      }
+
+      if (!isTimekeeper && !faiInput.value.trim()) {
+        alert(t[currentLang].faiRequired);
+        faiInput.focus();
+        return;
+      }
+
+      if (!isTimekeeper && !thsfInput.value.trim()) {
+        alert(t[currentLang].thsfRequired);
+        thsfInput.focus();
+        return;
+      }
+
+      if (selectedCategories.includes('Timekeeper') && selectedCategories.length > 1) {
+        alert(t[currentLang].timekeeperOnly);
         return;
       }
 
@@ -250,15 +515,20 @@
 
         if (response.ok) {
           form.reset();
+          toggleRoleUI();
           successBox.style.display = 'block';
+          successBox.textContent = t[currentLang].success;
           window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         } else {
-          alert('Gönderim sırasında bir sorun oluştu. Lütfen tekrar deneyiniz.');
+          alert(t[currentLang].submitError);
         }
       } catch (err) {
-        alert('Bağlantı hatası oluştu. Lütfen tekrar deneyiniz.');
+        alert(t[currentLang].connectionError);
       }
     });
+
+    setLanguage('tr');
+    toggleRoleUI();
   </script>
 </body>
 </html>
