@@ -13,8 +13,6 @@
       --line: #dbe3ee;
       --accent: #1d4ed8;
       --accent-hover: #1e40af;
-      --soft: #eff6ff;
-      --soft-text: #1e3a8a;
     }
     * { box-sizing: border-box; }
     body {
@@ -24,7 +22,7 @@
       color: var(--text);
     }
     .wrap {
-      max-width: 1180px;
+      max-width: 1120px;
       margin: 40px auto;
       padding: 20px;
     }
@@ -47,17 +45,8 @@
       gap: 16px;
       flex-wrap: wrap;
     }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 30px;
-      line-height: 1.2;
-    }
-    .sub {
-      margin: 0;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.6;
-    }
+    h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; }
+    .sub { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
     .lang-switch {
       display: inline-flex;
       gap: 8px;
@@ -76,97 +65,21 @@
       font-weight: 700;
       cursor: pointer;
     }
-    .lang-switch button.active {
-      background: var(--accent);
-      color: #fff;
-    }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .btn, .file-label {
+    .lang-switch button.active { background: var(--accent); color: #fff; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    .btn {
       display: inline-block;
       text-decoration: none;
       padding: 12px 16px;
       border-radius: 12px;
       font-size: 14px;
       font-weight: 700;
-      cursor: pointer;
-      border: 1px solid transparent;
     }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-secondary {
-      background: #fff;
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-    .btn-light {
-      background: #fff;
-      color: var(--text);
-      border-color: var(--line);
-    }
-    .content {
-      padding: 28px;
-    }
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 18px;
-      background: #fff;
-      margin-bottom: 24px;
-    }
-    .panel h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
-    }
-    .panel p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-    .file-input { display: none; }
-    .info {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: var(--soft);
-      color: var(--soft-text);
-      font-size: 13px;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-    .counts {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin: 18px 0 24px;
-    }
-    .count-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 16px;
-    }
-    .count-card strong {
-      display: block;
-      font-size: 26px;
-      margin-bottom: 6px;
-    }
-    .count-card span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 22px;
-    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+    .content { padding: 28px; }
+    .section-title { margin: 0 0 14px; font-size: 22px; }
+    .meta { margin: 0 0 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
     .table-wrap {
       overflow-x: auto;
       border: 1px solid var(--line);
@@ -174,11 +87,7 @@
       background: #fff;
       margin-bottom: 26px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 860px;
-    }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
     th, td {
       padding: 14px 12px;
       border-bottom: 1px solid var(--line);
@@ -189,13 +98,14 @@
     th {
       background: #f8fafc;
       font-weight: 700;
+      cursor: pointer;
+      user-select: none;
       white-space: nowrap;
     }
+    th.sort-asc::after { content: " ▲"; font-size: 12px; color: var(--accent); }
+    th.sort-desc::after { content: " ▼"; font-size: 12px; color: var(--accent); }
     tr:last-child td { border-bottom: 0; }
-    .empty {
-      color: var(--muted);
-      font-style: italic;
-    }
+    .empty { color: var(--muted); font-style: italic; }
     .note-box {
       margin-top: 8px;
       padding: 14px 16px;
@@ -206,20 +116,16 @@
       font-size: 13px;
       line-height: 1.7;
     }
-    .sortable {
-      cursor: pointer;
-      user-select: none;
-    }
-    .sortable:hover {
-      background: #eef4ff;
-    }
-    .sort-indicator {
-      margin-left: 6px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    @media (max-width: 800px) {
-      .counts { grid-template-columns: 1fr; }
+    .error-box {
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      background: #fff1f2;
+      color: #9f1239;
+      font-size: 13px;
+      line-height: 1.7;
+      display: none;
     }
     @media (max-width: 700px) {
       .wrap { margin: 20px auto; padding: 12px; }
@@ -235,7 +141,7 @@
         <div class="topbar">
           <div>
             <h1 id="heroTitle">Kayıtlı Yarışmacılar</h1>
-            <p class="sub" id="heroSub">Netlify form ekranından indirdiğiniz CSV dosyasını içe aktararak listeyi anında gösterebilirsiniz.</p>
+            <p class="sub" id="heroSub">Aşağıda organizasyon tarafından yayımlanan güncel katılımcı listesi yer almaktadır.</p>
           </div>
           <div class="lang-switch">
             <button type="button" class="active" data-lang-btn="tr">TR</button>
@@ -246,44 +152,22 @@
         <div class="actions">
           <a href="index.html" class="btn btn-primary" id="backButton">Kayıt Formuna Dön</a>
           <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-tr.pdf" target="_blank" rel="noopener" class="btn btn-secondary" id="bulletinButton">Bülteni Gör</a>
-          <label for="csvFile" class="file-label btn btn-light" id="uploadButton">CSV Yükle</label>
-          <button type="button" class="btn btn-light" id="clearButton">Temizle</button>
-          <input id="csvFile" class="file-input" type="file" accept=".csv,text/csv" />
         </div>
       </div>
 
       <div class="content">
-        <div class="panel">
-          <h2 id="panelTitle">Kullanım</h2>
-          <p id="panelText">Netlify form bölümünden CSV indirip burada yükleyin. Liste otomatik ayrıştırılır. Bu sayfa herhangi bir kayıt silmez, sadece yüklediğiniz CSV içeriğini tarayıcı içinde gösterir.</p>
-          <div class="info" id="fileInfo">Henüz CSV yüklenmedi.</div>
-        </div>
-
-        <div class="counts">
-          <div class="count-card">
-            <strong id="countAll">0</strong>
-            <span id="countAllLabel">Toplam Kayıt</span>
-          </div>
-          <div class="count-card">
-            <strong id="countParticipants">0</strong>
-            <span id="countParticipantsLabel">Yarışmacı</span>
-          </div>
-          <div class="count-card">
-            <strong id="countTimekeepers">0</strong>
-            <span id="countTimekeepersLabel">Hakem</span>
-          </div>
-        </div>
+        <div class="error-box" id="errorBox"></div>
+        <p class="meta" id="updatedText">Liste otomatik olarak kayitlar-public.csv dosyasından okunur.</p>
 
         <h2 class="section-title" id="participantsTitle">Yarışmacılar</h2>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th id="thName" class="sortable" data-table="participants" data-key="name">Ad Soyad<span class="sort-indicator">▲</span></th>
-                <th id="thCountry" class="sortable" data-table="participants" data-key="country">Ülke<span class="sort-indicator">↕</span></th>
-                <th id="thClub" class="sortable" data-table="participants" data-key="club">Kulüp / Takım<span class="sort-indicator">↕</span></th>
-                <th id="thCategories" class="sortable" data-table="participants" data-key="categories">Kategori<span class="sort-indicator">↕</span></th>
-                <th id="thEmail" class="sortable" data-table="participants" data-key="email">E-posta<span class="sort-indicator">↕</span></th>
+                <th data-table="participants" data-key="name" id="thName">Ad Soyad</th>
+                <th data-table="participants" data-key="country" id="thCountry">Ülke</th>
+                <th data-table="participants" data-key="club" id="thClub">Kulüp / Takım</th>
+                <th data-table="participants" data-key="categories" id="thCategories">Kategori</th>
               </tr>
             </thead>
             <tbody id="participantsBody"></tbody>
@@ -295,478 +179,299 @@
           <table>
             <thead>
               <tr>
-                <th id="thTkName" class="sortable" data-table="timekeepers" data-key="name">Ad Soyad<span class="sort-indicator">▲</span></th>
-                <th id="thTkCountry" class="sortable" data-table="timekeepers" data-key="country">Ülke<span class="sort-indicator">↕</span></th>
-                <th id="thTkClub" class="sortable" data-table="timekeepers" data-key="club">Kulüp / Takım<span class="sort-indicator">↕</span></th>
-                <th id="thTkRole" class="sortable" data-table="timekeepers" data-key="role">Görev<span class="sort-indicator">↕</span></th>
-                <th id="thTkEmail" class="sortable" data-table="timekeepers" data-key="email">E-posta<span class="sort-indicator">↕</span></th>
+                <th data-table="timekeepers" data-key="name" id="thTkName">Ad Soyad</th>
+                <th data-table="timekeepers" data-key="country" id="thTkCountry">Ülke</th>
+                <th data-table="timekeepers" data-key="club" id="thTkClub">Kulüp / Takım</th>
+                <th data-table="timekeepers" data-key="role" id="thTkRole">Görev</th>
               </tr>
             </thead>
             <tbody id="timekeepersBody"></tbody>
           </table>
         </div>
 
-        <div class="note-box" id="noteBox">Bu sayfa Netlify form CSV dışa aktarımını tarayıcı içinde okuyarak liste oluşturur. Canlı form sistemine doğrudan müdahale etmez. Sıralamak için sütun başlıklarına tıklayabilirsiniz.</div>
+        <div class="note-box" id="noteBox">
+          Bu sayfa otomatik olarak yalnızca herkese gösterilmesi uygun alanları listeler.
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    (function () {
-      var currentLang = 'tr';
-      var rows = [];
-      var loadedFileName = '';
+    const CSV_URL = "kayitlar-public.csv";
+    const CATEGORY_ORDER = { F1A: 1, F1B: 2, F1C: 3, F1G: 4, F1H: 5, F1Q: 6, P30: 7, HAKEM: 98, TIMEKEEPER: 99, "TIME KEEPER": 99 };
 
-      var sortState = {
-        participants: { key: 'name', direction: 'asc' },
-        timekeepers: { key: 'name', direction: 'asc' }
-      };
-
-      var textMap = {
-        tr: {
-          heroTitle: 'Kayıtlı Yarışmacılar',
-          heroSub: 'Netlify form ekranından indirdiğiniz CSV dosyasını içe aktararak listeyi anında gösterebilirsiniz.',
-          backButton: 'Kayıt Formuna Dön',
-          bulletinButton: 'Bülteni Gör',
-          uploadButton: 'CSV Yükle',
-          clearButton: 'Temizle',
-          panelTitle: 'Kullanım',
-          panelText: 'Netlify form bölümünden CSV indirip burada yükleyin. Liste otomatik ayrıştırılır. Bu sayfa herhangi bir kayıt silmez, sadece yüklediğiniz CSV içeriğini tarayıcı içinde gösterir.',
-          fileInfoEmpty: 'Henüz CSV yüklenmedi.',
-          fileInfoLoaded: 'Yüklenen dosya:',
-          countAllLabel: 'Toplam Kayıt',
-          countParticipantsLabel: 'Yarışmacı',
-          countTimekeepersLabel: 'Hakem',
-          participantsTitle: 'Yarışmacılar',
-          timekeepersTitle: 'Hakemler',
-          thName: 'Ad Soyad',
-          thCountry: 'Ülke',
-          thClub: 'Kulüp / Takım',
-          thCategories: 'Kategori',
-          thEmail: 'E-posta',
-          thTkName: 'Ad Soyad',
-          thTkCountry: 'Ülke',
-          thTkClub: 'Kulüp / Takım',
-          thTkRole: 'Görev',
-          thTkEmail: 'E-posta',
-          emptyParticipants: 'Henüz gösterilecek yarışmacı kaydı yok.',
-          emptyTimekeepers: 'Henüz gösterilecek hakem kaydı yok.',
-          noteBox: 'Bu sayfa Netlify form CSV dışa aktarımını tarayıcı içinde okuyarak liste oluşturur. Canlı form sistemine doğrudan müdahale etmez.',
-          sortHint: 'Sıralamak için sütun başlıklarına tıklayabilirsiniz.',
-          roleJudge: 'Hakem',
-          unknown: '-',
-          parseError: 'CSV yüklenemedi. Lütfen Netlify üzerinden indirilen CSV dosyasını seçin.'
-        },
-        en: {
-          heroTitle: 'Registered Participants',
-          heroSub: 'You can instantly show the list by importing the CSV file downloaded from the Netlify forms screen.',
-          backButton: 'Back to Registration Form',
-          bulletinButton: 'View Bulletin',
-          uploadButton: 'Upload CSV',
-          clearButton: 'Clear',
-          panelTitle: 'Usage',
-          panelText: 'Download the CSV from the Netlify forms section and upload it here. The list will be parsed automatically. This page does not delete any records; it only displays the uploaded CSV content in the browser.',
-          fileInfoEmpty: 'No CSV uploaded yet.',
-          fileInfoLoaded: 'Loaded file:',
-          countAllLabel: 'Total Records',
-          countParticipantsLabel: 'Competitors',
-          countTimekeepersLabel: 'Time Keepers',
-          participantsTitle: 'Competitors',
-          timekeepersTitle: 'Time Keepers',
-          thName: 'Full Name',
-          thCountry: 'Country',
-          thClub: 'Club / Team',
-          thCategories: 'Category',
-          thEmail: 'Email',
-          thTkName: 'Full Name',
-          thTkCountry: 'Country',
-          thTkClub: 'Club / Team',
-          thTkRole: 'Role',
-          thTkEmail: 'Email',
-          emptyParticipants: 'There are no competitor records to display yet.',
-          emptyTimekeepers: 'There are no time keeper records to display yet.',
-          noteBox: 'This page builds the list by reading the Netlify form CSV export in the browser. It does not directly modify the live form system.',
-          sortHint: 'You can click the column headers to sort the list.',
-          roleJudge: 'Time Keeper',
-          unknown: '-',
-          parseError: 'CSV could not be loaded. Please choose the CSV file downloaded from Netlify.'
-        }
-      };
-
-      function $(id) {
-        return document.getElementById(id);
+    const t = {
+      tr: {
+        heroTitle: "Kayıtlı Yarışmacılar",
+        heroSub: "Aşağıda organizasyon tarafından yayımlanan güncel katılımcı listesi yer almaktadır.",
+        backButton: "Kayıt Formuna Dön",
+        bulletinButton: "Bülteni Gör",
+        updatedText: "Liste otomatik olarak kayitlar-public.csv dosyasından okunur.",
+        participantsTitle: "Yarışmacılar",
+        timekeepersTitle: "Hakemler",
+        thName: "Ad Soyad",
+        thCountry: "Ülke",
+        thClub: "Kulüp / Takım",
+        thCategories: "Kategori",
+        thTkName: "Ad Soyad",
+        thTkCountry: "Ülke",
+        thTkClub: "Kulüp / Takım",
+        thTkRole: "Görev",
+        emptyParticipants: "Henüz yayımlanmış yarışmacı kaydı bulunmuyor.",
+        emptyTimekeepers: "Henüz yayımlanmış hakem kaydı bulunmuyor.",
+        noteBox: "Bu sayfa otomatik olarak yalnızca herkese gösterilmesi uygun alanları listeler.",
+        roleJudge: "Hakem",
+        csvError: "CSV dosyası okunamadı. Aynı klasörde kayitlar-public.csv dosyasının bulunduğundan emin olun."
+      },
+      en: {
+        heroTitle: "Registered Participants",
+        heroSub: "Below is the current participant list published by the organization.",
+        backButton: "Back to Registration Form",
+        bulletinButton: "View Bulletin",
+        updatedText: "The list is loaded automatically from kayitlar-public.csv.",
+        participantsTitle: "Participants",
+        timekeepersTitle: "Time Keepers",
+        thName: "Full Name",
+        thCountry: "Country",
+        thClub: "Club / Team",
+        thCategories: "Category",
+        thTkName: "Full Name",
+        thTkCountry: "Country",
+        thTkClub: "Club / Team",
+        thTkRole: "Role",
+        emptyParticipants: "There are no published participant registrations yet.",
+        emptyTimekeepers: "There are no published time keeper registrations yet.",
+        noteBox: "This page automatically lists only fields that are appropriate to show publicly.",
+        roleJudge: "Time Keeper",
+        csvError: "The CSV file could not be read. Make sure kayitlar-public.csv exists in the same folder."
       }
+    };
 
-      function normalizeHeader(value) {
-        var map = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u' };
-        return String(value || '')
-          .trim()
-          .toLowerCase()
-          .replace(/\ufeff/g, '')
-          .replace(/[çğıöşü]/g, function (char) { return map[char] || char; })
-          .replace(/[^a-z0-9]+/g, '_')
-          .replace(/^_+|_+$/g, '');
-      }
+    let currentLang = "tr";
+    let participants = [];
+    let timekeepers = [];
+    const sortState = {
+      participants: { key: "categories", dir: "asc" },
+      timekeepers: { key: "name", dir: "asc" }
+    };
 
-      function detectDelimiter(text) {
-        var firstLine = String(text || '').split(/\r?\n/).find(function (line) {
-          return line.trim() !== '';
-        }) || '';
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
 
-        var commaCount = 0;
-        var semicolonCount = 0;
-        var inQuotes = false;
-        for (var i = 0; i < firstLine.length; i++) {
-          var char = firstLine[i];
-          var next = firstLine[i + 1];
-          if (char === '"') {
-            if (inQuotes && next === '"') {
-              i++;
-            } else {
-              inQuotes = !inQuotes;
-            }
-          } else if (!inQuotes && char === ',') {
-            commaCount++;
-          } else if (!inQuotes && char === ';') {
-            semicolonCount++;
-          }
-        }
-        return semicolonCount > commaCount ? ';' : ',';
-      }
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
 
-      function parseCSV(text) {
-        var delimiter = detectDelimiter(text);
-        var parsed = [];
-        var row = [];
-        var cell = '';
-        var inQuotes = false;
-
-        for (var i = 0; i < text.length; i++) {
-          var char = text[i];
-          var next = text[i + 1];
-
-          if (char === '"') {
-            if (inQuotes && next === '"') {
-              cell += '"';
-              i++;
-            } else {
-              inQuotes = !inQuotes;
-            }
-          } else if (char === delimiter && !inQuotes) {
-            row.push(cell);
-            cell = '';
-          } else if ((char === '\n' || char === '\r') && !inQuotes) {
-            if (char === '\r' && next === '\n') {
-              i++;
-            }
-            row.push(cell);
-            if (row.some(function (item) { return String(item).trim() !== ''; })) {
-              parsed.push(row);
-            }
-            row = [];
-            cell = '';
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            cell += '"';
+            i++;
           } else {
-            cell += char;
+            inQuotes = !inQuotes;
           }
-        }
-
-        if (cell.length > 0 || row.length > 0) {
+        } else if (char === ',' && !inQuotes) {
           row.push(cell);
-          if (row.some(function (item) { return String(item).trim() !== ''; })) {
-            parsed.push(row);
-          }
-        }
-
-        return parsed;
-      }
-
-      function pick(record, keys) {
-        for (var i = 0; i < keys.length; i++) {
-          var key = keys[i];
-          var value = record[key];
-          if (value !== undefined && value !== null && String(value).trim() !== '') {
-            return String(value).trim();
-          }
-        }
-        return '';
-      }
-
-      function isTimekeeper(role, categories) {
-        var roleValue = String(role || '').toLowerCase();
-        var categoryValue = String(categories || '').toLowerCase();
-        return roleValue.indexOf('time') !== -1 ||
-          roleValue.indexOf('hakem') !== -1 ||
-          categoryValue === 'timekeeper' ||
-          categoryValue === 'hakem';
-      }
-
-      function mapRecord(record) {
-        var firstName = pick(record, ['ad_first_name', 'ad', 'first_name', 'firstname']);
-        var lastName = pick(record, ['soyad_last_name', 'soyad', 'last_name', 'lastname']);
-        var fullName = pick(record, ['full_name', 'name']) || [firstName, lastName].filter(Boolean).join(' ').trim();
-        var role = pick(record, ['kayit_turu_registration_type', 'registration_type', 'role_type', 'kayit_turu']);
-        var categories = pick(record, ['kategori_category', 'kategori', 'category', 'categories']);
-        var country = pick(record, ['country', 'ulke']);
-        var club = pick(record, ['club_team', 'club', 'kulup_takim', 'kulup']);
-        var email = pick(record, ['email', 'e_posta', 'eposta']);
-
-        return {
-          name: fullName || textMap[currentLang].unknown,
-          country: country || textMap[currentLang].unknown,
-          club: club || textMap[currentLang].unknown,
-          categories: categories || textMap[currentLang].unknown,
-          role: role || '',
-          email: email || textMap[currentLang].unknown,
-          isTimekeeper: isTimekeeper(role, categories)
-        };
-      }
-
-      function escapeHtml(value) {
-        return String(value || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
-
-      function normalizeValue(value) {
-        return String(value || '').trim().toLowerCase();
-      }
-
-      function getCategoryRank(value) {
-        var order = ['f1a', 'f1b', 'f1c', 'f1g', 'f1h', 'f1q', 'p30', 'timekeeper', 'hakem'];
-        var normalized = normalizeValue(value);
-        var rank = order.length + 1;
-        for (var i = 0; i < order.length; i++) {
-          if (normalized.indexOf(order[i]) !== -1) {
-            rank = i;
-            break;
-          }
-        }
-        return rank;
-      }
-
-      function compareRows(a, b, key, direction, tableName) {
-        var aValue = key === 'role' ? textMap[currentLang].roleJudge : (a[key] || '');
-        var bValue = key === 'role' ? textMap[currentLang].roleJudge : (b[key] || '');
-
-        if (key === 'categories') {
-          var rankDiff = getCategoryRank(aValue) - getCategoryRank(bValue);
-          if (rankDiff !== 0) {
-            return direction === 'asc' ? rankDiff : -rankDiff;
-          }
-        }
-
-        var compareResult = normalizeValue(aValue).localeCompare(
-          normalizeValue(bValue),
-          currentLang === 'tr' ? 'tr' : 'en',
-          { numeric: true, sensitivity: 'base' }
-        );
-
-        return direction === 'asc' ? compareResult : -compareResult;
-      }
-
-      function updateSortIndicators() {
-        var headers = document.querySelectorAll('.sortable');
-        headers.forEach(function (header) {
-          var tableName = header.getAttribute('data-table');
-          var key = header.getAttribute('data-key');
-          var state = sortState[tableName];
-          var indicator = header.querySelector('.sort-indicator');
-          if (!indicator) return;
-          indicator.textContent = state.key === key ? (state.direction === 'asc' ? '▲' : '▼') : '↕';
-        });
-      }
-
-      function setHeaderText(id, text) {
-        var header = $(id);
-        var indicator = header.querySelector('.sort-indicator');
-        header.innerHTML = '';
-        header.appendChild(document.createTextNode(text));
-        if (indicator) {
-          header.appendChild(indicator);
-        }
-      }
-
-      function updateFileInfo() {
-        $('fileInfo').textContent = loadedFileName
-          ? textMap[currentLang].fileInfoLoaded + ' ' + loadedFileName
-          : textMap[currentLang].fileInfoEmpty;
-      }
-
-      function renderTables() {
-        var participants = rows
-          .filter(function (row) { return !row.isTimekeeper; })
-          .slice()
-          .sort(function (a, b) {
-            return compareRows(a, b, sortState.participants.key, sortState.participants.direction, 'participants');
-          });
-
-        var timekeepers = rows
-          .filter(function (row) { return row.isTimekeeper; })
-          .slice()
-          .sort(function (a, b) {
-            return compareRows(a, b, sortState.timekeepers.key, sortState.timekeepers.direction, 'timekeepers');
-          });
-
-        $('countAll').textContent = String(rows.length);
-        $('countParticipants').textContent = String(participants.length);
-        $('countTimekeepers').textContent = String(timekeepers.length);
-
-        var participantsHtml = '';
-        if (participants.length === 0) {
-          participantsHtml = '<tr><td colspan="5" class="empty">' + escapeHtml(textMap[currentLang].emptyParticipants) + '</td></tr>';
+          cell = "";
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && next === '\n') i++;
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
         } else {
-          participants.forEach(function (item) {
-            participantsHtml += '<tr>' +
-              '<td>' + escapeHtml(item.name) + '</td>' +
-              '<td>' + escapeHtml(item.country) + '</td>' +
-              '<td>' + escapeHtml(item.club) + '</td>' +
-              '<td>' + escapeHtml(item.categories) + '</td>' +
-              '<td>' + escapeHtml(item.email) + '</td>' +
-            '</tr>';
-          });
+          cell += char;
         }
-        $('participantsBody').innerHTML = participantsHtml;
+      }
 
-        var timekeepersHtml = '';
-        if (timekeepers.length === 0) {
-          timekeepersHtml = '<tr><td colspan="5" class="empty">' + escapeHtml(textMap[currentLang].emptyTimekeepers) + '</td></tr>';
+      if (cell.length > 0 || row.length > 0) {
+        row.push(cell);
+        rows.push(row);
+      }
+
+      if (!rows.length) return [];
+
+      const headers = rows[0].map(h => (h || "").trim());
+      return rows.slice(1)
+        .filter(r => r.some(v => String(v || "").trim() !== ""))
+        .map(r => {
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = (r[idx] || "").trim());
+          return obj;
+        });
+    }
+
+    function normalizeRole(value) {
+      const v = String(value || "").trim().toLowerCase();
+      if (v.includes("time")) return "Timekeeper";
+      if (v.includes("hakem")) return "Timekeeper";
+      return "Competitor";
+    }
+
+    function parseCategories(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      if (raw.startsWith("[") && raw.endsWith("]")) {
+        try {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) return arr.map(x => String(x).trim()).filter(Boolean).join(", ");
+        } catch (e) {}
+      }
+      return raw;
+    }
+
+    function categoryRank(value) {
+      const first = String(value || "").split(",")[0].trim().toUpperCase();
+      return CATEGORY_ORDER[first] || 999;
+    }
+
+    function compareValues(a, b, key, dir) {
+      let av = a[key] || "";
+      let bv = b[key] || "";
+
+      if (key === "categories") {
+        const rankA = categoryRank(av);
+        const rankB = categoryRank(bv);
+        if (rankA !== rankB) return dir === "asc" ? rankA - rankB : rankB - rankA;
+      }
+
+      av = String(av).toLocaleLowerCase("tr");
+      bv = String(bv).toLocaleLowerCase("tr");
+      const result = av.localeCompare(bv, "tr");
+      return dir === "asc" ? result : -result;
+    }
+
+    function applySorting() {
+      participants.sort((a, b) => compareValues(a, b, sortState.participants.key, sortState.participants.dir));
+      timekeepers.sort((a, b) => compareValues(a, b, sortState.timekeepers.key, sortState.timekeepers.dir));
+    }
+
+    function renderTables() {
+      applySorting();
+
+      const participantsBody = document.getElementById("participantsBody");
+      const timekeepersBody = document.getElementById("timekeepersBody");
+      participantsBody.innerHTML = "";
+      timekeepersBody.innerHTML = "";
+
+      if (!participants.length) {
+        participantsBody.innerHTML = `<tr><td colspan="4" class="empty">${t[currentLang].emptyParticipants}</td></tr>`;
+      } else {
+        participants.forEach(item => {
+          participantsBody.innerHTML += `
+            <tr>
+              <td>${item.name || ""}</td>
+              <td>${item.country || ""}</td>
+              <td>${item.club || ""}</td>
+              <td>${item.categories || ""}</td>
+            </tr>`;
+        });
+      }
+
+      if (!timekeepers.length) {
+        timekeepersBody.innerHTML = `<tr><td colspan="4" class="empty">${t[currentLang].emptyTimekeepers}</td></tr>`;
+      } else {
+        timekeepers.forEach(item => {
+          timekeepersBody.innerHTML += `
+            <tr>
+              <td>${item.name || ""}</td>
+              <td>${item.country || ""}</td>
+              <td>${item.club || ""}</td>
+              <td>${currentLang === "tr" ? "Hakem" : "Time Keeper"}</td>
+            </tr>`;
+        });
+      }
+
+      updateSortIcons();
+    }
+
+    function updateSortIcons() {
+      document.querySelectorAll("th[data-table]").forEach(th => th.classList.remove("sort-asc", "sort-desc"));
+      const p = document.querySelector(`th[data-table="participants"][data-key="${sortState.participants.key}"]`);
+      const tHeader = document.querySelector(`th[data-table="timekeepers"][data-key="${sortState.timekeepers.key}"]`);
+      if (p) p.classList.add(sortState.participants.dir === "asc" ? "sort-asc" : "sort-desc");
+      if (tHeader) tHeader.classList.add(sortState.timekeepers.dir === "asc" ? "sort-asc" : "sort-desc");
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+
+      document.getElementById("heroTitle").textContent = t[lang].heroTitle;
+      document.getElementById("heroSub").textContent = t[lang].heroSub;
+      document.getElementById("backButton").textContent = t[lang].backButton;
+      document.getElementById("bulletinButton").textContent = t[lang].bulletinButton;
+      document.getElementById("updatedText").textContent = t[lang].updatedText;
+      document.getElementById("participantsTitle").textContent = t[lang].participantsTitle;
+      document.getElementById("timekeepersTitle").textContent = t[lang].timekeepersTitle;
+      document.getElementById("thName").textContent = t[lang].thName;
+      document.getElementById("thCountry").textContent = t[lang].thCountry;
+      document.getElementById("thClub").textContent = t[lang].thClub;
+      document.getElementById("thCategories").textContent = t[lang].thCategories;
+      document.getElementById("thTkName").textContent = t[lang].thTkName;
+      document.getElementById("thTkCountry").textContent = t[lang].thTkCountry;
+      document.getElementById("thTkClub").textContent = t[lang].thTkClub;
+      document.getElementById("thTkRole").textContent = t[lang].thTkRole;
+      document.getElementById("noteBox").textContent = t[lang].noteBox;
+
+      document.querySelectorAll("[data-lang-btn]").forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-lang-btn") === lang);
+      });
+
+      renderTables();
+    }
+
+    async function loadData() {
+      try {
+        const response = await fetch(CSV_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error("CSV fetch failed");
+        const text = await response.text();
+        const rows = parseCSV(text);
+
+        const all = rows.map(r => ({
+          name: String(r.name || "").trim(),
+          country: String(r.country || "").trim(),
+          club: String(r.club || "").trim(),
+          role: normalizeRole(r.role),
+          categories: parseCategories(r.categories),
+          created_at: String(r.created_at || "").trim()
+        })).filter(r => r.name);
+
+        participants = all.filter(r => r.role !== "Timekeeper");
+        timekeepers = all.filter(r => r.role === "Timekeeper");
+
+        renderTables();
+      } catch (err) {
+        const box = document.getElementById("errorBox");
+        box.style.display = "block";
+        box.textContent = t[currentLang].csvError;
+      }
+    }
+
+    document.querySelectorAll("[data-lang-btn]").forEach(btn => {
+      btn.addEventListener("click", function () {
+        setLanguage(this.getAttribute("data-lang-btn"));
+      });
+    });
+
+    document.querySelectorAll("th[data-table]").forEach(th => {
+      th.addEventListener("click", function () {
+        const table = this.getAttribute("data-table");
+        const key = this.getAttribute("data-key");
+        if (sortState[table].key === key) {
+          sortState[table].dir = sortState[table].dir === "asc" ? "desc" : "asc";
         } else {
-          timekeepers.forEach(function (item) {
-            timekeepersHtml += '<tr>' +
-              '<td>' + escapeHtml(item.name) + '</td>' +
-              '<td>' + escapeHtml(item.country) + '</td>' +
-              '<td>' + escapeHtml(item.club) + '</td>' +
-              '<td>' + escapeHtml(textMap[currentLang].roleJudge) + '</td>' +
-              '<td>' + escapeHtml(item.email) + '</td>' +
-            '</tr>';
-          });
+          sortState[table].key = key;
+          sortState[table].dir = "asc";
         }
-        $('timekeepersBody').innerHTML = timekeepersHtml;
-
-        updateSortIndicators();
-      }
-
-      function setLanguage(lang) {
-        currentLang = lang;
-        document.documentElement.lang = lang;
-
-        $('heroTitle').textContent = textMap[lang].heroTitle;
-        $('heroSub').textContent = textMap[lang].heroSub;
-        $('backButton').textContent = textMap[lang].backButton;
-        $('bulletinButton').textContent = textMap[lang].bulletinButton;
-        $('uploadButton').textContent = textMap[lang].uploadButton;
-        $('clearButton').textContent = textMap[lang].clearButton;
-        $('panelTitle').textContent = textMap[lang].panelTitle;
-        $('panelText').textContent = textMap[lang].panelText;
-        $('countAllLabel').textContent = textMap[lang].countAllLabel;
-        $('countParticipantsLabel').textContent = textMap[lang].countParticipantsLabel;
-        $('countTimekeepersLabel').textContent = textMap[lang].countTimekeepersLabel;
-        $('participantsTitle').textContent = textMap[lang].participantsTitle;
-        $('timekeepersTitle').textContent = textMap[lang].timekeepersTitle;
-        setHeaderText('thName', textMap[lang].thName);
-        setHeaderText('thCountry', textMap[lang].thCountry);
-        setHeaderText('thClub', textMap[lang].thClub);
-        setHeaderText('thCategories', textMap[lang].thCategories);
-        setHeaderText('thEmail', textMap[lang].thEmail);
-        setHeaderText('thTkName', textMap[lang].thTkName);
-        setHeaderText('thTkCountry', textMap[lang].thTkCountry);
-        setHeaderText('thTkClub', textMap[lang].thTkClub);
-        setHeaderText('thTkRole', textMap[lang].thTkRole);
-        setHeaderText('thTkEmail', textMap[lang].thTkEmail);
-        $('noteBox').textContent = textMap[lang].noteBox + ' ' + textMap[lang].sortHint;
-
-        document.querySelectorAll('[data-lang-btn]').forEach(function (button) {
-          button.classList.toggle('active', button.getAttribute('data-lang-btn') === lang);
-        });
-
-        updateFileInfo();
-        renderTables();
-      }
-
-      function loadRowsFromCSVText(text) {
-        var parsed = parseCSV(text);
-        if (!parsed.length || parsed[0].length === 0) {
-          throw new Error('Empty CSV');
-        }
-
-        var headers = parsed[0].map(normalizeHeader);
-        var body = parsed.slice(1);
-        var mappedRows = body.map(function (columns) {
-          var record = {};
-          headers.forEach(function (header, index) {
-            record[header] = columns[index] || '';
-          });
-          return mapRecord(record);
-        }).filter(function (item) {
-          return item.name && item.name !== textMap[currentLang].unknown;
-        });
-
-        rows = mappedRows;
-        renderTables();
-      }
-
-      document.querySelectorAll('.sortable').forEach(function (header) {
-        header.addEventListener('click', function () {
-          var tableName = this.getAttribute('data-table');
-          var key = this.getAttribute('data-key');
-          if (sortState[tableName].key === key) {
-            sortState[tableName].direction = sortState[tableName].direction === 'asc' ? 'desc' : 'asc';
-          } else {
-            sortState[tableName].key = key;
-            sortState[tableName].direction = 'asc';
-          }
-          renderTables();
-        });
-      });
-
-      document.querySelectorAll('[data-lang-btn]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          setLanguage(this.getAttribute('data-lang-btn'));
-        });
-      });
-
-      $('csvFile').addEventListener('change', function (event) {
-        var file = event.target.files && event.target.files[0];
-        if (!file) return;
-
-        var reader = new FileReader();
-        reader.onload = function (loadEvent) {
-          try {
-            var text = String(loadEvent.target.result || '');
-            loadRowsFromCSVText(text);
-            loadedFileName = file.name;
-            updateFileInfo();
-          } catch (error) {
-            rows = [];
-            loadedFileName = '';
-            updateFileInfo();
-            $('fileInfo').textContent = textMap[currentLang].parseError;
-            renderTables();
-            console.error(error);
-          }
-        };
-        reader.onerror = function () {
-          rows = [];
-          loadedFileName = '';
-          $('fileInfo').textContent = textMap[currentLang].parseError;
-          renderTables();
-        };
-        reader.readAsText(file, 'utf-8');
-      });
-
-      $('clearButton').addEventListener('click', function () {
-        rows = [];
-        loadedFileName = '';
-        $('csvFile').value = '';
-        updateFileInfo();
         renderTables();
       });
+    });
 
-      setLanguage('tr');
-    })();
+    setLanguage("tr");
+    loadData();
   </script>
 </body>
 </html>
