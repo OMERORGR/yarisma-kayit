@@ -195,7 +195,6 @@
     }
     [data-lang-group] { display: none; }
     [data-lang-group].active { display: flex; }
-    .hidden { display: none; }
     @media (max-width: 700px) {
       .grid { grid-template-columns: 1fr; }
       .wrap { margin: 20px auto; padding: 12px; }
@@ -232,6 +231,10 @@
           <div class="bullet-actions" data-lang-group="en">
             <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-en.pdf" target="_blank" rel="noopener" class="primary-link">View Bulletin PDF (EN)</a>
             <a href="2026-ismail-sarioglu-serbest-ucus-kupasi-bulteni-en.pdf" download class="secondary-link">Download PDF (EN)</a>
+          </div>
+
+          <div class="bullet-actions active" style="margin-top:12px;">
+            <a href="kayit-listesi.html" class="secondary-link" id="listPageButton">Kayıtlı Yarışmacıları Gör</a>
           </div>
         </div>
       </div>
@@ -278,9 +281,9 @@
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="F1H" /> F1H</label>
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="F1Q" /> F1Q</label>
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="P30" /> P30</label>
-                <label class="check"><input type="checkbox" name="Kategori_Category" value="Timekeeper" /> Timekeeper</label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="Timekeeper" /> <span id="timekeeperCategoryText">Hakem</span></label>
               </div>
-              <div class="hint" id="categoryHint">F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Timekeeper seçeneği de bulunur.</div>
+              <div class="hint" id="categoryHint">F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Hakem seçeneği de bulunur.</div>
             </div>
 
             <div>
@@ -325,7 +328,7 @@
 
         <div class="notice" id="successBox">Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.</div>
 
-        <div class="footnote" id="footnoteText">iletişim için omer_gurer@hotmail.com adresini kullanabilirsiniz.</div>
+        <div class="footnote" id="footnoteText">İletişim için omer_gurer@hotmail.com adresini kullanabilirsiniz.</div>
       </div>
     </div>
   </div>
@@ -334,7 +337,6 @@
     const form = document.getElementById('registrationForm');
     const successBox = document.getElementById('successBox');
     const roleType = document.getElementById('roleType');
-    const categorySection = document.getElementById('categorySection');
     const formLanguage = document.getElementById('formLanguage');
     const langButtons = document.querySelectorAll('[data-lang-btn]');
     const langGroups = document.querySelectorAll('[data-lang-group]');
@@ -354,10 +356,10 @@
         roleType: 'Kayıt Türü',
         select: 'Seçiniz',
         competitor: 'Yarışmacı',
-        timekeeper: 'Hakem / Timekeeper',
+        timekeeper: 'Hakem',
         roleHint: 'Hakem kaydını ayrı ve net takip etmek için seçim alanı eklendi.',
         categories: 'Kategori / Kategoriler',
-        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Timekeeper seçeneği de bulunur.',
+        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Hakem seçeneği de bulunur.',
         country: 'Ülke',
         club: 'Kulüp / Takım',
         fai: 'FAI Lisans Kodu',
@@ -368,12 +370,13 @@
         note: 'Ek Not',
         notePlaceholder: 'Varsa eklemek istediğiniz notları yazabilirsiniz.',
         submit: 'Kaydı Gönder',
+        listButton: 'Kayıtlı Yarışmacıları Gör',
         success: 'Kayıt bilgileri başarıyla gönderildi. Teşekkür ederiz.',
-        footnote: 'iletişim için omer_gurer@hotmail.com adresini kullanabilirsiniz.',
+        footnote: 'İletişim için omer_gurer@hotmail.com adresini kullanabilirsiniz.',
         categoryRequired: 'Lütfen en az bir kategori seçiniz.',
         faiRequired: 'Yarışmacılar için FAI Lisans Kodu alanı zorunludur.',
         thsfRequired: 'Yarışmacılar için THSF Lisans Numarası alanı zorunludur.',
-        timekeeperOnly: 'Timekeeper seçeneği yarışmacı kategorileriyle birlikte işaretlenemez.',
+        timekeeperOnly: 'Hakem seçeneği yarışmacı kategorileriyle birlikte işaretlenemez.',
         submitError: 'Gönderim sırasında bir sorun oluştu. Lütfen tekrar deneyiniz.',
         connectionError: 'Bağlantı hatası oluştu. Lütfen tekrar deneyiniz.'
       },
@@ -389,9 +392,9 @@
         select: 'Select',
         competitor: 'Competitor',
         timekeeper: 'Time Keeper',
-        roleHint: 'A separate field was added so Timekeeper registrations can be tracked clearly.',
+        roleHint: 'A separate field was added so Time Keeper registrations can be tracked clearly.',
         categories: 'Category / Categories',
-        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q and P30 were added. A Timekeeper option is also available.',
+        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q and P30 were added. A Time Keeper option is also available.',
         country: 'Country',
         club: 'Club / Team',
         fai: 'FAI License Code',
@@ -402,12 +405,13 @@
         note: 'Additional Note',
         notePlaceholder: 'You can write any additional note here.',
         submit: 'Submit Registration',
+        listButton: 'View Registered Participants',
         success: 'Your registration has been submitted successfully. Thank you.',
-        footnote: 'You can use omer_gurer@hotmail.com  for communication.',
+        footnote: 'You can use omer_gurer@hotmail.com for communication.',
         categoryRequired: 'Please select at least one category.',
         faiRequired: 'FAI License Code is required for competitors.',
         thsfRequired: 'THSF License Number is required for competitors.',
-        timekeeperOnly: 'The Timekeeper option cannot be selected together with competitor categories.',
+        timekeeperOnly: 'The Time Keeper option cannot be selected together with competitor categories.',
         submitError: 'A problem occurred during submission. Please try again.',
         connectionError: 'A connection error occurred. Please try again.'
       }
@@ -431,6 +435,7 @@
       document.getElementById('optionSelect').textContent = t[lang].select;
       document.getElementById('optionCompetitor').textContent = t[lang].competitor;
       document.getElementById('optionTimekeeper').textContent = t[lang].timekeeper;
+      document.getElementById('timekeeperCategoryText').textContent = t[lang].timekeeper;
       document.getElementById('roleHint').textContent = t[lang].roleHint;
       document.getElementById('labelCategories').textContent = t[lang].categories;
       document.getElementById('categoryHint').textContent = t[lang].categoryHint;
@@ -445,6 +450,7 @@
       document.getElementById('labelNote').textContent = t[lang].note;
       noteInput.placeholder = t[lang].notePlaceholder;
       document.getElementById('submitButton').textContent = t[lang].submit;
+      document.getElementById('listPageButton').textContent = t[lang].listButton;
       document.getElementById('footnoteText').textContent = t[lang].footnote;
       successBox.textContent = t[lang].success;
 
