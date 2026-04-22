@@ -13,10 +13,7 @@
       --line: #dbe3ee;
       --accent: #1d4ed8;
       --accent-hover: #1e40af;
-      --ok: #065f46;
-      --ok-bg: #ecfdf5;
-      --warn: #92400e;
-      --warn-bg: #fffbeb;
+      --soft: #f8fafc;
     }
     * { box-sizing: border-box; }
     body {
@@ -26,7 +23,7 @@
       color: var(--text);
     }
     .wrap {
-      max-width: 1160px;
+      max-width: 1220px;
       margin: 40px auto;
       padding: 20px;
     }
@@ -34,7 +31,7 @@
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
       overflow: hidden;
     }
     .hero {
@@ -59,7 +56,6 @@
       color: var(--muted);
       font-size: 15px;
       line-height: 1.6;
-      max-width: 760px;
     }
     .lang-switch {
       display: inline-flex;
@@ -109,55 +105,23 @@
     .content {
       padding: 28px;
     }
-    .info-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 22px;
-    }
-    .info-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px 16px;
-    }
-    .info-label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .info-value {
-      font-size: 20px;
-      font-weight: 700;
-    }
-    .status {
+      flex-wrap: wrap;
       margin-bottom: 18px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      font-size: 14px;
-      line-height: 1.6;
-      display: none;
-    }
-    .status.show { display: block; }
-    .status.info {
-      background: #eff6ff;
-      color: #1e3a8a;
-      border: 1px solid #bfdbfe;
-    }
-    .status.warn {
-      background: var(--warn-bg);
-      color: var(--warn);
-      border: 1px solid #fcd34d;
-    }
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 22px;
     }
     .meta {
-      margin: 0 0 20px;
+      margin: 0;
       color: var(--muted);
       font-size: 14px;
       line-height: 1.6;
+    }
+    .section-title {
+      margin: 20px 0 14px;
+      font-size: 22px;
     }
     .table-wrap {
       overflow-x: auto;
@@ -169,7 +133,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 760px;
+      min-width: 920px;
     }
     th, td {
       padding: 14px 12px;
@@ -179,20 +143,19 @@
       vertical-align: top;
     }
     th {
-      background: #f8fafc;
+      background: var(--soft);
       font-weight: 700;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
-      position: relative;
     }
-    th.sortable:hover {
-      background: #eef4ff;
+    th.sort-active {
+      color: var(--accent);
     }
-    th .arrow {
-      font-size: 11px;
+    .sort-indicator {
       margin-left: 6px;
-      color: var(--muted);
+      font-size: 11px;
+      opacity: 0.8;
     }
     tr:last-child td {
       border-bottom: 0;
@@ -201,15 +164,14 @@
       color: var(--muted);
       font-style: italic;
     }
-    .pill {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 12px;
-      margin: 2px 6px 2px 0;
-      border: 1px solid #dbeafe;
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
     }
     .note-box {
       margin-top: 8px;
@@ -235,7 +197,7 @@
         <div class="topbar">
           <div>
             <h1 id="heroTitle">Kayıtlı Yarışmacılar</h1>
-            <p class="sub" id="heroSub">Aşağıda organizasyon tarafından yayımlanan güncel katılımcı listesi yer almaktadır.</p>
+            <p class="sub" id="heroSub">Aşağıda yayımlanan liste, sitedeki yarisma-kayit.csv dosyasından otomatik olarak okunur.</p>
           </div>
           <div class="lang-switch">
             <button type="button" class="active" data-lang-btn="tr">TR</button>
@@ -250,39 +212,25 @@
       </div>
 
       <div class="content">
-        <div id="statusBox" class="status info show">Liste yükleniyor...</div>
-
-        <div class="info-row">
-          <div class="info-card">
-            <div class="info-label" id="infoParticipantsLabel">Yarışmacı Sayısı</div>
-            <div class="info-value" id="participantCount">0</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label" id="infoTimekeepersLabel">Hakem Sayısı</div>
-            <div class="info-value" id="timekeeperCount">0</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label" id="infoTotalLabel">Toplam Kayıt</div>
-            <div class="info-value" id="totalCount">0</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label" id="infoUpdatedLabel">Son Güncelleme</div>
-            <div class="info-value" id="updatedAt">-</div>
-          </div>
+        <div class="meta-row">
+          <p class="meta" id="updatedText">Veri kaynağı: yarisma-kayit.csv</p>
+          <p class="meta" id="countText">Toplam kayıt: 0</p>
         </div>
 
-        <p class="meta" id="metaText">Liste, site klasöründeki <strong>yarisma-kayit.csv</strong> dosyasından otomatik okunur.</p>
+        <div class="status" id="statusBox">CSV yükleniyor...</div>
 
         <h2 class="section-title" id="participantsTitle">Yarışmacılar</h2>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th class="sortable" data-table="participants" data-key="name" id="thName">Ad Soyad <span class="arrow"></span></th>
-                <th class="sortable" data-table="participants" data-key="country" id="thCountry">Ülke <span class="arrow"></span></th>
-                <th class="sortable" data-table="participants" data-key="club" id="thClub">Kulüp / Takım <span class="arrow"></span></th>
-                <th class="sortable" data-table="participants" data-key="categories" id="thCategories">Kategori <span class="arrow"></span></th>
-                <th class="sortable" data-table="participants" data-key="createdAt" id="thDate">Kayıt Tarihi <span class="arrow"></span></th>
+                <th data-table="participants" data-key="name" id="p_name">Ad Soyad <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="ageClass" id="p_age">Sınıf <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="country" id="p_country">Ülke <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="club" id="p_club">Kulüp / Takım <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="category" id="p_category">Kategori <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="banquet" id="p_banquet">Banket <span class="sort-indicator"></span></th>
+                <th data-table="participants" data-key="createdAt" id="p_date">Kayıt Tarihi <span class="sort-indicator"></span></th>
               </tr>
             </thead>
             <tbody id="participantsBody"></tbody>
@@ -294,128 +242,123 @@
           <table>
             <thead>
               <tr>
-                <th class="sortable" data-table="timekeepers" data-key="name" id="thTkName">Ad Soyad <span class="arrow"></span></th>
-                <th class="sortable" data-table="timekeepers" data-key="country" id="thTkCountry">Ülke <span class="arrow"></span></th>
-                <th class="sortable" data-table="timekeepers" data-key="club" id="thTkClub">Kulüp / Takım <span class="arrow"></span></th>
-                <th class="sortable" data-table="timekeepers" data-key="role" id="thTkRole">Görev <span class="arrow"></span></th>
-                <th class="sortable" data-table="timekeepers" data-key="createdAt" id="thTkDate">Kayıt Tarihi <span class="arrow"></span></th>
+                <th data-table="timekeepers" data-key="name" id="t_name">Ad Soyad <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="country" id="t_country">Ülke <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="club" id="t_club">Kulüp / Takım <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="role" id="t_role">Görev <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="banquet" id="t_banquet">Banket <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="createdAt" id="t_date">Kayıt Tarihi <span class="sort-indicator"></span></th>
               </tr>
             </thead>
             <tbody id="timekeepersBody"></tbody>
           </table>
         </div>
 
-        <div class="note-box" id="noteBox">Bu sayfa otomatik olarak <strong>yarisma-kayit.csv</strong> dosyasını okur. Yeni liste göstermek için sadece aynı isimli CSV dosyasını GitHub'da güncellemen yeterlidir.</div>
+        <div class="note-box" id="noteBox">
+          Bu sayfa otomatik olarak aynı klasördeki yarisma-kayit.csv dosyasını okur. Listeyi güncellemek için sadece CSV dosyasını yenisiyle değiştirmen yeterlidir.
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const CSV_FILE = 'yarisma-kayit.csv';
-    const CATEGORY_ORDER = ['F1A', 'F1B', 'F1C', 'F1G', 'F1H', 'F1Q', 'P30', 'TIMEKEEPER'];
-
-    const state = {
-      currentLang: 'tr',
-      participants: [],
-      timekeepers: [],
-      sorts: {
-        participants: { key: 'categories', dir: 'asc' },
-        timekeepers: { key: 'createdAt', dir: 'asc' }
-      }
-    };
+    const categoryOrder = ['F1A', 'F1B', 'F1C', 'F1G', 'F1H', 'F1Q', 'P30', 'TIMEKEEPER'];
 
     const t = {
       tr: {
         heroTitle: 'Kayıtlı Yarışmacılar',
-        heroSub: 'Aşağıda organizasyon tarafından yayımlanan güncel katılımcı listesi yer almaktadır.',
+        heroSub: 'Aşağıda yayımlanan liste, sitedeki yarisma-kayit.csv dosyasından otomatik olarak okunur.',
         backButton: 'Kayıt Formuna Dön',
         bulletinButton: 'Bülteni Gör',
-        infoParticipantsLabel: 'Yarışmacı Sayısı',
-        infoTimekeepersLabel: 'Hakem Sayısı',
-        infoTotalLabel: 'Toplam Kayıt',
-        infoUpdatedLabel: 'Son Güncelleme',
-        metaText: 'Liste, site klasöründeki yarisma-kayit.csv dosyasından otomatik okunur.',
+        updatedText: 'Veri kaynağı: yarisma-kayit.csv',
+        countText: 'Toplam kayıt: {count}',
+        loading: 'CSV yükleniyor...',
+        loaded: 'Liste başarıyla yüklendi.',
+        loadError: 'CSV okunamadı. Aynı klasörde yarisma-kayit.csv dosyasının bulunduğundan emin olun.',
         participantsTitle: 'Yarışmacılar',
         timekeepersTitle: 'Hakemler',
-        thName: 'Ad Soyad',
-        thCountry: 'Ülke',
-        thClub: 'Kulüp / Takım',
-        thCategories: 'Kategori',
-        thDate: 'Kayıt Tarihi',
-        thTkName: 'Ad Soyad',
-        thTkCountry: 'Ülke',
-        thTkClub: 'Kulüp / Takım',
-        thTkRole: 'Görev',
-        thTkDate: 'Kayıt Tarihi',
+        p_name: 'Ad Soyad',
+        p_age: 'Sınıf',
+        p_country: 'Ülke',
+        p_club: 'Kulüp / Takım',
+        p_category: 'Kategori',
+        p_banquet: 'Banket',
+        p_date: 'Kayıt Tarihi',
+        t_name: 'Ad Soyad',
+        t_country: 'Ülke',
+        t_club: 'Kulüp / Takım',
+        t_role: 'Görev',
+        t_banquet: 'Banket',
+        t_date: 'Kayıt Tarihi',
         emptyParticipants: 'Henüz yayımlanmış yarışmacı kaydı bulunmuyor.',
         emptyTimekeepers: 'Henüz yayımlanmış hakem kaydı bulunmuyor.',
-        noteBox: 'Bu sayfa otomatik olarak yarisma-kayit.csv dosyasını okur. Yeni liste göstermek için sadece aynı isimli CSV dosyasını GitHub\'da güncellemen yeterlidir.',
-        loading: 'Liste yükleniyor...',
-        loadError: 'CSV dosyası yüklenemedi. GitHub\'a yarisma-kayit.csv dosyasını index.html ve kayit-listesi.html ile aynı klasöre yüklediğinden emin ol.',
-        loaded: 'Liste başarıyla yüklendi.',
-        roleJudge: 'Hakem'
+        noteBox: 'Bu sayfa otomatik olarak aynı klasördeki yarisma-kayit.csv dosyasını okur. Listeyi güncellemek için sadece CSV dosyasını yenisiyle değiştirmen yeterlidir.',
+        roleJudge: 'Hakem',
+        senior: 'Senior',
+        junior: 'Junior',
+        yes: 'Evet',
+        no: 'Hayır',
+        unknown: '-'
       },
       en: {
         heroTitle: 'Registered Participants',
-        heroSub: 'Below is the current participant list published by the organization.',
+        heroSub: 'The list below is automatically read from the yarisma-kayit.csv file on the site.',
         backButton: 'Back to Registration Form',
         bulletinButton: 'View Bulletin',
-        infoParticipantsLabel: 'Participants',
-        infoTimekeepersLabel: 'Time Keepers',
-        infoTotalLabel: 'Total Records',
-        infoUpdatedLabel: 'Last Updated',
-        metaText: 'The list is loaded automatically from yarisma-kayit.csv in the site folder.',
+        updatedText: 'Data source: yarisma-kayit.csv',
+        countText: 'Total records: {count}',
+        loading: 'Loading CSV...',
+        loaded: 'List loaded successfully.',
+        loadError: 'CSV could not be read. Make sure yarisma-kayit.csv exists in the same folder.',
         participantsTitle: 'Participants',
         timekeepersTitle: 'Time Keepers',
-        thName: 'Full Name',
-        thCountry: 'Country',
-        thClub: 'Club / Team',
-        thCategories: 'Category',
-        thDate: 'Registration Date',
-        thTkName: 'Full Name',
-        thTkCountry: 'Country',
-        thTkClub: 'Club / Team',
-        thTkRole: 'Role',
-        thTkDate: 'Registration Date',
+        p_name: 'Full Name',
+        p_age: 'Class',
+        p_country: 'Country',
+        p_club: 'Club / Team',
+        p_category: 'Category',
+        p_banquet: 'Banquet',
+        p_date: 'Registration Date',
+        t_name: 'Full Name',
+        t_country: 'Country',
+        t_club: 'Club / Team',
+        t_role: 'Role',
+        t_banquet: 'Banquet',
+        t_date: 'Registration Date',
         emptyParticipants: 'There are no published participant registrations yet.',
         emptyTimekeepers: 'There are no published time keeper registrations yet.',
-        noteBox: 'This page reads yarisma-kayit.csv automatically. To show an updated list, you only need to replace the CSV file in GitHub with the same file name.',
-        loading: 'Loading list...',
-        loadError: 'The CSV file could not be loaded. Make sure yarisma-kayit.csv is uploaded to GitHub in the same folder as index.html and kayit-listesi.html.',
-        loaded: 'The list was loaded successfully.',
-        roleJudge: 'Time Keeper'
+        noteBox: 'This page automatically reads the yarisma-kayit.csv file in the same folder. To update the list, just replace the CSV file with the new one.',
+        roleJudge: 'Time Keeper',
+        senior: 'Senior',
+        junior: 'Junior',
+        yes: 'Yes',
+        no: 'No',
+        unknown: '-'
       }
     };
 
-    function escapeHtml(value) {
-      return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    let currentLang = 'tr';
+    let participantsData = [];
+    let timekeepersData = [];
+    let sortState = {
+      participants: { key: 'category', dir: 'asc' },
+      timekeepers: { key: 'name', dir: 'asc' }
+    };
 
-    function showStatus(message, type) {
-      const box = document.getElementById('statusBox');
-      box.className = 'status show ' + type;
-      box.textContent = message;
-    }
-
-    function parseCsv(text) {
+    function parseCSV(text) {
       const rows = [];
       let row = [];
       let value = '';
       let inQuotes = false;
 
-      for (let i = 0; i < text.length; i += 1) {
+      for (let i = 0; i < text.length; i++) {
         const char = text[i];
         const next = text[i + 1];
 
         if (char === '"') {
           if (inQuotes && next === '"') {
             value += '"';
-            i += 1;
+            i++;
           } else {
             inQuotes = !inQuotes;
           }
@@ -423,287 +366,251 @@
           row.push(value);
           value = '';
         } else if ((char === '\n' || char === '\r') && !inQuotes) {
-          if (char === '\r' && next === '\n') i += 1;
+          if (char === '\r' && next === '\n') i++;
           row.push(value);
-          value = '';
-          if (row.length > 1 || (row.length === 1 && row[0] !== '')) rows.push(row);
+          if (row.some(cell => String(cell).trim() !== '')) rows.push(row);
           row = [];
+          value = '';
         } else {
           value += char;
         }
       }
 
-      if (value !== '' || row.length) {
+      if (value.length || row.length) {
         row.push(value);
-        rows.push(row);
+        if (row.some(cell => String(cell).trim() !== '')) rows.push(row);
       }
 
       if (!rows.length) return [];
-      const headers = rows[0].map(h => (h || '').trim());
-
-      return rows.slice(1).map(cols => {
-        const item = {};
-        headers.forEach((header, index) => {
-          item[header] = (cols[index] || '').trim();
-        });
-        return item;
-      }).filter(item => Object.values(item).some(Boolean));
-    }
-
-    function splitCategories(rawValue) {
-      if (!rawValue) return [];
-      return rawValue
-        .split(/[,;|]/)
-        .map(v => v.trim())
-        .filter(Boolean);
-    }
-
-    function categoryRank(rawValue) {
-      const categories = splitCategories(rawValue).map(v => v.toUpperCase());
-      if (!categories.length) return 999;
-      let best = 999;
-      categories.forEach(cat => {
-        const index = CATEGORY_ORDER.indexOf(cat);
-        if (index !== -1 && index < best) best = index;
+      const headers = rows[0].map(h => String(h || '').trim());
+      return rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, index) => { obj[h] = (r[index] || '').trim(); });
+        return obj;
       });
-      return best;
     }
 
-    function normalizeDate(value) {
-      if (!value) return 0;
-      const timestamp = Date.parse(value);
-      return Number.isNaN(timestamp) ? 0 : timestamp;
+    function normalizeText(val) {
+      return String(val || '').trim();
     }
 
-    function formatDate(value) {
-      if (!value) return '-';
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return '-';
-      return state.currentLang === 'tr'
-        ? date.toLocaleString('tr-TR')
-        : date.toLocaleString('en-GB');
+    function normalizeCategory(val) {
+      const raw = normalizeText(val).toUpperCase();
+      if (!raw) return '';
+      if (raw.includes('TIMEKEEPER')) return 'TIMEKEEPER';
+      return raw;
     }
 
-    function isTimekeeper(row) {
-      const role = (row['Kayit_Turu_Registration_Type'] || '').trim().toLowerCase();
-      const category = (row['Kategori_Category'] || '').trim().toLowerCase();
-      return role === 'timekeeper' || category === 'timekeeper';
+    function categoryRank(val) {
+      const idx = categoryOrder.indexOf(normalizeCategory(val));
+      return idx === -1 ? 999 : idx;
+    }
+
+    function formatBanquet(val) {
+      const upper = normalizeText(val).toUpperCase();
+      if (upper === 'YES' || upper === 'EVET') return t[currentLang].yes;
+      if (upper === 'NO' || upper === 'HAYIR') return t[currentLang].no;
+      return t[currentLang].unknown;
+    }
+
+    function formatAgeClass(val) {
+      const upper = normalizeText(val).toUpperCase();
+      if (upper === 'SENIOR') return t[currentLang].senior;
+      if (upper === 'JUNIOR') return t[currentLang].junior;
+      return t[currentLang].unknown;
+    }
+
+    function formatDate(val) {
+      const raw = normalizeText(val);
+      if (!raw) return t[currentLang].unknown;
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return raw;
+      return d.toLocaleString(currentLang === 'tr' ? 'tr-TR' : 'en-GB');
     }
 
     function mapRow(row) {
-      const firstName = (row['Ad_First_Name'] || '').trim();
-      const lastName = (row['Soyad_Last_Name'] || '').trim();
+      const firstName = normalizeText(row['Ad_First_Name']);
+      const lastName = normalizeText(row['Soyad_Last_Name']);
       return {
-        name: [firstName, lastName].filter(Boolean).join(' ').trim(),
-        country: (row['Country'] || '').trim(),
-        club: (row['Club_Team'] || '').trim(),
-        categories: splitCategories(row['Kategori_Category'] || ''),
-        createdAt: row['created_at'] || '',
-        role: isTimekeeper(row) ? t[state.currentLang].roleJudge : ''
+        name: `${firstName} ${lastName}`.trim() || t[currentLang].unknown,
+        ageClass: normalizeText(row['Katilim_Sinifi_Age_Class']),
+        country: normalizeText(row['Country']) || t[currentLang].unknown,
+        club: normalizeText(row['Club_Team']) || t[currentLang].unknown,
+        category: normalizeText(row['Kategori_Category']) || t[currentLang].unknown,
+        role: normalizeText(row['Kayit_Turu_Registration_Type']),
+        banquet: normalizeText(row['Banquet_Attendance']),
+        createdAt: normalizeText(row['created_at']) || '',
       };
     }
 
-    function compareValues(a, b, key, dir) {
-      let left;
-      let right;
+    function compareValues(a, b, key, dir, tableName) {
+      let result = 0;
 
-      if (key === 'categories') {
-        left = categoryRank(a.categories.join(', '));
-        right = categoryRank(b.categories.join(', '));
-        if (left === right) {
-          left = (a.categories.join(', ') || '').toUpperCase();
-          right = (b.categories.join(', ') || '').toUpperCase();
-        }
+      if (key === 'category') {
+        result = categoryRank(a.category) - categoryRank(b.category);
+        if (result === 0) result = a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' });
       } else if (key === 'createdAt') {
-        left = normalizeDate(a.createdAt);
-        right = normalizeDate(b.createdAt);
+        result = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
       } else {
-        left = String(a[key] || '').toUpperCase();
-        right = String(b[key] || '').toUpperCase();
+        const av = normalizeText(a[key]).toLocaleLowerCase('tr');
+        const bv = normalizeText(b[key]).toLocaleLowerCase('tr');
+        result = av.localeCompare(bv, 'tr', { sensitivity: 'base' });
       }
 
-      if (left < right) return dir === 'asc' ? -1 : 1;
-      if (left > right) return dir === 'asc' ? 1 : -1;
-      return 0;
+      return dir === 'asc' ? result : -result;
     }
 
-    function sortData() {
-      state.participants.sort((a, b) => compareValues(a, b, state.sorts.participants.key, state.sorts.participants.dir));
-      state.timekeepers.sort((a, b) => compareValues(a, b, state.sorts.timekeepers.key, state.sorts.timekeepers.dir));
+    function sortTableData(tableName) {
+      const state = sortState[tableName];
+      const target = tableName === 'participants' ? participantsData : timekeepersData;
+      target.sort((a, b) => compareValues(a, b, state.key, state.dir, tableName));
     }
 
-    function renderCategoryPills(categories) {
-      if (!categories.length) return '-';
-      return categories.map(cat => '<span class="pill">' + escapeHtml(cat) + '</span>').join('');
-    }
+    function renderParticipants() {
+      const tbody = document.getElementById('participantsBody');
+      tbody.innerHTML = '';
 
-    function renderTableRows() {
-      const participantsBody = document.getElementById('participantsBody');
-      const timekeepersBody = document.getElementById('timekeepersBody');
-
-      participantsBody.innerHTML = '';
-      timekeepersBody.innerHTML = '';
-
-      if (!state.participants.length) {
-        participantsBody.innerHTML = '<tr><td colspan="5" class="empty">' + escapeHtml(t[state.currentLang].emptyParticipants) + '</td></tr>';
-      } else {
-        participantsBody.innerHTML = state.participants.map(item => (
-          '<tr>' +
-            '<td>' + escapeHtml(item.name) + '</td>' +
-            '<td>' + escapeHtml(item.country) + '</td>' +
-            '<td>' + escapeHtml(item.club) + '</td>' +
-            '<td>' + renderCategoryPills(item.categories) + '</td>' +
-            '<td>' + escapeHtml(formatDate(item.createdAt)) + '</td>' +
-          '</tr>'
-        )).join('');
+      if (!participantsData.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty">${t[currentLang].emptyParticipants}</td></tr>`;
+        return;
       }
 
-      if (!state.timekeepers.length) {
-        timekeepersBody.innerHTML = '<tr><td colspan="5" class="empty">' + escapeHtml(t[state.currentLang].emptyTimekeepers) + '</td></tr>';
-      } else {
-        timekeepersBody.innerHTML = state.timekeepers.map(item => (
-          '<tr>' +
-            '<td>' + escapeHtml(item.name) + '</td>' +
-            '<td>' + escapeHtml(item.country) + '</td>' +
-            '<td>' + escapeHtml(item.club) + '</td>' +
-            '<td>' + escapeHtml(t[state.currentLang].roleJudge) + '</td>' +
-            '<td>' + escapeHtml(formatDate(item.createdAt)) + '</td>' +
-          '</tr>'
-        )).join('');
-      }
-    }
-
-    function renderCounts() {
-      document.getElementById('participantCount').textContent = String(state.participants.length);
-      document.getElementById('timekeeperCount').textContent = String(state.timekeepers.length);
-      document.getElementById('totalCount').textContent = String(state.participants.length + state.timekeepers.length);
-
-      const allDates = [...state.participants, ...state.timekeepers]
-        .map(item => normalizeDate(item.createdAt))
-        .filter(Boolean)
-        .sort((a, b) => b - a);
-
-      if (!allDates.length) {
-        document.getElementById('updatedAt').textContent = '-';
-      } else {
-        document.getElementById('updatedAt').textContent = state.currentLang === 'tr'
-          ? new Date(allDates[0]).toLocaleDateString('tr-TR')
-          : new Date(allDates[0]).toLocaleDateString('en-GB');
-      }
-    }
-
-    function renderSortArrows() {
-      document.querySelectorAll('th.sortable').forEach(th => {
-        const table = th.dataset.table;
-        const key = th.dataset.key;
-        const arrow = th.querySelector('.arrow');
-        const sort = state.sorts[table];
-        arrow.textContent = sort.key === key ? (sort.dir === 'asc' ? '▲' : '▼') : '';
+      participantsData.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>${formatAgeClass(item.ageClass)}</td>
+            <td>${item.country}</td>
+            <td>${item.club}</td>
+            <td>${item.category}</td>
+            <td>${formatBanquet(item.banquet)}</td>
+            <td>${formatDate(item.createdAt)}</td>
+          </tr>
+        `;
       });
     }
 
-    function renderLanguage() {
-      const lang = state.currentLang;
+    function renderTimekeepers() {
+      const tbody = document.getElementById('timekeepersBody');
+      tbody.innerHTML = '';
+
+      if (!timekeepersData.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">${t[currentLang].emptyTimekeepers}</td></tr>`;
+        return;
+      }
+
+      timekeepersData.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.country}</td>
+            <td>${item.club}</td>
+            <td>${t[currentLang].roleJudge}</td>
+            <td>${formatBanquet(item.banquet)}</td>
+            <td>${formatDate(item.createdAt)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function updateSortIndicators() {
+      document.querySelectorAll('th[data-table]').forEach(th => {
+        const table = th.getAttribute('data-table');
+        const key = th.getAttribute('data-key');
+        const span = th.querySelector('.sort-indicator');
+        const active = sortState[table].key === key;
+        th.classList.toggle('sort-active', active);
+        span.textContent = active ? (sortState[table].dir === 'asc' ? '▲' : '▼') : '';
+      });
+    }
+
+    function renderAll() {
+      sortTableData('participants');
+      sortTableData('timekeepers');
+      renderParticipants();
+      renderTimekeepers();
+      updateSortIndicators();
+      document.getElementById('countText').textContent = t[currentLang].countText.replace('{count}', participantsData.length + timekeepersData.length);
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
       document.documentElement.lang = lang;
       document.getElementById('heroTitle').textContent = t[lang].heroTitle;
       document.getElementById('heroSub').textContent = t[lang].heroSub;
       document.getElementById('backButton').textContent = t[lang].backButton;
       document.getElementById('bulletinButton').textContent = t[lang].bulletinButton;
-      document.getElementById('infoParticipantsLabel').textContent = t[lang].infoParticipantsLabel;
-      document.getElementById('infoTimekeepersLabel').textContent = t[lang].infoTimekeepersLabel;
-      document.getElementById('infoTotalLabel').textContent = t[lang].infoTotalLabel;
-      document.getElementById('infoUpdatedLabel').textContent = t[lang].infoUpdatedLabel;
-      document.getElementById('metaText').textContent = t[lang].metaText;
+      document.getElementById('updatedText').textContent = t[lang].updatedText;
       document.getElementById('participantsTitle').textContent = t[lang].participantsTitle;
       document.getElementById('timekeepersTitle').textContent = t[lang].timekeepersTitle;
-      document.getElementById('thName').childNodes[0].nodeValue = t[lang].thName + ' ';
-      document.getElementById('thCountry').childNodes[0].nodeValue = t[lang].thCountry + ' ';
-      document.getElementById('thClub').childNodes[0].nodeValue = t[lang].thClub + ' ';
-      document.getElementById('thCategories').childNodes[0].nodeValue = t[lang].thCategories + ' ';
-      document.getElementById('thDate').childNodes[0].nodeValue = t[lang].thDate + ' ';
-      document.getElementById('thTkName').childNodes[0].nodeValue = t[lang].thTkName + ' ';
-      document.getElementById('thTkCountry').childNodes[0].nodeValue = t[lang].thTkCountry + ' ';
-      document.getElementById('thTkClub').childNodes[0].nodeValue = t[lang].thTkClub + ' ';
-      document.getElementById('thTkRole').childNodes[0].nodeValue = t[lang].thTkRole + ' ';
-      document.getElementById('thTkDate').childNodes[0].nodeValue = t[lang].thTkDate + ' ';
+      document.getElementById('p_name').childNodes[0].nodeValue = t[lang].p_name + ' ';
+      document.getElementById('p_age').childNodes[0].nodeValue = t[lang].p_age + ' ';
+      document.getElementById('p_country').childNodes[0].nodeValue = t[lang].p_country + ' ';
+      document.getElementById('p_club').childNodes[0].nodeValue = t[lang].p_club + ' ';
+      document.getElementById('p_category').childNodes[0].nodeValue = t[lang].p_category + ' ';
+      document.getElementById('p_banquet').childNodes[0].nodeValue = t[lang].p_banquet + ' ';
+      document.getElementById('p_date').childNodes[0].nodeValue = t[lang].p_date + ' ';
+      document.getElementById('t_name').childNodes[0].nodeValue = t[lang].t_name + ' ';
+      document.getElementById('t_country').childNodes[0].nodeValue = t[lang].t_country + ' ';
+      document.getElementById('t_club').childNodes[0].nodeValue = t[lang].t_club + ' ';
+      document.getElementById('t_role').childNodes[0].nodeValue = t[lang].t_role + ' ';
+      document.getElementById('t_banquet').childNodes[0].nodeValue = t[lang].t_banquet + ' ';
+      document.getElementById('t_date').childNodes[0].nodeValue = t[lang].t_date + ' ';
       document.getElementById('noteBox').textContent = t[lang].noteBox;
+
       document.querySelectorAll('[data-lang-btn]').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-lang-btn') === lang);
       });
+
+      renderAll();
     }
 
-    function renderAll() {
-      sortData();
-      renderLanguage();
-      renderCounts();
-      renderTableRows();
-      renderSortArrows();
-    }
+    async function loadCSV() {
+      const statusBox = document.getElementById('statusBox');
+      statusBox.textContent = t[currentLang].loading;
 
-    async function loadCsvFile() {
-      showStatus(t[state.currentLang].loading, 'info');
       try {
-        const response = await fetch(CSV_FILE + '?v=' + Date.now(), { cache: 'no-store' });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const response = await fetch('yarisma-kayit.csv', { cache: 'no-store' });
+        if (!response.ok) throw new Error('CSV not found');
         const text = await response.text();
-        const rows = parseCsv(text);
+        const rows = parseCSV(text);
 
-        state.participants = [];
-        state.timekeepers = [];
-
-        rows.forEach(row => {
-          const mapped = mapRow(row);
-          if (!mapped.name) return;
-          if (isTimekeeper(row)) {
-            state.timekeepers.push(mapped);
-          } else {
-            state.participants.push(mapped);
-          }
-        });
+        const mapped = rows.map(mapRow);
+        participantsData = mapped.filter(item => normalizeText(item.role).toUpperCase() !== 'TIMEKEEPER' && normalizeCategory(item.category) !== 'TIMEKEEPER');
+        timekeepersData = mapped.filter(item => normalizeText(item.role).toUpperCase() === 'TIMEKEEPER' || normalizeCategory(item.category) === 'TIMEKEEPER');
 
         renderAll();
-        showStatus(t[state.currentLang].loaded, 'info');
+        statusBox.textContent = t[currentLang].loaded;
       } catch (error) {
-        console.error(error);
-        state.participants = [];
-        state.timekeepers = [];
+        participantsData = [];
+        timekeepersData = [];
         renderAll();
-        showStatus(t[state.currentLang].loadError, 'warn');
+        statusBox.textContent = t[currentLang].loadError;
       }
     }
 
+    document.querySelectorAll('th[data-table]').forEach(th => {
+      th.addEventListener('click', function() {
+        const table = this.getAttribute('data-table');
+        const key = this.getAttribute('data-key');
+        if (sortState[table].key === key) {
+          sortState[table].dir = sortState[table].dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortState[table].key = key;
+          sortState[table].dir = 'asc';
+        }
+        renderAll();
+      });
+    });
+
     document.querySelectorAll('[data-lang-btn]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.currentLang = btn.getAttribute('data-lang-btn');
-        renderAll();
-        const currentStatus = document.getElementById('statusBox');
-        if (currentStatus.textContent === t.tr.loaded || currentStatus.textContent === t.en.loaded) {
-          showStatus(t[state.currentLang].loaded, 'info');
-        } else if (currentStatus.textContent === t.tr.loading || currentStatus.textContent === t.en.loading) {
-          showStatus(t[state.currentLang].loading, 'info');
-        } else {
-          showStatus(t[state.currentLang].loadError, 'warn');
-        }
+      btn.addEventListener('click', function() {
+        setLanguage(this.getAttribute('data-lang-btn'));
       });
     });
 
-    document.querySelectorAll('th.sortable').forEach(th => {
-      th.addEventListener('click', () => {
-        const table = th.dataset.table;
-        const key = th.dataset.key;
-        const current = state.sorts[table];
-        if (current.key === key) {
-          current.dir = current.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-          current.key = key;
-          current.dir = 'asc';
-        }
-        renderAll();
-      });
-    });
-
-    renderLanguage();
-    loadCsvFile();
+    setLanguage('tr');
+    loadCSV();
   </script>
 </body>
 </html>
