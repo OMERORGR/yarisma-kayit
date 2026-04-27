@@ -237,7 +237,7 @@
           </table>
         </div>
 
-        <h2 class="section-title" id="timekeepersTitle">Hakemler</h2>
+        <h2 class="section-title" id="timekeepersTitle">Görevliler</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -245,7 +245,7 @@
                 <th data-table="timekeepers" data-key="name" id="t_name">Ad Soyad <span class="sort-indicator"></span></th>
                 <th data-table="timekeepers" data-key="country" id="t_country">Ülke <span class="sort-indicator"></span></th>
                 <th data-table="timekeepers" data-key="club" id="t_club">Kulüp / Takım <span class="sort-indicator"></span></th>
-                <th data-table="timekeepers" data-key="role" id="t_role">Görev <span class="sort-indicator"></span></th>
+                <th data-table="timekeepers" data-key="role" id="t_role">Kayıt Türü <span class="sort-indicator"></span></th>
                 <th data-table="timekeepers" data-key="banquet" id="t_banquet">Banket <span class="sort-indicator"></span></th>
                 <th data-table="timekeepers" data-key="createdAt" id="t_date">Kayıt Tarihi <span class="sort-indicator"></span></th>
               </tr>
@@ -276,7 +276,7 @@
         loaded: 'Liste başarıyla yüklendi.',
         loadError: 'CSV okunamadı. Aynı klasörde yarisma-kayit.csv dosyasının bulunduğundan emin olun.',
         participantsTitle: 'Yarışmacılar',
-        timekeepersTitle: 'Hakemler',
+        timekeepersTitle: 'Görevliler',
         p_name: 'Ad Soyad',
         p_age: 'Sınıf',
         p_country: 'Ülke',
@@ -287,13 +287,17 @@
         t_name: 'Ad Soyad',
         t_country: 'Ülke',
         t_club: 'Kulüp / Takım',
-        t_role: 'Görev',
+        t_role: 'Kayıt Türü',
         t_banquet: 'Banket',
         t_date: 'Kayıt Tarihi',
         emptyParticipants: 'Henüz yayımlanmış yarışmacı kaydı bulunmuyor.',
-        emptyTimekeepers: 'Henüz yayımlanmış hakem kaydı bulunmuyor.',
+        emptyTimekeepers: 'Henüz yayımlanmış görevli kaydı bulunmuyor.',
         noteBox: 'Bu sayfa otomatik olarak aynı klasördeki yarisma-kayit.csv dosyasını okur. Listeyi güncellemek için sadece CSV dosyasını yenisiyle değiştirmen yeterlidir.',
         roleJudge: 'Hakem',
+        roleJury: 'Jüri',
+        roleOrganizer: 'Organizatör',
+        roleChiefJudge: 'Baş Hakem',
+        roleJuryPresident: 'Jüri Başkanı',
         senior: 'Senior',
         junior: 'Junior',
         yes: 'Evet',
@@ -311,7 +315,7 @@
         loaded: 'List loaded successfully.',
         loadError: 'CSV could not be read. Make sure yarisma-kayit.csv exists in the same folder.',
         participantsTitle: 'Participants',
-        timekeepersTitle: 'Time Keepers',
+        timekeepersTitle: 'Officials',
         p_name: 'Full Name',
         p_age: 'Class',
         p_country: 'Country',
@@ -322,13 +326,17 @@
         t_name: 'Full Name',
         t_country: 'Country',
         t_club: 'Club / Team',
-        t_role: 'Role',
+        t_role: 'Registration Type',
         t_banquet: 'Banquet',
         t_date: 'Registration Date',
         emptyParticipants: 'There are no published participant registrations yet.',
-        emptyTimekeepers: 'There are no published time keeper registrations yet.',
+        emptyTimekeepers: 'There are no published official registrations yet.',
         noteBox: 'This page automatically reads the yarisma-kayit.csv file in the same folder. To update the list, just replace the CSV file with the new one.',
         roleJudge: 'Time Keeper',
+        roleJury: 'Jury',
+        roleOrganizer: 'Organizer',
+        roleChiefJudge: 'Chief Judge',
+        roleJuryPresident: 'Jury President',
         senior: 'Senior',
         junior: 'Junior',
         yes: 'Yes',
@@ -418,6 +426,16 @@
       if (upper === 'SENIOR') return t[currentLang].senior;
       if (upper === 'JUNIOR') return t[currentLang].junior;
       return t[currentLang].unknown;
+    }
+
+    function formatRole(val) {
+      const role = normalizeText(val).toUpperCase();
+      if (role === 'TIMEKEEPER') return t[currentLang].roleJudge;
+      if (role === 'JURY') return t[currentLang].roleJury;
+      if (role === 'ORGANIZER') return t[currentLang].roleOrganizer;
+      if (role === 'CHIEFJUDGE') return t[currentLang].roleChiefJudge;
+      if (role === 'JURYPRESIDENT') return t[currentLang].roleJuryPresident;
+      return normalizeText(val) || t[currentLang].unknown;
     }
 
     function formatDate(val) {
@@ -576,8 +594,13 @@
         const rows = parseCSV(text);
 
         const mapped = rows.map(mapRow);
-        participantsData = mapped.filter(item => normalizeText(item.role).toUpperCase() !== 'TIMEKEEPER' && normalizeCategory(item.category) !== 'TIMEKEEPER');
-        timekeepersData = mapped.filter(item => normalizeText(item.role).toUpperCase() === 'TIMEKEEPER' || normalizeCategory(item.category) === 'TIMEKEEPER');
+        const officialRoles = ['TIMEKEEPER', 'JURY', 'ORGANIZER', 'CHIEFJUDGE', 'JURYPRESIDENT'];
+        participantsData = mapped.filter(item => normalizeText(item.role).toUpperCase() === 'COMPETITOR' && !officialRoles.includes(normalizeCategory(item.category)));
+        timekeepersData = mapped.filter(item => {
+          const role = normalizeText(item.role).toUpperCase();
+          const category = normalizeCategory(item.category);
+          return role !== 'COMPETITOR' || officialRoles.includes(category);
+        });
 
         renderAll();
         statusBox.textContent = t[currentLang].loaded;

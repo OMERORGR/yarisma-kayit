@@ -267,8 +267,12 @@
                 <option value="" id="optionSelect">Seçiniz</option>
                 <option value="Competitor" id="optionCompetitor">Yarışmacı</option>
                 <option value="Timekeeper" id="optionTimekeeper">Hakem</option>
+                <option value="Jury" id="optionJury">Jüri</option>
+                <option value="Organizer" id="optionOrganizer">Organizatör</option>
+                <option value="ChiefJudge" id="optionChiefJudge">Baş Hakem</option>
+                <option value="JuryPresident" id="optionJuryPresident">Jüri Başkanı</option>
               </select>
-              <div class="hint" id="roleHint">Hakem kaydını ayrı ve net takip etmek için seçim alanı eklendi.</div>
+              <div class="hint" id="roleHint">Görevli kayıtlarını ayrı ve net takip etmek için ek kayıt türleri eklendi.</div>
             </div>
 
             <div class="full">
@@ -292,8 +296,12 @@
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="F1Q" /> F1Q</label>
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="P30" /> P30</label>
                 <label class="check"><input type="checkbox" name="Kategori_Category" value="Timekeeper" /> <span id="timekeeperCategoryText">Hakem</span></label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="Jury" /> <span id="juryCategoryText">Jüri</span></label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="Organizer" /> <span id="organizerCategoryText">Organizatör</span></label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="ChiefJudge" /> <span id="chiefJudgeCategoryText">Baş Hakem</span></label>
+                <label class="check"><input type="checkbox" name="Kategori_Category" value="JuryPresident" /> <span id="juryPresidentCategoryText">Jüri Başkanı</span></label>
               </div>
-              <div class="hint" id="categoryHint">F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Hakem seçeneği de bulunur.</div>
+              <div class="hint" id="categoryHint">F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçeneklerinin yanında Hakem, Jüri, Organizatör, Baş Hakem ve Jüri Başkanı görev kategorileri de eklendi.</div>
             </div>
 
             <div>
@@ -368,14 +376,18 @@
         select: 'Seçiniz',
         competitor: 'Yarışmacı',
         timekeeper: 'Hakem',
+        jury: 'Jüri',
+        organizer: 'Organizatör',
+        chiefJudge: 'Baş Hakem',
+        juryPresident: 'Jüri Başkanı',
         ageClass: 'Katılımcı Sınıfı',
         ageSelect: 'Seçiniz',
         senior: 'Senior',
         junior: 'Junior',
         ageClassHint: 'Yarışmacılar için Senior veya Junior seçimi zorunludur.',
-        roleHint: 'Hakem kaydını ayrı ve net takip etmek için seçim alanı eklendi.',
+        roleHint: 'Görevli kayıtlarını ayrı ve net takip etmek için ek kayıt türleri eklendi.',
         categories: 'Kategori / Kategoriler',
-        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçenekleri eklendi. Ayrı görev kaydı için Hakem seçeneği de bulunur.',
+        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q ve P30 seçeneklerinin yanında Hakem, Jüri, Organizatör, Baş Hakem ve Jüri Başkanı görev kategorileri de eklendi.',
         country: 'Ülke',
         club: 'Kulüp / Takım',
         fai: 'FAI Lisans Kodu',
@@ -393,7 +405,8 @@
         ageClassRequired: 'Lütfen Senior veya Junior seçiniz.',
         faiRequired: 'Yarışmacılar için FAI Lisans Kodu alanı zorunludur.',
         thsfRequired: 'Yarışmacılar için THSF Lisans Numarası alanı zorunludur.',
-        timekeeperOnly: 'Hakem seçeneği yarışmacı kategorileriyle birlikte işaretlenemez.',
+        officialCategoryOnly: 'Görevli kayıtlarında seçilen kategori, kayıt türü ile aynı olmalıdır.',
+        competitorCategoryOnly: 'Yarışmacı kaydında görev kategorileri seçilemez.',
         submitError: 'Gönderim sırasında bir sorun oluştu. Lütfen tekrar deneyiniz.',
         connectionError: 'Bağlantı hatası oluştu. Lütfen tekrar deneyiniz.'
       },
@@ -409,14 +422,18 @@
         select: 'Select',
         competitor: 'Competitor',
         timekeeper: 'Time Keeper',
+        jury: 'Jury',
+        organizer: 'Organizer',
+        chiefJudge: 'Chief Judge',
+        juryPresident: 'Jury President',
         ageClass: 'Participant Class',
         ageSelect: 'Select',
         senior: 'Senior',
         junior: 'Junior',
         ageClassHint: 'Senior or Junior selection is required for competitors.',
-        roleHint: 'A separate field was added so Time Keeper registrations can be tracked clearly.',
+        roleHint: 'Additional registration types were added so official registrations can be tracked clearly.',
         categories: 'Category / Categories',
-        categoryHint: 'F1A, F1B, F1C, F1H, F1G, F1Q and P30 were added. A Time Keeper option is also available.',
+        categoryHint: 'In addition to F1A, F1B, F1C, F1H, F1G, F1Q and P30, official categories for Time Keeper, Jury, Organizer, Chief Judge and Jury President were also added.',
         country: 'Country',
         club: 'Club / Team',
         fai: 'FAI License Code',
@@ -434,7 +451,8 @@
         ageClassRequired: 'Please select Senior or Junior.',
         faiRequired: 'FAI License Code is required for competitors.',
         thsfRequired: 'THSF License Number is required for competitors.',
-        timekeeperOnly: 'The Time Keeper option cannot be selected together with competitor categories.',
+        officialCategoryOnly: 'For official registrations, the selected category must match the registration type.',
+        competitorCategoryOnly: 'Official categories cannot be selected for competitor registrations.',
         submitError: 'A problem occurred during submission. Please try again.',
         connectionError: 'A connection error occurred. Please try again.'
       }
@@ -458,6 +476,10 @@
       document.getElementById('optionSelect').textContent = t[lang].select;
       document.getElementById('optionCompetitor').textContent = t[lang].competitor;
       document.getElementById('optionTimekeeper').textContent = t[lang].timekeeper;
+      document.getElementById('optionJury').textContent = t[lang].jury;
+      document.getElementById('optionOrganizer').textContent = t[lang].organizer;
+      document.getElementById('optionChiefJudge').textContent = t[lang].chiefJudge;
+      document.getElementById('optionJuryPresident').textContent = t[lang].juryPresident;
       document.getElementById('labelAgeClass').textContent = t[lang].ageClass;
       document.getElementById('optionAgeSelect').textContent = t[lang].ageSelect;
       document.getElementById('optionSenior').textContent = t[lang].senior;
@@ -497,13 +519,17 @@
     }
 
     function toggleRoleUI() {
-      const isTimekeeper = roleType.value === 'Timekeeper';
-      faiInput.required = !isTimekeeper;
-      thsfInput.required = !isTimekeeper;
-      ageClassInput.required = !isTimekeeper;
-      ageClassInput.disabled = isTimekeeper;
+      const isCompetitor = roleType.value === 'Competitor';
+      faiInput.required = isCompetitor;
+      thsfInput.required = isCompetitor;
+      ageClassInput.required = isCompetitor;
+      faiInput.disabled = !isCompetitor;
+      thsfInput.disabled = !isCompetitor;
+      ageClassInput.disabled = !isCompetitor;
 
-      if (isTimekeeper) {
+      if (!isCompetitor) {
+        faiInput.value = '';
+        thsfInput.value = '';
         ageClassInput.value = '';
       }
     }
@@ -522,34 +548,47 @@
       const selectedCategories = Array.from(document.querySelectorAll('input[name="Kategori_Category"]:checked')).map(function(el) {
         return el.value;
       });
-      const isTimekeeper = roleType.value === 'Timekeeper';
+      const selectedRole = roleType.value;
+      const isCompetitor = selectedRole === 'Competitor';
+      const officialRoles = ['Timekeeper', 'Jury', 'Organizer', 'ChiefJudge', 'JuryPresident'];
 
       if (selectedCategories.length === 0) {
         alert(t[currentLang].categoryRequired);
         return;
       }
 
-      if (!isTimekeeper && !ageClassInput.value.trim()) {
+      if (isCompetitor && !ageClassInput.value.trim()) {
         alert(t[currentLang].ageClassRequired);
         ageClassInput.focus();
         return;
       }
 
-      if (!isTimekeeper && !faiInput.value.trim()) {
+      if (isCompetitor && !faiInput.value.trim()) {
         alert(t[currentLang].faiRequired);
         faiInput.focus();
         return;
       }
 
-      if (!isTimekeeper && !thsfInput.value.trim()) {
+      if (isCompetitor && !thsfInput.value.trim()) {
         alert(t[currentLang].thsfRequired);
         thsfInput.focus();
         return;
       }
 
-      if (selectedCategories.includes('Timekeeper') && selectedCategories.length > 1) {
-        alert(t[currentLang].timekeeperOnly);
+      const selectedOfficialCategories = selectedCategories.filter(function(category) {
+        return officialRoles.includes(category);
+      });
+
+      if (isCompetitor && selectedOfficialCategories.length > 0) {
+        alert(t[currentLang].competitorCategoryOnly);
         return;
+      }
+
+      if (!isCompetitor) {
+        if (selectedCategories.length !== 1 || selectedCategories[0] !== selectedRole) {
+          alert(t[currentLang].officialCategoryOnly);
+          return;
+        }
       }
 
       try {
