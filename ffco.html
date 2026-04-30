@@ -2934,7 +2934,16 @@ function approveExtraFlight(reqId){
   const memKey=req.competitorId+'_'+req.roundId;
   if(!JUDGE_STATE.attemptMemory) JUDGE_STATE.attemptMemory={};
   JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:'Onaylandı: '+req.note};
-  STATE.logs.push({id:uid(),type:'extra_flight_approved',reqId,ts:new Date().toISOString()});
+  // If this judge is currently logged in on same device, reset timer immediately
+  if(CURRENT_JUDGE_ID===req.judgeId){
+    JUDGE_STATE.currentAttempt=2;
+    JUDGE_STATE.attemptType=req.type;
+    JUDGE_STATE.timerElapsed=0;
+    JUDGE_STATE.timerRunning=false;
+    JUDGE_STATE.timerStart=null;
+    clearInterval(JUDGE_STATE.timerInterval);
+  }
+  STATE.logs.push({id:uid(),type:'extra_flight_approved',reqId,competitorId:req.competitorId,roundId:req.roundId,judgeId:req.judgeId,note:req.note,ts:new Date().toISOString()});
   save();
   toast(`${req.competitorName} için ek uçuş onaylandı ✓`,'success');
   document.getElementById('orgContent').innerHTML=renderOverview();
@@ -3392,7 +3401,23 @@ setInterval(async()=>{
         const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
         const nowApproved=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved');
         if(prevPending.length>0&&nowApproved.length>prevPending.filter(r=>r.status==='approved').length){
-          toast('✅ Ek uçuş talebiniz onaylandı!','success');
+          // Restore attempt from memory for current selected competitor
+          const sel=JUDGE_STATE.selectedCompetitorId;
+          const activeRnd=STATE.rounds.find(r=>r.status==='active');
+          if(sel&&activeRnd){
+            const memKey=sel+'_'+activeRnd.id;
+            const mem=JUDGE_STATE.attemptMemory[memKey];
+            if(mem){
+              JUDGE_STATE.currentAttempt=mem.attempt||2;
+              JUDGE_STATE.attemptType=mem.type||null;
+            }
+          }
+          // Reset timer so START button appears
+          JUDGE_STATE.timerElapsed=0;
+          JUDGE_STATE.timerRunning=false;
+          JUDGE_STATE.timerStart=null;
+          clearInterval(JUDGE_STATE.timerInterval);
+          toast('✅ Ek uçuş talebiniz onaylandı! Başlatabilirsiniz.','success');
           navigate('judge');
         }
       }
