@@ -2388,11 +2388,12 @@ function renderTimerEmpty(){
 
 function renderTimerPanel(comp,round,roundClosed=false){
   const existing=STATE.scores.find(s=>s.competitorId===comp.id&&s.roundId===round.id);
+  const isAutoZero=existing&&existing.autoZero===true&&existing.finalTime===0; // auto-zero can be overwritten by real score
   const elapsed=JUDGE_STATE.timerElapsed;
   const running=JUDGE_STATE.timerRunning;
   const stopped=!running&&elapsed>0;
   // Can start a new flight only if round is active (not closed)
-  const canStart=!roundClosed&&!running&&elapsed===0&&!existing;
+  const canStart=!roundClosed&&!running&&elapsed===0&&(!existing||isAutoZero);
 
   return `
   <div>
@@ -2420,8 +2421,8 @@ function renderTimerPanel(comp,round,roundClosed=false){
     <div class="timer-controls">
       ${canStart?`<button class="timer-btn timer-start" onclick="timerStart()">▶ BAŞLAT</button>`:''}
       ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">⏹ DURDUR</button>`:''}
-      ${stopped&&!existing?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
-      ${(stopped||existing)?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
+      ${stopped&&(!existing||isAutoZero)?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
+      ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
     </div>
 
     ${stopped&&elapsed<20&&JUDGE_STATE.currentAttempt===1&&!roundClosed?`
@@ -2439,7 +2440,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
       <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
     </div>`:''}
 
-    ${existing?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
+    ${existing&&!isAutoZero?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
 
     <div class="mt-3">
       <textarea id="judge-note" placeholder="Opsiyonel not..." style="height:50px;font-size:12px;"></textarea>
