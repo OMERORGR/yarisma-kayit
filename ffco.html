@@ -2273,6 +2273,8 @@ function restoreTimerState(){
 function clearTimerState(){localStorage.removeItem('ffco_timer');}
 // Listen for visibility change (phone call, tab switch)
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&CURRENT_ROLE==='judge')saveTimerState();});
+// Also save on page unload/refresh — most reliable catch for F5
+window.addEventListener('beforeunload',()=>{if(CURRENT_ROLE==='judge'&&(JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0))saveTimerState();});
 
 function renderJudge(){
   const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
@@ -2316,6 +2318,11 @@ function renderJudge(){
 
 async function judgeSyncComp(){
   if(!ACTIVE_COMP_ID) return;
+  // If timer is running or flight in progress, block sync to avoid losing the flight
+  if(JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0){
+    toast('⚠️ Uçuş devam ediyor — önce durdurun ve kaydedin','warn');
+    return;
+  }
   const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}`);
   if(rows&&rows.length>0){
     STATE=rows[0].data;
@@ -2462,8 +2469,8 @@ function selectCompetitor(id){
 function timerStart(){
   JUDGE_STATE.timerStart=Date.now()-JUDGE_STATE.timerElapsed*1000;
   JUDGE_STATE.timerRunning=true;
-  const round=STATE.rounds.find(r=>r.status==='active');
-  const maxMs=round?round.maxTime*1000:999999;
+  const round=STATE.rounds.find(r=>r.status==='active')||STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
+  let saveCounter=0;
   JUDGE_STATE.timerInterval=setInterval(()=>{
     const now=Date.now();
     JUDGE_STATE.timerElapsed=Math.min((now-JUDGE_STATE.timerStart)/1000,round?round.maxTime:9999);
@@ -2477,6 +2484,9 @@ function timerStart(){
         timerStop();
       }
     }
+    // Save timer state to localStorage every 5 seconds (50 * 100ms)
+    saveCounter++;
+    if(saveCounter>=50){saveCounter=0;saveTimerState();}
   },100);
   const btn=document.querySelector('.timer-btn.timer-start');
   if(btn){btn.textContent='⏸ DURAKLATILDI';btn.className='timer-btn timer-stop';btn.onclick=timerStop;}
@@ -2954,12 +2964,17 @@ setInterval(async()=>{
         localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(rows[0].data));
         STATE=rows[0].data;
         const newActiveRoundId=STATE.rounds.find(r=>r.status==='active')?.id;
-        // Re-render if round changed and no flight in progress
-        if(oldActiveRoundId!==newActiveRoundId&&!JUDGE_STATE.timerRunning){
+        // Re-render ONLY if round changed AND no flight in progress (timer not running AND no elapsed time)
+        const flightInProgress=JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0;
+        if(oldActiveRoundId!==newActiveRoundId&&!flightInProgress){
           JUDGE_STATE.selectedCompetitorId=null;
           navigate('judge');
           if(newActiveRoundId) toast('🏁 Yeni raund başladı!','success');
           else toast('⏹ Raund kapandı','info');
+        } else if(oldActiveRoundId!==newActiveRoundId&&flightInProgress){
+          // Round changed but flight in progress — show warning only
+          if(newActiveRoundId) toast('🏁 Yeni raund başladı — uçuşu tamamlayın ve kaydedin','warn');
+          else toast('⏹ Raund kapandı — uçuşu tamamlayın ve kaydedin','warn');
         }
       }
     }
