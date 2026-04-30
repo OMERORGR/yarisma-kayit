@@ -2233,6 +2233,10 @@ let JUDGE_STATE={selectedCompetitorId:null,timerStart:null,timerElapsed:0,timerR
 // Mobile timer persistence — save/restore on page visibility change
 function saveTimerState(){
   if(!JUDGE_STATE.timerRunning&&JUDGE_STATE.timerElapsed===0) return;
+  // Find the round this timer belongs to
+  const activeRound=STATE.rounds.find(r=>r.status==='active');
+  const lastRound=STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
+  const currentRoundId=JUDGE_STATE.roundId||(activeRound?.id)||lastRound?.id||null;
   localStorage.setItem('ffco_timer',JSON.stringify({
     selectedCompetitorId:JUDGE_STATE.selectedCompetitorId,
     timerStart:JUDGE_STATE.timerStart,
@@ -2240,6 +2244,7 @@ function saveTimerState(){
     timerRunning:JUDGE_STATE.timerRunning,
     currentAttempt:JUDGE_STATE.currentAttempt,
     attemptType:JUDGE_STATE.attemptType,
+    roundId:currentRoundId,
     compId:ACTIVE_COMP_ID,
     judgeId:CURRENT_JUDGE_ID,
     savedAt:Date.now()
@@ -2256,6 +2261,7 @@ function restoreTimerState(){
     JUDGE_STATE.selectedCompetitorId=ts.selectedCompetitorId;
     JUDGE_STATE.currentAttempt=ts.currentAttempt||1;
     JUDGE_STATE.attemptType=ts.attemptType||null;
+    JUDGE_STATE.roundId=ts.roundId||null; // restore which round this flight belongs to
     if(ts.timerRunning&&ts.timerStart){
       // Recalculate elapsed time based on when it was saved
       const round=STATE.rounds.find(r=>r.status==='active')||STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
@@ -2297,13 +2303,14 @@ function renderJudge(){
   }
 
   // Special case: round was closed while a flight was in progress
-  // Find the most recently closed round if timer has elapsed time
   const flightInProgress=JUDGE_STATE.timerElapsed>0||JUDGE_STATE.timerRunning;
+  // Use saved roundId from timer state if available (survives browser refresh)
+  const savedRound=JUDGE_STATE.roundId?STATE.rounds.find(r=>r.id===JUDGE_STATE.roundId):null;
   const lastClosedRound=!activeRound&&flightInProgress
-    ?STATE.rounds.filter(r=>r.status==='done').sort((a,b)=>new Date(b.endedAt||0)-new Date(a.endedAt||0))[0]
+    ?(savedRound||STATE.rounds.filter(r=>r.status==='done').sort((a,b)=>new Date(b.endedAt||0)-new Date(a.endedAt||0))[0])
     :null;
 
-  // The round to work with: active > lastClosed (for in-progress) > null
+  // The round to work with: active > savedRound (restored) > lastClosed > null
   const workingRound=activeRound||lastClosedRound||null;
   const roundClosed=!!lastClosedRound&&!activeRound;
 
@@ -2483,6 +2490,8 @@ function timerStart(){
   JUDGE_STATE.timerStart=Date.now()-JUDGE_STATE.timerElapsed*1000;
   JUDGE_STATE.timerRunning=true;
   const round=STATE.rounds.find(r=>r.status==='active')||STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
+  // Track which round this flight belongs to
+  if(round) JUDGE_STATE.roundId=round.id;
   let saveCounter=0;
   JUDGE_STATE.timerInterval=setInterval(()=>{
     const now=Date.now();
@@ -2522,6 +2531,8 @@ function timerReset(){
   JUDGE_STATE.timerRunning=false;
   JUDGE_STATE.timerElapsed=0;
   JUDGE_STATE.timerStart=null;
+  JUDGE_STATE.roundId=null;
+  clearTimerState();
 }
 
 function timerSave(compId,roundId){
