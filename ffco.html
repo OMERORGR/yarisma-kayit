@@ -372,7 +372,8 @@ function getInitialState(compId){
   const id=compId||uid();
   return{
     competition:{id,name:'',location:'',dateStart:'',dateEnd:'',categories:[],customCategories:[],bulletinUrl:'',organizerPin:'1234',judgePrefix:'4321',createdAt:new Date().toISOString()},
-    rounds:[],competitors:[],judges:[],lanes:[],scores:[],logs:[],setupComplete:false
+    rounds:[],competitors:[],judges:[],lanes:[],scores:[],logs:[],
+    setupComplete:false,extraFlightRequests:[]
   };
 }
 function loadComp(id){try{const s=localStorage.getItem('ffco_comp_'+id);return s?JSON.parse(s):null;}catch(e){return null;}}
@@ -1492,7 +1493,24 @@ function renderOverview(){
         <div class="stat-sub">toplam uçuş</div>
       </div>
     </div>
-    
+
+    ${(STATE.extraFlightRequests||[]).filter(r=>r.status==='pending').length>0?`
+    <div style="background:rgba(255,71,87,0.08);border:1px solid var(--red);border-radius:var(--r);padding:16px;margin-bottom:16px;">
+      <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px;">🚨 EK UÇUŞ TALEPLERİ</div>
+      ${STATE.extraFlightRequests.filter(r=>r.status==='pending').map(req=>`
+        <div style="background:var(--bg3);border-radius:var(--r3);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">${req.competitorName}</div>
+            <div style="font-size:11px;color:var(--text2);">Hakem: ${req.judgeName} · ${req.type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${req.note}</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-green btn-sm" onclick="approveExtraFlight('${req.id}')">✅ Onayla</button>
+            <button class="btn btn-red btn-sm" onclick="rejectExtraFlight('${req.id}')">❌ Reddet</button>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+
     ${flyoffInfo.length>0?`
     <div class="flyoff-banner mb-4">
       <div class="flyoff-title">⚡ FLYOFF GEREKLİ</div>
@@ -2545,6 +2563,16 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
     </div>
 
+    ${stopped&&!roundClosed&&JUDGE_STATE.currentAttempt===1?`
+    <div class="mt-3 card" style="background:var(--bg3);border-color:var(--border2);">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ SORUN / YANLIŞ BAŞLATMA</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">🤚 Yanlış Başlattım</button>
+        <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma</button>
+      </div>
+      <div class="form-hint mt-1">Baş hakem / jüri onayı gerektirir</div>
+    </div>`:''}
+
     ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===1&&!roundClosed&&!JUDGE_STATE._pendingAutoStart?`
     <div class="alert alert-warn mt-3">
       ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
@@ -2750,53 +2778,62 @@ function confirmGrantAttempt(type,compId,roundId){
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
-function resetJudgeAttempt(){
-  // Organizer can reset attempt flag on current selected competitor
-  if(!confirm('Deneme hakkını sıfırlamak istiyor musunuz?')) return;
-  JUDGE_STATE.currentAttempt=1;
-  JUDGE_STATE.attemptType=null;
-  JUDGE_STATE.attemptNote=null;
-  toast('Deneme hakkı sıfırlandı','info');
+function requestExtraFlight(type,compId,roundId){
+  const typeLabel=type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma';
+  openModal('⚡ Ek Uçuş Talebi',`
+    <div class="alert alert-info mb-3">Bu talep baş hakem / jüriye iletilecek. Onaylarsa ek uçuş hakkı verilecek.</div>
+    <div class="form-group"><label>Sebep</label><input value="${typeLabel}" disabled></div>
+    <div class="form-group">
+      <label>Açıklama *</label>
+      <textarea id="efr-note" placeholder="Ne olduğunu kısaca açıklayın..." style="height:70px"></textarea>
+    </div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="submitExtraFlightRequest('${type}','${compId}','${roundId}')">📨 Talep Gönder</button>`);
+  setTimeout(()=>document.getElementById('efr-note')?.focus(),100);
+}
+function submitExtraFlightRequest(type,compId,roundId){
+  const note=document.getElementById('efr-note')?.value.trim();
+  if(!note){toast('Açıklama zorunlu','error');return;}
+  const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+  const comp=STATE.competitors.find(c=>c.id===compId);
+  const req={
+    id:uid(),type,compId,roundId,
+    judgeId:CURRENT_JUDGE_ID,judgeName:judge?.name||'Hakem',
+    competitorId:compId,competitorName:comp?comp.name+' '+comp.surname:'?',
+    note,status:'pending',requestedAt:new Date().toISOString()
+  };
+  if(!STATE.extraFlightRequests) STATE.extraFlightRequests=[];
+  STATE.extraFlightRequests.push(req);
+  save();closeModal();
+  toast('Talep gönderildi — baş hakem/jüri onayı bekleniyor','info');
+  timerReset();
   document.getElementById('mainContent').innerHTML=renderJudge();
+  bindJudgeEvents();
+}
+function approveExtraFlight(reqId){
+  const req=STATE.extraFlightRequests?.find(r=>r.id===reqId);
+  if(!req) return;
+  req.status='approved';req.approvedAt=new Date().toISOString();req.approvedBy=CURRENT_ROLE;
+  // Grant attempt in attemptMemory for that judge's competitor
+  const memKey=req.competitorId+'_'+req.roundId;
+  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type,note:'Onaylandı: '+req.note};
+  save();
+  toast(`${req.competitorName} için ek uçuş onaylandı ✓`,'success');
+  document.getElementById('orgContent').innerHTML=renderOverview();
+}
+function rejectExtraFlight(reqId){
+  const req=STATE.extraFlightRequests?.find(r=>r.id===reqId);
+  if(!req) return;
+  req.status='rejected';req.rejectedAt=new Date().toISOString();req.rejectedBy=CURRENT_ROLE;
+  save();
+  toast('Talep reddedildi','info');
+  document.getElementById('orgContent').innerHTML=renderOverview();
 }
 
 // Double-tap START protection
-let _startBtnArmed=false;
-let _startBtnTimer=null;
-let _startBtnCountdown=null;
+// Instant START — no double tap needed
 function handleStartBtn(btn){
-  if(!_startBtnArmed){
-    _startBtnArmed=true;
-    let secs=2;
-    btn.textContent=`✓ Emin misin? (${secs})`;
-    btn.style.background='var(--gold)';
-    btn.style.color='#000';
-    _startBtnCountdown=setInterval(()=>{
-      secs--;
-      if(secs>0){
-        btn.textContent=`✓ Emin misin? (${secs})`;
-      } else {
-        // Time's up — reset without starting
-        clearInterval(_startBtnCountdown);
-        clearTimeout(_startBtnTimer);
-        _startBtnArmed=false;
-        btn.textContent='▶ BAŞLAT';
-        btn.style.background='';
-        btn.style.color='';
-      }
-    },1000);
-    _startBtnTimer=setTimeout(()=>{
-      clearInterval(_startBtnCountdown);
-      _startBtnArmed=false;
-      if(btn){btn.textContent='▶ BAŞLAT';btn.style.background='';btn.style.color='';}
-    },2100);
-  } else {
-    // Second tap — start immediately
-    clearInterval(_startBtnCountdown);
-    clearTimeout(_startBtnTimer);
-    _startBtnArmed=false;
-    timerStart();
-  }
+  timerStart();
 }
 
 function editScore(scoreId){
