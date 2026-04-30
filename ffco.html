@@ -2241,7 +2241,14 @@ function renderResultsPanel(){
 }
 
 // ==================== JUDGE PANEL ====================
-let JUDGE_STATE={selectedCompetitorId:null,timerStart:null,timerElapsed:0,timerRunning:false,timerInterval:null,currentAttempt:1,attemptType:null,pendingScore:null};
+let JUDGE_STATE={
+  selectedCompetitorId:null,
+  timerStart:null,timerElapsed:0,timerRunning:false,timerInterval:null,
+  currentAttempt:1,attemptType:null,attemptNote:null,
+  pendingScore:null,roundId:null,_pendingAutoStart:false,
+  // Per-competitor attempt memory: {competitorId_roundId: {attempt, type, note}}
+  attemptMemory:{}
+};
 
 // Mobile timer persistence — save/restore on page visibility change
 function saveTimerState(){
@@ -2392,10 +2399,14 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
         ${myCompetitors.length===0?`<div class="alert alert-warn">Bu raund için size atanmış yarışmacı bulunamadı. Kulvar atamaları kontrol edin.</div>`:''}
         ${myCompetitors.map(c=>{
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
-          return `<div class="competitor-chip ${sel===c.id?'selected':''} ${score?'scored':''}" onclick="selectCompetitor('${c.id}')">
+          const memKey=c.id+'_'+activeRound.id;
+          const hasPendingAttempt=!!(JUDGE_STATE.attemptMemory[memKey]||
+            (JUDGE_STATE.selectedCompetitorId===c.id&&JUDGE_STATE.currentAttempt>1));
+          return `<div class="competitor-chip ${sel===c.id?'selected':''} ${score&&!score.autoZero?'scored':''}" onclick="selectCompetitor('${c.id}')">
             <div class="chip-cats">${c.categories.slice(0,2).map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}</div>
             <div class="chip-name">${c.name} ${c.surname}</div>
-            ${score?`<div class="chip-time">${fmtSec(score.finalTime)} ${score.finalTime>=activeRound.maxTime?'✅':''}</div>`:''}
+            ${hasPendingAttempt?`<span class="badge badge-gold" style="font-size:9px;white-space:nowrap;">2.UÇUŞ</span>`:''}
+            ${score&&!score.autoZero?`<div class="chip-time ${score.finalTime>=activeRound.maxTime?'text-green':''}">${fmtSec(score.finalTime)} ${score.finalTime>=activeRound.maxTime?'✅':''}</div>`:''}
           </div>`;
         }).join('')}
       </div>
@@ -2496,12 +2507,32 @@ function renderTimerPanel(comp,round,roundClosed=false){
 }
 
 function selectCompetitor(id){
+  // Save current attempt state for the departing competitor
+  const activeRound=STATE.rounds.find(r=>r.status==='active');
+  const workingRoundId=JUDGE_STATE.roundId||activeRound?.id;
+  if(JUDGE_STATE.selectedCompetitorId&&workingRoundId&&JUDGE_STATE.currentAttempt>1){
+    const memKey=JUDGE_STATE.selectedCompetitorId+'_'+workingRoundId;
+    JUDGE_STATE.attemptMemory[memKey]={
+      attempt:JUDGE_STATE.currentAttempt,
+      type:JUDGE_STATE.attemptType,
+      note:JUDGE_STATE.attemptNote
+    };
+  }
   timerReset();
   JUDGE_STATE.selectedCompetitorId=id;
-  JUDGE_STATE.currentAttempt=1;
-  JUDGE_STATE.attemptType=null;
-  const round=STATE.rounds.find(r=>r.status==='active');
-  const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+  // Restore attempt state for the incoming competitor
+  const newRoundId=activeRound?.id||workingRoundId;
+  const memKey=id+'_'+newRoundId;
+  const mem=JUDGE_STATE.attemptMemory[memKey];
+  if(mem){
+    JUDGE_STATE.currentAttempt=mem.attempt||1;
+    JUDGE_STATE.attemptType=mem.type||null;
+    JUDGE_STATE.attemptNote=mem.note||null;
+  } else {
+    JUDGE_STATE.currentAttempt=1;
+    JUDGE_STATE.attemptType=null;
+    JUDGE_STATE.attemptNote=null;
+  }
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
@@ -2604,8 +2635,12 @@ function timerSave(compId,roundId){
   save();
   timerReset();
   clearTimerState();
+  // Clear attempt memory for this competitor+round
+  delete JUDGE_STATE.attemptMemory[compId+'_'+roundId];
   JUDGE_STATE.selectedCompetitorId=null;
   JUDGE_STATE.currentAttempt=1;
+  JUDGE_STATE.attemptType=null;
+  JUDGE_STATE.attemptNote=null;
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
@@ -2649,20 +2684,36 @@ function resetJudgeAttempt(){
 // Double-tap START protection
 let _startBtnArmed=false;
 let _startBtnTimer=null;
+let _startBtnCountdown=null;
 function handleStartBtn(btn){
   if(!_startBtnArmed){
-    // First tap — arm it
     _startBtnArmed=true;
-    btn.textContent='Tekrar Bas! ✓';
+    let secs=2;
+    btn.textContent=`✓ Emin misin? (${secs})`;
     btn.style.background='var(--gold)';
     btn.style.color='#000';
+    _startBtnCountdown=setInterval(()=>{
+      secs--;
+      if(secs>0){
+        btn.textContent=`✓ Emin misin? (${secs})`;
+      } else {
+        // Time's up — reset without starting
+        clearInterval(_startBtnCountdown);
+        clearTimeout(_startBtnTimer);
+        _startBtnArmed=false;
+        btn.textContent='▶ BAŞLAT';
+        btn.style.background='';
+        btn.style.color='';
+      }
+    },1000);
     _startBtnTimer=setTimeout(()=>{
-      // Reset if not confirmed in 2s
+      clearInterval(_startBtnCountdown);
       _startBtnArmed=false;
       if(btn){btn.textContent='▶ BAŞLAT';btn.style.background='';btn.style.color='';}
-    },2000);
+    },2100);
   } else {
-    // Second tap — actually start
+    // Second tap — start immediately
+    clearInterval(_startBtnCountdown);
     clearTimeout(_startBtnTimer);
     _startBtnArmed=false;
     timerStart();
