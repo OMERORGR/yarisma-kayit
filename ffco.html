@@ -250,6 +250,7 @@ th[data-sort]:hover{color:var(--blue);}
 .toast-warn{background:var(--bg2);border-color:var(--gold);color:var(--gold);}
 @keyframes toast-in{from{transform:translateX(40px);opacity:0;}to{transform:none;opacity:1;}}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
 /* FLYOFF ALERT */
 .flyoff-banner{background:linear-gradient(135deg,rgba(155,109,255,0.15),rgba(245,166,35,0.1));border:1px solid var(--purple);border-radius:var(--r);padding:20px;margin-bottom:20px;}
@@ -394,6 +395,7 @@ let STATE=ACTIVE_COMP_ID?loadComp(ACTIVE_COMP_ID)||getInitialState():getInitialS
 
 function save(){
   if(ACTIVE_COMP_ID){
+    STATE.competition.updatedAt=new Date().toISOString();
     saveComp(ACTIVE_COMP_ID,STATE);
     const idx=loadIndex();
     const entry=idx.find(e=>e.id===ACTIVE_COMP_ID);
@@ -442,23 +444,42 @@ function syncERR(){const el=document.getElementById('syncDot');if(el){el.style.b
 async function startupSync(){
   document.getElementById('mainContent').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--blue);letter-spacing:3px;">FFCO</div><div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div><div style="font-size:12px;color:var(--text2);">Veriler yükleniyor...</div></div>`;
   try{
-    // Sync admin
+    // Sync admin & organizers (always trust Supabase for these)
     const adminRows=await sbGet('ffco_kv','?key=eq.admin');
     if(adminRows&&adminRows.length>0) localStorage.setItem('ffco_admin',JSON.stringify(adminRows[0].value));
-    // Sync organizers
     const orgRows=await sbGet('ffco_kv','?key=eq.organizers');
     if(orgRows&&orgRows.length>0) localStorage.setItem('ffco_organizers',JSON.stringify(orgRows[0].value));
-    // Sync comp index from Supabase
-    const compRows=await sbGet('ffco_comps','?select=id,meta');
-    if(compRows&&compRows.length>0){
-      const idx=compRows.map(r=>({id:r.id,...r.meta}));
+
+    // Sync comps — compare updated_at timestamps, keep newer version
+    const sbRows=await sbGet('ffco_comps','?select=id,meta,data,updated_at');
+    if(sbRows&&sbRows.length>0){
+      const idx=[];
+      sbRows.forEach(r=>{
+        idx.push({id:r.id,...r.meta});
+        const localKey='ffco_comp_'+r.id;
+        const localRaw=localStorage.getItem(localKey);
+        if(!localRaw){
+          // Not in local at all — take Supabase version
+          localStorage.setItem(localKey,JSON.stringify(r.data));
+        } else {
+          // Compare timestamps
+          const localData=JSON.parse(localRaw);
+          const localTs=localData.competition?.updatedAt||localData.competition?.createdAt||'';
+          const sbTs=r.updated_at||'';
+          // Only overwrite local if Supabase is strictly newer
+          if(sbTs>localTs){
+            localStorage.setItem(localKey,JSON.stringify(r.data));
+          }
+          // Otherwise keep local (it has newer unsaved changes)
+        }
+      });
+      // Merge index: add any local-only comps that aren't in Supabase yet
+      const localIdx=JSON.parse(localStorage.getItem('ffco_index')||'[]');
+      localIdx.forEach(le=>{if(!idx.find(e=>e.id===le.id))idx.push(le);});
       localStorage.setItem('ffco_index',JSON.stringify(idx));
-      // Cache each comp data
-      const fullRows=await sbGet('ffco_comps','?select=id,data');
-      if(fullRows) fullRows.forEach(r=>{localStorage.setItem('ffco_comp_'+r.id,JSON.stringify(r.data));});
     }
-    // Reload active comp if any
-    if(ACTIVE_COMP_ID){STATE=loadComp(ACTIVE_COMP_ID)||getInitialState();}
+
+    if(ACTIVE_COMP_ID) STATE=loadComp(ACTIVE_COMP_ID)||getInitialState();
   }catch(e){toast('Supabase bağlantısı kurulamadı — yerel veri kullanılıyor','warn');}
   renderApp();
 }
@@ -1776,16 +1797,41 @@ function calcJudgesNeeded(){
   });
   return total;
 }
+// Check if PIN is used anywhere in any competition (except current judge being edited)
+function isPinUsedGlobally(pin, excludeJudgeId=''){
+  const idx=loadIndex();
+  for(const entry of idx){
+    const comp=loadComp(entry.id);
+    if(!comp) continue;
+    const conflict=comp.judges.find(j=>j.pin===pin&&j.id!==excludeJudgeId);
+    if(conflict) return {comp:comp.competition.name||entry.id, judge:conflict.name};
+  }
+  // Also check current STATE judges
+  const conflict=STATE.judges.find(j=>j.pin===pin&&j.id!==excludeJudgeId);
+  if(conflict) return {comp:STATE.competition.name||'Bu yarışma', judge:conflict.name};
+  return null;
+}
+function generateUniquePin(prefix, baseNum){
+  let n=baseNum;
+  while(true){
+    const pin=prefix+n;
+    if(!isPinUsedGlobally(pin)) return pin;
+    n++;
+  }
+}
+
 function openAddJudgeModal(editId){
   const j=editId?STATE.judges.find(x=>x.id===editId):{};
-  const suggestPin=STATE.competition.judgePrefix+(STATE.judges.length+1);
+  const prefix=STATE.competition.judgePrefix||'4321';
+  const baseNum=STATE.judges.length+1;
+  const suggestPin=editId?j.pin:generateUniquePin(prefix,baseNum);
   openModal(editId?'Hakem Düzenle':'Hakem Ekle',`
     <div class="form-group"><label>Ad Soyad *</label><input id="jm-name" value="${j.name||''}"></div>
     <div class="form-row">
       <div class="form-group">
         <label>PIN *</label>
-        <input id="jm-pin" value="${j.pin||suggestPin}">
-        <div class="form-hint">Hakem bu PIN ile giriş yapacak</div>
+        <input id="jm-pin" value="${suggestPin}" oninput="checkPinUnique(this,'${editId||''}')">
+        <div class="form-hint" id="pin-hint" style="color:var(--text3)">Hakem bu PIN ile giriş yapacak — tüm yarışmalarda benzersiz olmalı</div>
       </div>
       <div class="form-group">
         <label>Kategori (opsiyonel)</label>
@@ -1798,10 +1844,29 @@ function openAddJudgeModal(editId){
   `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
     <button class="btn btn-primary" onclick="saveJudge('${editId||''}')">Kaydet</button>`);
 }
+function checkPinUnique(input, excludeId){
+  const pin=input.value.trim();
+  const hint=document.getElementById('pin-hint');
+  if(!pin||!hint) return;
+  const conflict=isPinUsedGlobally(pin, excludeId);
+  if(conflict){
+    hint.style.color='var(--red)';
+    hint.textContent=`❌ Bu PIN zaten kullanımda: "${conflict.judge}" (${conflict.comp})`;
+  } else {
+    hint.style.color='var(--green)';
+    hint.textContent='✓ Bu PIN benzersiz, kullanılabilir';
+  }
+}
 function saveJudge(editId){
   const name=document.getElementById('jm-name').value.trim();
   const pin=document.getElementById('jm-pin').value.trim();
   if(!name||!pin){toast('Ad ve PIN zorunlu','error');return;}
+  // Final uniqueness check
+  const conflict=isPinUsedGlobally(pin, editId);
+  if(conflict){
+    toast(`❌ PIN zaten kullanımda: ${conflict.judge} (${conflict.comp})`,'error');
+    return;
+  }
   const data={name,pin,category:document.getElementById('jm-cat').value||null};
   if(editId){
     const idx=STATE.judges.findIndex(j=>j.id===editId);
@@ -1851,7 +1916,7 @@ function importJudgesCSV(){
     if(cols.length<2) continue;
     const name=cols[0];const pin=cols[1];const cat=cols[2]||null;
     if(!name||!pin) continue;
-    if(STATE.judges.find(j=>j.pin===pin)){continue;} // skip duplicate PINs
+    if(isPinUsedGlobally(pin)){toast(`PIN ${pin} zaten kullanımda, atlandı`,'warn');continue;}
     STATE.judges.push({id:uid(),name,pin,category:cat&&CATS.includes(cat.toUpperCase())?cat.toUpperCase():null});
     added++;
   }
@@ -2167,24 +2232,57 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&CURRENT_RO
 function renderJudge(){
   const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
   if(!judge) return '<div class="empty">Hakem bulunamadı</div>';
-  // Restore timer state if returning from phone call / tab switch
   if(!JUDGE_STATE.timerRunning&&!JUDGE_STATE.selectedCompetitorId) restoreTimerState();
   const activeRound=STATE.rounds.find(r=>r.status==='active');
+  const compName=STATE.competition.name||'—';
+
+  // Special case: round was closed while a flight was in progress
+  // Find the most recently closed round if timer has elapsed time
+  const flightInProgress=JUDGE_STATE.timerElapsed>0||JUDGE_STATE.timerRunning;
+  const lastClosedRound=!activeRound&&flightInProgress
+    ?STATE.rounds.filter(r=>r.status==='done').sort((a,b)=>new Date(b.endedAt||0)-new Date(a.endedAt||0))[0]
+    :null;
+
+  // The round to work with: active > lastClosed (for in-progress) > null
+  const workingRound=activeRound||lastClosedRound||null;
+  const roundClosed=!!lastClosedRound&&!activeRound;
+
   return `
   <div>
-    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-      <div>
-        <div class="font-orb text-blue" style="font-size:13px">${judge.name}</div>
-        <div class="text-sm text-muted">${activeRound?`Aktif: ${activeRound.isFlyoff?'Flyoff '+activeRound.flyoffNum:'Raund '+activeRound.number} · Max ${fmtSec(activeRound.maxTime)}`:'Aktif raund yok'}</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;">
+        <div class="font-orb text-blue" style="font-size:13px;letter-spacing:1px;">⚖️ ${judge.name}</div>
+        <div class="text-sm text-muted mt-1">🏆 ${compName}</div>
       </div>
-      ${!activeRound?'<div class="badge badge-gray">Raund Bekleniyor</div>':''}
+      <div>
+        ${activeRound
+          ?`<span class="badge badge-green">🟢 ${activeRound.isFlyoff?'Flyoff '+activeRound.flyoffNum:'Raund '+activeRound.number} · Max ${fmtSec(activeRound.maxTime)}</span>`
+          :roundClosed
+            ?`<span class="badge badge-gold">⚠️ Raund Kapandı</span>`
+            :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':'Raund bekleniyor'}</span>`}
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="judgeSyncComp()" title="Sunucudan güncelle">🔄</button>
     </div>
-    
-    ${!activeRound?`<div class="alert alert-warn">⏳ Organizatör yeni raund başlatana kadar bekleyin.</div>`:renderJudgePanel(judge,activeRound)}
+
+    ${roundClosed?`<div class="alert alert-warn">⚠️ Raund organizatör tarafından kapatıldı. <strong>Devam eden uçuşunuzu kaydedebilirsiniz</strong> ancak yeni uçuş başlatamazsınız.</div>`:''}
+    ${!workingRound&&!flightInProgress?`<div class="alert alert-warn">⏳ ${t('waitRound')}</div>`:renderJudgePanel(judge,workingRound,roundClosed)}
   </div>`;
 }
 
-function renderJudgePanel(judge,activeRound){
+async function judgeSyncComp(){
+  if(!ACTIVE_COMP_ID) return;
+  const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}`);
+  if(rows&&rows.length>0){
+    STATE=rows[0].data;
+    localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(STATE));
+    toast('Güncellendi ✓','success');
+    navigate('judge');
+  } else {
+    toast('Bağlantı hatası','error');
+  }
+}
+
+function renderJudgePanel(judge,activeRound,roundClosed=false){
   const myLanes=STATE.lanes.filter(l=>l.judgeIds.includes(judge.id));
   const myCompetitors=[];
   myLanes.forEach(lane=>{
@@ -2227,7 +2325,7 @@ function renderJudgePanel(judge,activeRound){
     
     <div>
       <div class="card">
-        ${selComp?renderTimerPanel(selComp,activeRound):renderTimerEmpty()}
+        ${selComp?renderTimerPanel(selComp,activeRound,roundClosed):renderTimerEmpty()}
       </div>
     </div>
   </div>`;
@@ -2237,12 +2335,14 @@ function renderTimerEmpty(){
   return `<div class="empty"><div class="empty-icon">⏱</div><div class="empty-text">Sol taraftan yarışmacı seçin</div></div>`;
 }
 
-function renderTimerPanel(comp,round){
+function renderTimerPanel(comp,round,roundClosed=false){
   const existing=STATE.scores.find(s=>s.competitorId===comp.id&&s.roundId===round.id);
   const elapsed=JUDGE_STATE.timerElapsed;
   const running=JUDGE_STATE.timerRunning;
   const stopped=!running&&elapsed>0;
-  
+  // Can start a new flight only if round is active (not closed)
+  const canStart=!roundClosed&&!running&&elapsed===0&&!existing;
+
   return `
   <div>
     <div class="card-header">
@@ -2251,23 +2351,29 @@ function renderTimerPanel(comp,round){
         ${comp.categories.map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}
       </div>
     </div>
-    
+
+    ${roundClosed&&!running&&elapsed===0?`
+      <div class="alert alert-warn mt-3">
+        🔒 Raund kapatıldı — yeni uçuş başlatılamaz.
+        ${existing?'':'<div class="text-sm mt-1">Bu yarışmacı için skor girilmedi.</div>'}
+      </div>`:''}
+
     ${JUDGE_STATE.currentAttempt>1?`<div class="alert alert-warn mb-3">⚠️ Deneme Hakkı ${JUDGE_STATE.currentAttempt-1} — ${JUDGE_STATE.attemptType==='sub20'?'20sn altı uçuş':'Kaza/Çarpışma'}</div>`:''}
-    
+
     <div class="timer-hero">
       <div class="timer-display ${running?'running':stopped?'stopped':''}" id="timerDisplay">${fmtTimer(elapsed)}</div>
-      <div class="text-sm text-muted mt-2">Max: ${fmtSec(round.maxTime)} · ${elapsed>=round.maxTime?'<span style="color:var(--green)">✅ MAX UÇUŞ</span>':''}</div>
+      <div class="text-sm text-muted mt-2">Max: ${fmtSec(round.maxTime)} ${elapsed>=round.maxTime?'<span style="color:var(--green)">✅ MAX</span>':''}</div>
       ${elapsed>=round.maxTime&&stopped?'<div class="alert alert-success mt-3">🏆 Maksimum süre tamamlandı!</div>':''}
     </div>
-    
+
     <div class="timer-controls">
-      ${!running&&elapsed===0?`<button class="timer-btn timer-start" onclick="timerStart()">▶ BAŞLAT</button>`:''}
+      ${canStart?`<button class="timer-btn timer-start" onclick="timerStart()">▶ BAŞLAT</button>`:''}
       ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">⏹ DURDUR</button>`:''}
       ${stopped&&!existing?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
-      ${stopped||existing?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
+      ${(stopped||existing)?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
     </div>
-    
-    ${stopped&&elapsed<20&&JUDGE_STATE.currentAttempt===1?`
+
+    ${stopped&&elapsed<20&&JUDGE_STATE.currentAttempt===1&&!roundClosed?`
     <div class="alert alert-warn mt-3">
       ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
       <div class="mt-2 flex gap-2 flex-wrap">
@@ -2275,17 +2381,17 @@ function renderTimerPanel(comp,round){
         <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">Kaydet (${fmtTimer(elapsed)})</button>
       </div>
     </div>`:''}
-    
-    ${JUDGE_STATE.currentAttempt===1&&!running?`
+
+    ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed?`
     <div class="mt-3 card" style="background:var(--bg3)">
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">ÇARPIŞMA / KAZA</div>
       <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
     </div>`:''}
-    
+
     ${existing?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
-    
+
     <div class="mt-3">
-      <textarea id="judge-note" placeholder="Opsiyonel not (kaza detayı, deneme sebebi...)" style="height:60px;font-size:12px;"></textarea>
+      <textarea id="judge-note" placeholder="Opsiyonel not..." style="height:50px;font-size:12px;"></textarea>
     </div>
   </div>`;
 }
@@ -2346,24 +2452,48 @@ function timerReset(){
 function timerSave(compId,roundId){
   const elapsed=JUDGE_STATE.timerElapsed;
   const round=STATE.rounds.find(r=>r.id===roundId);
-  const finalTime=Math.min(Math.round(elapsed*100)/100, round?round.maxTime:elapsed);
+  // Kural 2: Max süreyi asla geçme
+  const finalTime=Math.min(Math.round(elapsed), round?round.maxTime:elapsed);
   const note=document.getElementById('judge-note')?.value||'';
-  
-  // Check if score already exists
+
   const existIdx=STATE.scores.findIndex(s=>s.competitorId===compId&&s.roundId===roundId);
-  const scoreData={
-    id:uid(),competitorId:compId,roundId,
-    attempts:[...((existIdx>-1?STATE.scores[existIdx].attempts:[])),{time:elapsed,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note}],
-    finalTime,confirmed:false,disqualified:false
-  };
-  if(existIdx>-1) STATE.scores[existIdx]=scoreData;
-  else STATE.scores.push(scoreData);
+
+  if(existIdx>-1){
+    const existing=STATE.scores[existIdx];
+    // Kural 1: Pozitif ayrımcılık — yüksek değer kazanır
+    if(finalTime>existing.finalTime){
+      // Yeni değer daha yüksek → güncelle, önceki ölçümü kayıt altında tut
+      STATE.scores[existIdx]={
+        ...existing,
+        finalTime,
+        attempts:[...existing.attempts,{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID,replacedPrevious:existing.finalTime}],
+      };
+      STATE.logs.push({id:uid(),type:'score_higher_wins',competitorId:compId,roundId,prev:existing.finalTime,new:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
+      toast(`${fmtSec(finalTime)} kaydedildi ✓ (önceki: ${fmtSec(existing.finalTime)} — yüksek değer alındı)`,'success');
+    } else {
+      // Yeni değer daha düşük veya eşit → mevcut korunur
+      STATE.scores[existIdx]={
+        ...existing,
+        attempts:[...existing.attempts,{time:elapsed,finalTime,type:'lower_ignored',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
+      };
+      STATE.logs.push({id:uid(),type:'score_lower_ignored',competitorId:compId,roundId,kept:existing.finalTime,ignored:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
+      toast(`Mevcut skor korundu: ${fmtSec(existing.finalTime)} (yeni ölçüm ${fmtSec(finalTime)} daha düşük — görmezden gelindi)`,'warn');
+    }
+  } else {
+    // İlk kayıt
+    STATE.scores.push({
+      id:uid(),competitorId:compId,roundId,
+      attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
+      finalTime,confirmed:false,disqualified:false
+    });
+    toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
+  }
+
   save();
   timerReset();
   clearTimerState();
   JUDGE_STATE.selectedCompetitorId=null;
   JUDGE_STATE.currentAttempt=1;
-  toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
@@ -2438,10 +2568,26 @@ function renderScoreboard(){
       </div>
     </div>
     <div id="sb-table">${renderSbTable(sbState)}</div>
-    <div class="text-center mt-3"><button class="btn btn-ghost btn-sm" onclick="navigate('scoreboard')">↺ ${t('refresh')}</button></div>`}
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px;">
+      <button class="btn btn-ghost btn-sm" onclick="sbForceRefresh()">↺ ${t('refresh')}</button>
+      <span id="sb-last-update" class="text-xs text-muted"></span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;"></span>
+        ${CURRENT_LANG==='en'?'Live · updates every 8s':'Canlı · 8sn\'de bir güncellenir'}
+      </span>
+    </div>`}
   </div>`;
 }
 function sbSelectComp(id){SB_COMP_ID=id;SB_CAT=null;navigate('scoreboard');}
+async function sbForceRefresh(){
+  if(!SB_COMP_ID) return;
+  const rows=await sbGet('ffco_comps',`?id=eq.${SB_COMP_ID}&select=id,data,updated_at`);
+  if(rows&&rows.length>0){
+    localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
+    document.getElementById('mainContent').innerHTML=renderScoreboard();
+    toast('Güncellendi ✓','success');
+  }
+}
 function sbCat(cat){
   SB_CAT=cat;
   const sbState=SB_COMP_ID?loadComp(SB_COMP_ID):null;
@@ -2675,12 +2821,17 @@ document.getElementById('modal').onclick=(e)=>{if(e.target===document.getElement
 // ==================== UTILS ====================
 function fmtSec(s){
   if(s===undefined||s===null||isNaN(s)) return '—';
-  const m=Math.floor(s/60);const sec=s%60;
-  return `${m}:${sec.toFixed(s%1?2:0).padStart(sec%1?5:2,'0')}`;
+  s=Math.round(s); // always whole seconds
+  const m=Math.floor(s/60);
+  const sec=s%60;
+  return `${m}:${String(sec).padStart(2,'0')}`;
 }
 function fmtTimer(s){
-  const m=Math.floor(s/60);const sec=s%60;
-  return `${String(m).padStart(2,'0')}:${sec.toFixed(1).padStart(4,'0')}`;
+  // Live timer — whole seconds only, no decimals
+  s=Math.floor(s);
+  const m=Math.floor(s/60);
+  const sec=s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 function downloadCSV(filename,content){
   const a=document.createElement('a');
@@ -2720,16 +2871,25 @@ if(ACTIVE_COMP_ID&&!loadComp(ACTIVE_COMP_ID)){
 // Start with Supabase sync
 startupSync();
 
-// Auto-refresh scoreboard from Supabase every 15s
+// Auto-refresh scoreboard from Supabase every 5s
 setInterval(async()=>{
   if(CURRENT_VIEW==='scoreboard'&&SB_COMP_ID){
-    const rows=await sbGet('ffco_comps',`?id=eq.${SB_COMP_ID}`);
+    const rows=await sbGet('ffco_comps',`?id=eq.${SB_COMP_ID}&select=id,data,updated_at`);
     if(rows&&rows.length>0){
-      localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
-      document.getElementById('mainContent').innerHTML=renderScoreboard();
+      const localRaw=localStorage.getItem('ffco_comp_'+SB_COMP_ID);
+      const localTs=localRaw?JSON.parse(localRaw).competition?.updatedAt||'':'';
+      const sbTs=rows[0].updated_at||'';
+      if(sbTs>localTs){
+        localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
+        // Only refresh the table, not the full page (avoids scroll jump)
+        const el=document.getElementById('sb-table');
+        const sbState=loadComp(SB_COMP_ID);
+        if(el&&sbState) el.innerHTML=renderSbTable(sbState);
+        syncOK();
+      }
     }
   }
-},15000);
+},5000);
 </script>
 </body>
 </html>
