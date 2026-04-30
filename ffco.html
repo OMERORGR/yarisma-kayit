@@ -2459,7 +2459,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
     </div>
 
-    ${stopped&&elapsed<20&&JUDGE_STATE.currentAttempt===1&&!roundClosed?`
+    ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===1&&!roundClosed&&!JUDGE_STATE._pendingAutoStart?`
     <div class="alert alert-warn mt-3">
       ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
       <div class="mt-2 flex gap-2 flex-wrap">
