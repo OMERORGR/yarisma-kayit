@@ -1,0 +1,2735 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>FFCO – Free Flight Competition Organizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06091200;
+  --bg1: #060912;
+  --bg2: #0b1220;
+  --bg3: #101b2e;
+  --bg4: #19263d;
+  --border: #1e2e48;
+  --border2: #2a3d5a;
+  --text: #dde8f5;
+  --text2: #8a9bb5;
+  --text3: #5a6e8a;
+  --blue: #00c8ff;
+  --blue2: #0096cc;
+  --blue-glow: rgba(0,200,255,0.15);
+  --gold: #f5a623;
+  --gold2: #c47d0e;
+  --green: #00e87a;
+  --green2: #00b85f;
+  --red: #ff4757;
+  --red2: #cc2233;
+  --purple: #9b6dff;
+  --orange: #ff7043;
+  --r: 14px;
+  --r2: 10px;
+  --r3: 8px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow2: 0 4px 16px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:var(--bg1);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* LAYOUT */
+.app-shell{display:flex;flex-direction:column;min-height:100vh;}
+
+/* HEADER */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 24px;height:60px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-logo{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--blue);letter-spacing:2px;white-space:nowrap;}
+.topbar-logo span{color:var(--gold);}
+.topbar-comp{flex:1;font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.topbar-nav{display:flex;gap:4px;}
+.nav-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.nav-btn:hover{border-color:var(--blue);color:var(--blue);}
+.nav-btn.active{background:var(--blue);border-color:var(--blue);color:#000;font-weight:700;}
+.topbar-role{padding:5px 12px;border-radius:20px;background:var(--bg3);border:1px solid var(--border2);font-size:11px;color:var(--gold);font-weight:600;letter-spacing:.5px;cursor:pointer;white-space:nowrap;}
+
+/* MAIN */
+.main{flex:1;padding:24px;max-width:1280px;margin:0 auto;width:100%;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow2);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+.card-title .icon{font-size:16px;}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.tab.active{background:var(--bg1);color:var(--blue);box-shadow:var(--shadow2);}
+.tab:hover:not(.active){color:var(--text);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r3);border:1px solid transparent;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.3px;white-space:nowrap;}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#000;}
+.btn-primary:hover{background:var(--blue2);border-color:var(--blue2);}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#000;}
+.btn-gold:hover{background:var(--gold2);}
+.btn-green{background:var(--green);border-color:var(--green);color:#000;}
+.btn-green:hover{background:var(--green2);}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff;}
+.btn-red:hover{background:var(--red2);}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* FORMS */
+.form-group{margin-bottom:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase;}
+input,select,textarea{width:100%;padding:10px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;transition:border-color .15s;outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+input[type=checkbox]{width:auto;accent-color:var(--blue);}
+select option{background:var(--bg3);}
+textarea{resize:vertical;min-height:80px;}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* CHECKBOXES */
+.check-group{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);}
+.check-item{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg4);border:1px solid var(--border2);border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.check-item input{width:14px;height:14px;}
+.check-item.checked{border-color:var(--blue);background:rgba(0,200,255,0.08);color:var(--blue);}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.5px;}
+.badge-blue{background:rgba(0,200,255,0.15);color:var(--blue);}
+.badge-gold{background:rgba(245,166,35,0.15);color:var(--gold);}
+.badge-green{background:rgba(0,232,122,0.15);color:var(--green);}
+.badge-red{background:rgba(255,71,87,0.15);color:var(--red);}
+.badge-purple{background:rgba(155,109,255,0.15);color:var(--purple);}
+.badge-gray{background:var(--bg4);color:var(--text2);}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+th{background:var(--bg3);color:var(--text2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:10px 14px;text-align:left;white-space:nowrap;}
+td{padding:10px 14px;font-size:13px;border-top:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--bg3);}
+th.sort-asc::after{content:' ▲';}
+th.sort-desc::after{content:' ▼';}
+th[data-sort]{cursor:pointer;}
+th[data-sort]:hover{color:var(--blue);}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* STAT BOXES */
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;}
+.stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.stat-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--text);}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:4px;}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:var(--r3);font-size:13px;margin-bottom:14px;border-left:3px solid;}
+.alert-info{background:rgba(0,200,255,0.08);border-color:var(--blue);color:var(--blue);}
+.alert-warn{background:rgba(245,166,35,0.08);border-color:var(--gold);color:var(--gold);}
+.alert-success{background:rgba(0,232,122,0.08);border-color:var(--green);color:var(--green);}
+.alert-error{background:rgba(255,71,87,0.08);border-color:var(--red);color:var(--red);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{width:30px;height:30px;border:none;background:var(--bg4);border-radius:6px;cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{color:var(--red);}
+.modal-body{padding:20px 22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* TIMER PANEL (Judge) */
+.timer-hero{text-align:center;padding:32px 20px;}
+.timer-display{font-family:'Space Mono',monospace;font-size:80px;font-weight:700;color:var(--blue);letter-spacing:4px;line-height:1;text-shadow:0 0 40px rgba(0,200,255,0.4);}
+.timer-display.running{animation:pulse 1s infinite;}
+.timer-display.stopped{color:var(--gold);}
+.timer-display.saved{color:var(--green);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.8;}}
+.timer-controls{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+.timer-btn{padding:14px 32px;border-radius:12px;border:none;font-family:'Orbitron',monospace;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all .15s;min-width:120px;}
+.timer-start{background:var(--green);color:#000;box-shadow:0 0 20px rgba(0,232,122,0.3);}
+.timer-start:hover{background:var(--green2);}
+.timer-stop{background:var(--gold);color:#000;box-shadow:0 0 20px rgba(245,166,35,0.3);}
+.timer-stop:hover{background:var(--gold2);}
+.timer-save{background:var(--blue);color:#000;box-shadow:0 0 20px rgba(0,200,255,0.3);}
+.timer-save:hover{background:var(--blue2);}
+.timer-reset{background:var(--bg4);color:var(--text2);border:1px solid var(--border2);}
+.timer-reset:hover{color:var(--red);}
+.competitor-chip{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--bg3);border:2px solid var(--border);border-radius:var(--r2);cursor:pointer;transition:all .15s;margin-bottom:8px;}
+.competitor-chip:hover{border-color:var(--blue);}
+.competitor-chip.selected{border-color:var(--blue);background:rgba(0,200,255,0.08);}
+.competitor-chip.scored{border-color:var(--green);background:rgba(0,232,122,0.05);}
+.competitor-chip.scored .chip-time{color:var(--green);}
+.chip-num{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);width:30px;}
+.chip-name{flex:1;font-size:14px;font-weight:600;}
+.chip-cats{display:flex;gap:4px;}
+.chip-time{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--text2);}
+
+/* SCOREBOARD */
+.sb-header{text-align:center;padding:32px 20px 20px;background:linear-gradient(180deg,var(--bg2) 0%,var(--bg1) 100%);}
+.sb-comp-name{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:6px;text-shadow:0 0 30px rgba(0,200,255,0.3);}
+.sb-date{font-size:13px;color:var(--text2);margin-bottom:20px;}
+.sb-category-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+.sb-cat-btn{padding:7px 16px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .15s;}
+.sb-cat-btn.active{border-color:var(--gold);background:rgba(245,166,35,0.1);color:var(--gold);}
+.rank-1 td:first-child{color:var(--gold);font-size:16px;}
+.rank-2 td:first-child{color:#c0c0c0;font-size:15px;}
+.rank-3 td:first-child{color:#cd7f32;font-size:14px;}
+.rank-row td:first-child{font-family:'Orbitron',monospace;font-weight:700;}
+
+/* ROUND STATUS */
+.round-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.round-card.active{border-color:var(--green);background:rgba(0,232,122,0.05);}
+.round-card.done{opacity:.6;}
+.round-num{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--text2);width:80px;}
+.round-time{font-family:'Space Mono',monospace;font-size:13px;color:var(--text);}
+.round-status{margin-left:auto;}
+
+/* LANE VISUAL */
+.lane-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.lane-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;}
+.lane-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.lane-num{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--blue);}
+.lane-judges{font-size:11px;color:var(--text3);margin-bottom:8px;}
+.lane-comp{padding:5px 8px;background:var(--bg4);border-radius:5px;font-size:12px;margin-bottom:4px;}
+
+/* LANDING */
+.landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:32px;}
+.landing-logo{font-family:'Orbitron',monospace;font-size:48px;font-weight:900;color:var(--blue);text-shadow:0 0 60px rgba(0,200,255,0.3);letter-spacing:6px;}
+.landing-logo span{color:var(--gold);}
+.landing-sub{font-size:15px;color:var(--text2);max-width:480px;line-height:1.7;}
+.role-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:1000px;width:100%;}
+.role-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:28px 20px;cursor:pointer;transition:all .2s;text-align:center;}
+.role-card:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,200,255,0.1);}
+.role-icon{font-size:40px;margin-bottom:14px;}
+.role-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:1px;}
+.role-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+
+/* PIN SCREEN */
+.pin-screen{max-width:360px;margin:60px auto;text-align:center;}
+.pin-title{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;margin-bottom:8px;color:var(--blue);}
+.pin-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+.pin-input{text-align:center;font-family:'Space Mono',monospace;font-size:32px;letter-spacing:12px;padding:16px;background:var(--bg3);border:2px solid var(--border2);border-radius:12px;color:var(--text);width:100%;margin-bottom:16px;}
+.pin-input:focus{border-color:var(--blue);}
+.pin-error{color:var(--red);font-size:13px;margin-bottom:12px;}
+
+/* SETUP WIZARD */
+.wizard-steps{display:flex;gap:0;margin-bottom:28px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);}
+.wizard-step{flex:1;padding:12px 8px;text-align:center;font-size:12px;font-weight:600;background:var(--bg3);color:var(--text3);border-right:1px solid var(--border);transition:all .15s;}
+.wizard-step:last-child{border-right:none;}
+.wizard-step.done{background:rgba(0,232,122,0.08);color:var(--green);}
+.wizard-step.active{background:rgba(0,200,255,0.1);color:var(--blue);}
+
+/* PROGRESS */
+.progress{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px;}
+.progress-bar{height:100%;background:var(--blue);transition:width .3s;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:12px 18px;border-radius:var(--r3);font-size:13px;font-weight:600;min-width:220px;box-shadow:var(--shadow);animation:toast-in .2s ease;border-left:4px solid;}
+.toast-success{background:var(--bg2);border-color:var(--green);color:var(--green);}
+.toast-error{background:var(--bg2);border-color:var(--red);color:var(--red);}
+.toast-info{background:var(--bg2);border-color:var(--blue);color:var(--blue);}
+.toast-warn{background:var(--bg2);border-color:var(--gold);color:var(--gold);}
+@keyframes toast-in{from{transform:translateX(40px);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* FLYOFF ALERT */
+.flyoff-banner{background:linear-gradient(135deg,rgba(155,109,255,0.15),rgba(245,166,35,0.1));border:1px solid var(--purple);border-radius:var(--r);padding:20px;margin-bottom:20px;}
+.flyoff-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--purple);margin-bottom:10px;}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.5;}
+.empty-text{font-size:14px;}
+
+/* UTILS */
+.flex{display:flex;} .flex-col{flex-direction:column;} .items-center{align-items:center;} .justify-between{justify-content:space-between;} .gap-2{gap:8px;} .gap-3{gap:12px;} .gap-4{gap:16px;} .flex-wrap{flex-wrap:wrap;} .flex-1{flex:1;} .mt-1{margin-top:4px;} .mt-2{margin-top:8px;} .mt-3{margin-top:12px;} .mt-4{margin-top:16px;} .mb-2{margin-bottom:8px;} .mb-3{margin-bottom:12px;} .mb-4{margin-bottom:16px;} .text-sm{font-size:12px;} .text-xs{font-size:11px;} .text-gold{color:var(--gold);} .text-blue{color:var(--blue);} .text-green{color:var(--green);} .text-red{color:var(--red);} .text-muted{color:var(--text2);} .font-mono{font-family:'Space Mono',monospace;} .font-orb{font-family:'Orbitron',monospace;} .bold{font-weight:700;} .text-center{text-align:center;} .text-right{text-align:right;} .w-full{width:100%;} .hidden{display:none !important;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .main{padding:12px;}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+  .form-row,.form-row-3{grid-template-columns:1fr;}
+  .topbar-nav{display:none;}
+  .timer-display{font-size:56px;}
+  .landing-logo{font-size:32px;}
+  .role-cards{grid-template-columns:1fr 1fr;}
+  .tabs{gap:2px;}
+  .tab{padding:6px 10px;font-size:12px;}
+}
+@media(max-width:480px){
+  .role-cards{grid-template-columns:1fr;}
+  .timer-display{font-size:48px;}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-logo">FF<span>CO</span></div>
+    <div class="topbar-comp" id="topbarComp">Free Flight Competition Organizer</div>
+    <nav class="topbar-nav" id="topbarNav"></nav>
+    <div class="topbar-role" id="topbarRole" onclick="showRoleSwitch()">🔄 Rol Değiştir</div>
+    <div style="display:flex;gap:4px;margin-left:8px;align-items:center;">
+      <div id="syncDot" title="Supabase sync" style="width:8px;height:8px;border-radius:50%;background:var(--border2);transition:background .3s;cursor:help;"></div>
+      <button onclick="setLang('tr')" id="langTR" style="padding:4px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;" title="Türkçe">TR</button>
+      <button onclick="setLang('en')" id="langEN" style="padding:4px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;" title="English">EN</button>
+    </div>
+  </header>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==================== SUPABASE CONFIG ====================
+const SB_URL = 'https://pbfcrplortvavqcapouy.supabase.co';
+const SB_KEY = 'sb_publishable_yLYb3DgyYF72hInxvNNIoQ_Mh1hATJB';
+const SB_H = {
+  'Content-Type':'application/json',
+  'apikey':SB_KEY,
+  'Authorization':'Bearer '+SB_KEY,
+  'Prefer':'resolution=merge-duplicates'
+};
+async function sbGet(table,filter=''){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}${filter}`,{headers:SB_H});return r.ok?await r.json():null;}catch(e){return null;}
+}
+async function sbUpsert(table,data){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:SB_H,body:JSON.stringify(data)});return r.ok;}catch(e){return false;}
+}
+async function sbDelete(table,filter){
+  try{const r=await fetch(`${SB_URL}/rest/v1/${table}${filter}`,{method:'DELETE',headers:SB_H});return r.ok;}catch(e){return false;}
+}
+
+// ==================== STATE ====================
+const CATS = ['F1A','F1B','F1C','F1G','F1H','F1Q','P30','F2A','F2B','F2C','F3A','F3B','F3D','F3F'];
+function uid(){return 'id_'+Math.random().toString(36).substr(2,9)+'_'+Date.now();}
+
+// ---- ADMIN ----
+function loadAdmin(){try{return JSON.parse(localStorage.getItem('ffco_admin')||'null');}catch(e){return null;}}
+function saveAdmin(a){
+  localStorage.setItem('ffco_admin',JSON.stringify(a));
+  sbUpsert('ffco_kv',{key:'admin',value:a,updated_at:new Date().toISOString()}).then(ok=>ok?syncOK():syncERR());
+}
+function saveAdminAcc(a){saveAdmin(a);}
+function getAdmin(){return loadAdmin()||{pin:'admin1234',name:'Admin'};}
+function isAdminSetup(){return !!loadAdmin();}
+
+// ---- ORGANIZERS ----
+function loadOrganizers(){try{return JSON.parse(localStorage.getItem('ffco_organizers')||'[]');}catch(e){return[];}}
+function saveOrganizers(o){
+  localStorage.setItem('ffco_organizers',JSON.stringify(o));
+  sbUpsert('ffco_kv',{key:'organizers',value:o,updated_at:new Date().toISOString()}).then(ok=>ok?syncOK():syncERR());
+}
+function findOrgByCredentials(username,pin){
+  return loadOrganizers().find(o=>o.pin===pin&&o.active!==false);
+}
+
+// ---- COMPETITION INDEX ----
+function loadIndex(){try{return JSON.parse(localStorage.getItem('ffco_index')||'[]');}catch(e){return[];}}
+function saveIndex(idx){
+  localStorage.setItem('ffco_index',JSON.stringify(idx));
+  sbUpsert('ffco_kv',{key:'index',value:idx,updated_at:new Date().toISOString()}).then(ok=>ok?syncOK():syncERR());
+}
+
+// ---- COMPETITION DATA ----
+function getInitialState(compId){
+  const id=compId||uid();
+  return{
+    competition:{id,name:'',location:'',dateStart:'',dateEnd:'',categories:[],customCategories:[],bulletinUrl:'',organizerPin:'1234',judgePrefix:'4321',createdAt:new Date().toISOString()},
+    rounds:[],competitors:[],judges:[],lanes:[],scores:[],logs:[],setupComplete:false
+  };
+}
+function loadComp(id){try{const s=localStorage.getItem('ffco_comp_'+id);return s?JSON.parse(s):null;}catch(e){return null;}}
+function saveComp(id,state){
+  localStorage.setItem('ffco_comp_'+id,JSON.stringify(state));
+  const idx=loadIndex();const entry=idx.find(e=>e.id===id)||{};
+  const meta={name:state.competition.name||'',organizerId:entry.organizerId||'admin',organizerName:entry.organizerName||'',dateStart:state.competition.dateStart||'',location:state.competition.location||'',archived:entry.archived||false,archivedAt:entry.archivedAt||null,createdAt:entry.createdAt||new Date().toISOString()};
+  sbUpsert('ffco_comps',{id,meta,data:state,updated_at:new Date().toISOString()}).then(ok=>ok?syncOK():syncERR());
+}
+function deleteComp(id){
+  localStorage.removeItem('ffco_comp_'+id);
+  sbDelete('ffco_comps',`?id=eq.${id}`);
+}
+
+// ---- ACTIVE SESSION ----
+let ACTIVE_COMP_ID=sessionStorage.getItem('ffco_active_comp')||null;
+let ACTIVE_ORG_ID=sessionStorage.getItem('ffco_active_org')||null;
+let CURRENT_ORG_ID=ACTIVE_ORG_ID||null;
+let STATE=ACTIVE_COMP_ID?loadComp(ACTIVE_COMP_ID)||getInitialState():getInitialState();
+
+function save(){
+  if(ACTIVE_COMP_ID){
+    saveComp(ACTIVE_COMP_ID,STATE);
+    const idx=loadIndex();
+    const entry=idx.find(e=>e.id===ACTIVE_COMP_ID);
+    if(entry){entry.name=STATE.competition.name;entry.dateStart=STATE.competition.dateStart;entry.location=STATE.competition.location;}
+    saveIndex(idx);
+  }
+}
+function selectComp(id){
+  ACTIVE_COMP_ID=id;sessionStorage.setItem('ffco_active_comp',id);
+  STATE=loadComp(id)||getInitialState(id);
+}
+function createNewComp(){
+  const id=uid();saveComp(id,getInitialState(id));
+  const idx=loadIndex();
+  const org=CURRENT_ROLE==='admin'?{id:'admin',name:'Admin'}:loadOrganizers().find(o=>o.id===ACTIVE_ORG_ID)||{id:ACTIVE_ORG_ID,name:'?'};
+  idx.push({id,name:'Yeni Yarışma',dateStart:'',location:'',organizerId:org.id,organizerName:org.name,archived:false,createdAt:new Date().toISOString()});
+  saveIndex(idx);return id;
+}
+function archiveComp(id){
+  const idx=loadIndex();const e=idx.find(x=>x.id===id);
+  if(e){e.archived=true;e.archivedAt=new Date().toISOString();}
+  saveIndex(idx);
+  const comp=loadComp(id);if(comp)saveComp(id,comp);
+  if(ACTIVE_COMP_ID===id){ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();}
+  navigate('comp-select');toast(t('archivedSuccess'),'info');
+}
+function unarchiveComp(id){
+  const idx=loadIndex();const e=idx.find(x=>x.id===id);
+  if(e){e.archived=false;delete e.archivedAt;}
+  saveIndex(idx);const comp=loadComp(id);if(comp)saveComp(id,comp);
+  navigate('comp-select');toast(t('unarchiveSuccess'),'success');
+}
+function hardDeleteComp(id){
+  const comp=loadComp(id);const name=comp?.competition?.name||'Bu yarışma';
+  if(!confirm(`"${name}" yarışmasını kalıcı olarak silmek istiyor musunuz?`)) return;
+  saveIndex(loadIndex().filter(e=>e.id!==id));deleteComp(id);
+  if(ACTIVE_COMP_ID===id){ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();}
+  navigate('comp-select');toast(t('deleted'),'info');
+}
+
+// ---- SYNC INDICATOR ----
+function syncOK(){const el=document.getElementById('syncDot');if(el){el.style.background='var(--green)';el.title='Kaydedildi ✓';setTimeout(()=>{el.style.background='var(--border2)';},2000);}}
+function syncERR(){const el=document.getElementById('syncDot');if(el){el.style.background='var(--red)';el.title='Bağlantı hatası';setTimeout(()=>{el.style.background='var(--border2)';},4000);}}
+
+// ---- STARTUP SYNC ----
+async function startupSync(){
+  document.getElementById('mainContent').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--blue);letter-spacing:3px;">FFCO</div><div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div><div style="font-size:12px;color:var(--text2);">Veriler yükleniyor...</div></div>`;
+  try{
+    // Sync admin
+    const adminRows=await sbGet('ffco_kv','?key=eq.admin');
+    if(adminRows&&adminRows.length>0) localStorage.setItem('ffco_admin',JSON.stringify(adminRows[0].value));
+    // Sync organizers
+    const orgRows=await sbGet('ffco_kv','?key=eq.organizers');
+    if(orgRows&&orgRows.length>0) localStorage.setItem('ffco_organizers',JSON.stringify(orgRows[0].value));
+    // Sync comp index from Supabase
+    const compRows=await sbGet('ffco_comps','?select=id,meta');
+    if(compRows&&compRows.length>0){
+      const idx=compRows.map(r=>({id:r.id,...r.meta}));
+      localStorage.setItem('ffco_index',JSON.stringify(idx));
+      // Cache each comp data
+      const fullRows=await sbGet('ffco_comps','?select=id,data');
+      if(fullRows) fullRows.forEach(r=>{localStorage.setItem('ffco_comp_'+r.id,JSON.stringify(r.data));});
+    }
+    // Reload active comp if any
+    if(ACTIVE_COMP_ID){STATE=loadComp(ACTIVE_COMP_ID)||getInitialState();}
+  }catch(e){toast('Supabase bağlantısı kurulamadı — yerel veri kullanılıyor','warn');}
+  renderApp();
+}
+
+// ==================== i18n ====================
+let CURRENT_LANG = localStorage.getItem('ffco_lang')||'tr';
+function setLang(l){CURRENT_LANG=l;localStorage.setItem('ffco_lang',l);renderApp();}
+function t(key){return (LANGS[CURRENT_LANG]||LANGS['tr'])[key]||LANGS['tr'][key]||key;}
+const LANGS={
+  tr:{
+    // Nav
+    management:'Yönetim',results:'Sonuçlar',switchRole:'Rol Değiştir',register:'Kayıt Ol',
+    // Landing
+    tagline:'Serbest uçuş yarışmanızı dijital olarak yönetin.',
+    organizer:'ORGANİZATÖR',judge:'HAKEM',scoreboard:'SONUÇLAR',
+    orgDesc:'Yarışmayı oluştur, yönet, hakemleri ata, raundları başlat.',
+    judgeDesc:'Süre tut, skoru gir, atama yapılan yarışmacıları yönet.',
+    sbDesc:'Canlı skor tablosunu izle. Giriş gerekmez.',
+    regDesc:'Yarışmacı veya görevli kaydı için form doldur.',
+    dataNote:'Tüm veriler cihazda saklanır',
+    // Pins
+    orgLogin:'Organizatör Girişi', judgeLogin:'Hakem Girişi',
+    orgPinHint:'Organizatör PIN kodunu girin', judgePinHint:'Hakem PIN kodunuzu girin',
+    login:'Giriş', wrongPin:'❌ Hatalı PIN', back:'← Geri',
+    defaultPin:'Varsayılan PIN: <strong>1234</strong><br>Yarışma kurulumundan değiştirebilirsiniz.',
+    // Tabs
+    overview:'📊 Genel Bakış', setup:'⚙️ Yarışma Ayarları', competitors:'👥 Yarışmacılar',
+    judges:'⚖️ Hakemler', lanes:'🏟 Kulvarlar', rounds:'🏁 Raundlar', resultsTab:'🏆 Sonuçlar',
+    // Setup
+    compName:'Yarışma Adı', location:'Konum', startDate:'Başlangıç Tarihi', endDate:'Bitiş Tarihi',
+    bulletinUrl:'Bülten URL (PDF bağlantısı)', categories:'Kategoriler',
+    addCustomCat:'Özel Kategori Ekle', customCatPlaceholder:'Örn: F5J, HLG...',
+    roundSettings:'Raund Ayarları', addRound:'+ Raund Ekle', saveSettings:'💾 Ayarları Kaydet',
+    orgPin:'Organizatör PIN', judgePinPrefix:'Hakem PIN Ön Eki',
+    judgePinHintSetup:'Hakemler kendi PIN\'lerini oluşturursunuz: ön ek + sıra no (örn: 4321, 43212...)',
+    saved:'Yarışma ayarları kaydedildi ✓',
+    // Competitors
+    addCompetitor:'+ Yarışmacı Ekle', importCSV:'📥 CSV İçe Aktar', exportCSV:'📤 CSV Dışa Aktar',
+    noCompetitorsYet:'Henüz yarışmacı yok', firstName:'Ad', lastName:'Soyad',
+    email:'E-posta', country:'Ülke', faiId:'FAI ID', thsfNo:'THSF Lisans No',
+    compClass:'Sınıf', banquet:'Banket', senior:'Senior', junior:'Junior',
+    yes:'Evet', no:'Hayır', save:'Kaydet', cancel:'İptal', edit:'Düzenle', delete:'Sil',
+    confirmDelete:'Bu yarışmacıyı silmek istiyor musunuz?',
+    noCompetitors:'Önce yarışmacı ekleyin', noJudges:'Önce hakem ekleyin',
+    // Judges
+    addJudge:'+ Hakem Ekle', noJudgesYet:'Hakem tanımlanmadı',
+    judgesNeeded:'hakem ihtiyacı', autoAssign:'⚡ Otomatik Kulvar Ata',
+    pin:'PIN', judgeCategory:'Kategori (opsiyonel)', all:'Tümü',
+    pinHint:'Hakem bu PIN ile giriş yapacak',
+    // Lanes
+    noLanesYet:'Kulvar tanımlanmadı — Otomatik Ata butonuna basın',
+    reassign:'⚡ Yeniden Ata', lane:'KULVAR', noJudgeAssigned:'Hakem atanmadı',
+    lanesCreated:'kulvar otomatik oluşturuldu',
+    // Rounds
+    addFlyoff:'⚡ Flyoff Ekle', roundPending:'Bekliyor', roundActive:'Aktif', roundDone:'Tamamlandı',
+    startRound:'▶ Başlat', endRound:'⏹ Bitir', maxTime:'Max', scores:'skor',
+    roundEditNote:'Ayarlar sekmesinden raund ekleyin',
+    endRoundConfirm:'Raund bitmeden kaydedilmemiş skorlar sıfır olarak işaretlenir. Devam?',
+    flyoffRequired:'FLYOFF GEREKLİ',
+    flyoffDesc:'Aşağıdaki yarışmacılar tüm raundları max sürede tamamladı veya toplam süre eşit.',
+    addFlyoffRound:'+ Flyoff Raund Ekle',
+    flyoffMaxTime:'Flyoff Max Süresi (saniye)',
+    flyoffHeightCheck:'Yükseklik ölçümü ekle (süre + metre)',
+    flyoffHeightHint:'Flyoff öncesi yükseklik girişi sistem tarafından hatırlatılır',
+    // Timer
+    myCompetitors:'Yarışmacılarım', noAssigned:'Bu raund için size atanmış yarışmacı bulunamadı.',
+    noRound:'Aktif raund yok', waitRound:'Organizatör yeni raund başlatana kadar bekleyin.',
+    start:'▶ BAŞLAT', stop:'⏹ DURDUR', saveScore:'💾 KAYDET', reset:'↺ Sıfırla',
+    grantAttempt:'Deneme Hakkı Ver', saveAnyway:'Kaydet',
+    crashAttempt:'⚡ Kaza/Çarpışma — Deneme Hakkı Ver',
+    attemptWarning:'20 saniyenin altında uçuş! Deneme hakkı verilebilir.',
+    attemptGranted:'Deneme hakkı verildi — Yeni uçuş başlatılabilir',
+    alreadyAttempt:'Bu raund için zaten bir deneme hakkı kullanıldı',
+    optionalNote:'Opsiyonel not (kaza detayı, deneme sebebi...)',
+    scoreSaved:'kaydedildi ✓', maxFlight:'MAX UÇUŞ ✅',
+    attemptInfo:'Deneme Hakkı', sub20:'20sn altı uçuş', crash:'Kaza/Çarpışma',
+    roundScores:'Bu Raund Skorları', waiting:'Bekleniyor',
+    // Scoreboard
+    activeRound:'devam ediyor', refresh:'↺ Yenile', selectCat:'Kategori seçilmedi',
+    noCompInCat:'kategorisinde kayıtlı yarışmacı yok', total:'TOPLAM',
+    // Register
+    registerTitle:'Kayıt Formu', downloadBulletin:'📥 Bülteni İndir/Görüntüle',
+    bulletin:'Yarışma Bülteni', submit:'📩 Kaydı Gönder',
+    registerSuccess:'kaydı alındı! ✓',
+    // Misc
+    disqualify:'Diskalifiye', editScore:'Skor Düzenle', scoreEditWarn:'⚠️ Skor değişikliği log\'a kaydedilir.',
+    saveChange:'Değişikliği Kaydet', note:'Not', competitor:'Yarışmacı',
+    noCompFound:'Yarışmacı bulunamadı', noRoundFound:'Hakem bulunamadı',
+    csvFormat:'CSV formatı: Ad,Soyad,Email,Ülke,FAI_ID,THSF_No,Kategoriler(F1A;F1B),Senior(true/false),Banket(true/false)',
+    csvPaste:'veya CSV Metni Yapıştır', importBtn:'İçe Aktar', imported:'yarışmacı içe aktarıldı ✓',
+    csvEmpty:'CSV verisi boş', nameRequired:'Ad ve soyad zorunlu', pinRequired:'Ad ve PIN zorunlu',
+    categoryRequired:'Yarışma adı zorunlu', csvDownloaded:'CSV indirildi',
+    resultsDownloaded:'Sonuçlar CSV olarak indirildi',
+    scoreUpdated:'Skor güncellendi', deleted:'Silindi', confirmJudgeDelete:'Bu hakemi silmek istiyor musunuz?',
+    exportResults:'📤 CSV İndir',
+    activeRoundLabel:'Aktif Raund',
+    // Admin
+    adminLogin:'Admin Girişi', adminPinHint:'Admin PIN kodunu girin',
+    adminDefaultPin:'Varsayılan Admin PIN: <strong>admin1234</strong><br>Admin panelinden değiştirin.',
+    adminPanel:'ADMİN PANELİ', adminDesc:'Tüm sistemi yönet, organizatör hesapları oluştur, her yarışmaya müdahale et.',
+    adminTabOrgs:'👤 Organizatörler', adminTabComps:'🏆 Tüm Yarışmalar', adminTabSettings:'⚙️ Admin Ayarları',
+    addOrganizer:'+ Organizatör Ekle', noOrganizersYet:'Henüz organizatör hesabı yok',
+    organizerCount:'organizatör hesabı', competitions:'yarışma',
+    orgName:'Ad Soyad', createdAt:'Oluşturulma',
+    enterAsOrg:'Olarak Gir →', manageComp:'Yönet →',
+    editOrg:'Organizatör Düzenle', newOrg:'Yeni Organizatör',
+    orgPinLabel:'PIN * (giriş şifresi)',
+    deleteOrg:'Bu organizatörü silmek istiyor musunuz? Yarışmaları etkilenmez.',
+    orgLoginTitle:'Organizatör Girişi', orgLoginSub:'Hesabınızı seçin ve PIN ile giriş yapın.',
+    noOrgsWarning:'Henüz organizatör hesabı yok. Admin giriş yaparak hesap oluşturun.',
+    selectOrgHint:'Hesap seçin ve PIN girin',
+    // Admin settings
+    adminName:'Admin Adı', currentPin:'Mevcut Admin PIN', newPin:'Yeni Admin PIN',
+    newPinPlaceholder:'Yeni PIN (boş bırakırsan değişmez)', adminSaved:'Admin ayarları kaydedildi ✓',
+    wrongCurrentPin:'Mevcut PIN hatalı',
+    // Competition selector
+    competitions_title:'YARIŞMALAR', activeComps:'aktif', archivedComps:'arşivde',
+    newCompetition:'+ Yeni Yarışma', exitBtn:'← Çıkış',
+    activeTab:'🏆 Aktif Yarışmalar', archiveTab:'📦 Arşiv',
+    noActiveComps:'Henüz yarışma yok — Yeni Yarışma butonuna basın',
+    noArchivedComps:'Arşivde yarışma yok',
+    archiveBtn:'📦 Arşivle', unarchiveBtn:'↩ Aktife Al', hardDeleteBtn:'🗑 Kalıcı Sil',
+    archiveConfirm:'Tüm raundlar tamamlandı. Yarışmayı arşivlemek ister misiniz?',
+    hardDeleteConfirm:'yarışmasını kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz.',
+    archivedSuccess:'Yarışma arşivlendi ✓', unarchiveSuccess:'Yarışma aktife alındı ✓',
+    liveNow:'🟢 CANLI', selectedComp:'● Seçili', inArchive:'📦 Arşiv',
+    competitorCount:'yarışmacı', judgeCount:'hakem', roundCount:'raund',
+    // Archive results modal
+    archiveResults:'Arşiv Sonuçları', archiveCSV:'📤 CSV İndir', closeBtn:'Kapat',
+    // Stat labels
+    statOrgs:'Organizatörler', statActiveComps:'Aktif Yarışma',
+    statTotalComps:'Toplam Yarışma', statTotalComps2:'Toplam Yarışmacı',
+    // Misc
+    newComp:'Yeni yarışma oluşturuldu ✓', compArchive:'Yarışma arşivlendi ✓',
+    judgesCSV:'Hakem listesi CSV olarak indirildi',
+    judgeImported:'hakem içe aktarıldı ✓', judgeCSVFormat:'CSV formatı: Ad Soyad,PIN,Kategori(opsiyonel)',
+    judgeCSVExample:'Örnek: Ahmet Yılmaz,43211,F1A',
+    judgeImportBtn:'📥 CSV İçe Aktar', judgeExportBtn:'📤 CSV Dışa Aktar',
+    dupPin:'Bu PIN zaten kullanımda, atlandı',
+    singleJudgeLane:'Tek Hakem', noJudgeLane:'Hakem Yok',
+    lanesCreatedDouble:'Tüm kulvarlar çift hakem',
+    lanesCreatedMixed:'kulvar çift hakem, tek hakem kulvar',
+    laneNotEnough:'kulvar için en az',
+    laneNeedMore:'hakem gerekli. Şu an',
+    laneNeedAdd:'hakem daha ekleyin.',
+  },
+  en:{
+    management:'Management',results:'Results',switchRole:'Switch Role',register:'Register',
+    tagline:'Manage your free flight competition digitally.',
+    organizer:'ORGANIZER',judge:'TIMEKEEPER',scoreboard:'SCOREBOARD',
+    orgDesc:'Create competitions, manage, assign timekeepers, start rounds.',
+    judgeDesc:'Time flights, enter scores, manage assigned competitors.',
+    sbDesc:'Watch live scoreboard. No login required.',
+    regDesc:'Fill registration form for competitor or official.',
+    dataNote:'All data stored on device',
+    orgLogin:'Organizer Login', judgeLogin:'Timekeeper Login',
+    orgPinHint:'Enter organizer PIN code', judgePinHint:'Enter your timekeeper PIN code',
+    login:'Login', wrongPin:'❌ Wrong PIN', back:'← Back',
+    defaultPin:'Default PIN: <strong>1234</strong><br>You can change it in competition setup.',
+    overview:'📊 Overview', setup:'⚙️ Competition Setup', competitors:'👥 Competitors',
+    judges:'⚖️ Timekeepers', lanes:'🏟 Lanes', rounds:'🏁 Rounds', resultsTab:'🏆 Results',
+    compName:'Competition Name', location:'Location', startDate:'Start Date', endDate:'End Date',
+    bulletinUrl:'Bulletin URL (PDF link)', categories:'Categories',
+    addCustomCat:'Add Custom Category', customCatPlaceholder:'e.g. F5J, HLG...',
+    roundSettings:'Round Settings', addRound:'+ Add Round', saveSettings:'💾 Save Settings',
+    orgPin:'Organizer PIN', judgePinPrefix:'Timekeeper PIN Prefix',
+    judgePinHintSetup:'Timekeepers use: prefix + sequence (e.g. 4321, 43212...)',
+    saved:'Competition settings saved ✓',
+    addCompetitor:'+ Add Competitor', importCSV:'📥 Import CSV', exportCSV:'📤 Export CSV',
+    noCompetitorsYet:'No competitors yet', firstName:'First Name', lastName:'Last Name',
+    email:'Email', country:'Country', faiId:'FAI ID', thsfNo:'THSF License No',
+    compClass:'Class', banquet:'Banquet', senior:'Senior', junior:'Junior',
+    yes:'Yes', no:'No', save:'Save', cancel:'Cancel', edit:'Edit', delete:'Delete',
+    confirmDelete:'Are you sure you want to delete this competitor?',
+    noCompetitors:'Add competitors first', noJudges:'Add timekeepers first',
+    addJudge:'+ Add Timekeeper', noJudgesYet:'No timekeepers defined',
+    judgesNeeded:'timekeepers needed', autoAssign:'⚡ Auto Assign Lanes',
+    pin:'PIN', judgeCategory:'Category (optional)', all:'All',
+    pinHint:'Timekeeper will login with this PIN',
+    noLanesYet:'No lanes defined — click Auto Assign',
+    reassign:'⚡ Reassign', lane:'LANE', noJudgeAssigned:'No timekeeper assigned',
+    lanesCreated:'lanes created automatically',
+    addFlyoff:'⚡ Add Flyoff', roundPending:'Pending', roundActive:'Active', roundDone:'Completed',
+    startRound:'▶ Start', endRound:'⏹ End', maxTime:'Max', scores:'scores',
+    roundEditNote:'Add rounds in Setup tab',
+    endRoundConfirm:'Unrecorded scores will be marked as zero. Continue?',
+    flyoffRequired:'FLYOFF REQUIRED',
+    flyoffDesc:'The following competitors completed all rounds at max time or have equal total times.',
+    addFlyoffRound:'+ Add Flyoff Round',
+    flyoffMaxTime:'Flyoff Max Duration (seconds)',
+    flyoffHeightCheck:'Add height measurement (time + meters)',
+    flyoffHeightHint:'System will prompt for height entry before flyoff starts',
+    myCompetitors:'My Competitors', noAssigned:'No competitors assigned to you for this round.',
+    noRound:'No active round', waitRound:'Wait for organizer to start a new round.',
+    start:'▶ START', stop:'⏹ STOP', saveScore:'💾 SAVE', reset:'↺ Reset',
+    grantAttempt:'Grant Attempt', saveAnyway:'Save',
+    crashAttempt:'⚡ Crash/Collision — Grant Attempt',
+    attemptWarning:'Flight under 20 seconds! A retry attempt may be granted.',
+    attemptGranted:'Attempt granted — New flight can be started',
+    alreadyAttempt:'A retry attempt has already been used for this round',
+    optionalNote:'Optional note (crash detail, attempt reason...)',
+    scoreSaved:'saved ✓', maxFlight:'MAX FLIGHT ✅',
+    attemptInfo:'Attempt', sub20:'Under 20s flight', crash:'Crash/Collision',
+    roundScores:'Round Scores', waiting:'Waiting',
+    activeRound:'in progress', refresh:'↺ Refresh', selectCat:'No category selected',
+    noCompInCat:'no competitors registered in category', total:'TOTAL',
+    registerTitle:'Registration Form', downloadBulletin:'📥 Download/View Bulletin',
+    bulletin:'Competition Bulletin', submit:'📩 Submit Registration',
+    registerSuccess:'registration received! ✓',
+    disqualify:'Disqualify', editScore:'Edit Score', scoreEditWarn:'⚠️ Score changes are logged.',
+    saveChange:'Save Change', note:'Note', competitor:'Competitor',
+    noCompFound:'Competitor not found', noRoundFound:'Timekeeper not found',
+    csvFormat:'CSV format: Name,Surname,Email,Country,FAI_ID,THSF_No,Categories(F1A;F1B),Senior(true/false),Banquet(true/false)',
+    csvPaste:'or Paste CSV Text', importBtn:'Import', imported:'competitors imported ✓',
+    csvEmpty:'CSV data is empty', nameRequired:'First name and last name are required', pinRequired:'Name and PIN are required',
+    categoryRequired:'Competition name is required', csvDownloaded:'CSV downloaded',
+    resultsDownloaded:'Results downloaded as CSV',
+    scoreUpdated:'Score updated', deleted:'Deleted', confirmJudgeDelete:'Are you sure you want to delete this timekeeper?',
+    exportResults:'📤 Download CSV',
+    activeRoundLabel:'Active Round',
+    // Admin
+    adminLogin:'Admin Login', adminPinHint:'Enter admin PIN code',
+    adminDefaultPin:'Default Admin PIN: <strong>admin1234</strong><br>Change it in the Admin Settings tab.',
+    adminPanel:'ADMIN PANEL', adminDesc:'Manage the entire system, create organizer accounts, intervene in any competition.',
+    adminTabOrgs:'👤 Organizers', adminTabComps:'🏆 All Competitions', adminTabSettings:'⚙️ Admin Settings',
+    addOrganizer:'+ Add Organizer', noOrganizersYet:'No organizer accounts yet',
+    organizerCount:'organizer accounts', competitions:'competitions',
+    orgName:'Full Name', createdAt:'Created',
+    enterAsOrg:'Enter as →', manageComp:'Manage →',
+    editOrg:'Edit Organizer', newOrg:'New Organizer',
+    orgPinLabel:'PIN * (login password)',
+    deleteOrg:'Are you sure you want to delete this organizer? Their competitions will not be affected.',
+    orgLoginTitle:'Organizer Login', orgLoginSub:'Select your account and enter your PIN.',
+    noOrgsWarning:'No organizer accounts yet. Log in as admin to create one.',
+    selectOrgHint:'Select an account and enter PIN',
+    // Admin settings
+    adminName:'Admin Name', currentPin:'Current Admin PIN', newPin:'New Admin PIN',
+    newPinPlaceholder:'New PIN (leave blank to keep current)', adminSaved:'Admin settings saved ✓',
+    wrongCurrentPin:'Current PIN is incorrect',
+    // Competition selector
+    competitions_title:'COMPETITIONS', activeComps:'active', archivedComps:'archived',
+    newCompetition:'+ New Competition', exitBtn:'← Exit',
+    activeTab:'🏆 Active Competitions', archiveTab:'📦 Archive',
+    noActiveComps:'No competitions yet — click New Competition',
+    noArchivedComps:'No archived competitions',
+    archiveBtn:'📦 Archive', unarchiveBtn:'↩ Restore', hardDeleteBtn:'🗑 Delete',
+    archiveConfirm:'All rounds completed. Would you like to archive this competition?',
+    hardDeleteConfirm:'permanently? This cannot be undone.',
+    archivedSuccess:'Competition archived ✓', unarchiveSuccess:'Competition restored to active ✓',
+    liveNow:'🟢 LIVE', selectedComp:'● Selected', inArchive:'📦 Archive',
+    competitorCount:'competitors', judgeCount:'timekeepers', roundCount:'rounds',
+    // Archive results modal
+    archiveResults:'Archive Results', archiveCSV:'📤 Download CSV', closeBtn:'Close',
+    // Stat labels
+    statOrgs:'Organizers', statActiveComps:'Active Competitions',
+    statTotalComps:'Total Competitions', statTotalComps2:'Total Competitors',
+    // Misc
+    newComp:'New competition created ✓', compArchive:'Competition archived ✓',
+    judgesCSV:'Timekeeper list downloaded as CSV',
+    judgeImported:'timekeepers imported ✓', judgeCSVFormat:'CSV format: Full Name,PIN,Category(optional)',
+    judgeCSVExample:'Example: John Smith,43211,F1A',
+    judgeImportBtn:'📥 Import CSV', judgeExportBtn:'📤 Export CSV',
+    dupPin:'This PIN is already in use, skipped',
+    singleJudgeLane:'Single TK', noJudgeLane:'No TK',
+    lanesCreatedDouble:'All lanes have two timekeepers',
+    lanesCreatedMixed:'lanes double TK, single TK lanes',
+    laneNotEnough:'lanes require at least',
+    laneNeedMore:'timekeepers. Currently',
+    laneNeedAdd:'more needed.',
+  }
+};
+
+// ==================== AUTH ====================
+let CURRENT_ROLE='public'; // 'admin'|'organizer'|'judge'|'public'
+let CURRENT_JUDGE_ID=null;
+
+function checkJudgePin(pin){
+  const idx=loadIndex();
+  for(const entry of idx){
+    const comp=loadComp(entry.id);
+    if(!comp) continue;
+    const j=comp.judges.find(j=>j.pin===pin);
+    if(j){selectComp(entry.id);CURRENT_JUDGE_ID=j.id;return true;}
+  }
+  return false;
+}
+
+// ==================== ROUTER ====================
+let CURRENT_VIEW='landing';
+function navigate(view){CURRENT_VIEW=view;renderApp();}
+
+function renderApp(){
+  updateTopbar();
+  const main=document.getElementById('mainContent');
+  switch(CURRENT_VIEW){
+    case 'landing':      main.innerHTML=renderLanding(); break;
+    case 'admin-pin':    main.innerHTML=renderAdminPin(); break;
+    case 'admin':        main.innerHTML=renderAdmin(); break;
+    case 'org-login':    main.innerHTML=renderOrgLogin(); break;
+    case 'org-register': main.innerHTML=renderOrgRegister(); break;
+    case 'judge-pin':    main.innerHTML=renderPinScreen('judge'); break;
+    case 'comp-select':  main.innerHTML=renderCompSelect(); break;
+    case 'organizer':    main.innerHTML=renderOrganizer(); bindOrgEvents(); break;
+    case 'judge':        main.innerHTML=renderJudge(); bindJudgeEvents(); break;
+    case 'scoreboard':   main.innerHTML=renderScoreboard(); break;
+    case 'register':     main.innerHTML=renderPublicRegister(); break;
+    default:             main.innerHTML=renderLanding();
+  }
+}
+
+function updateTopbar(){
+  const comp=STATE.competition;
+  document.getElementById('topbarComp').textContent=comp.name||'Free Flight Competition Organizer';
+  const nav=document.getElementById('topbarNav');
+  const roleEl=document.getElementById('topbarRole');
+  ['TR','EN'].forEach(l=>{
+    const btn=document.getElementById('lang'+l);
+    if(btn){btn.style.background=CURRENT_LANG===l.toLowerCase()?'var(--blue)':'transparent';btn.style.color=CURRENT_LANG===l.toLowerCase()?'#000':'var(--text2)';}
+  });
+  if(CURRENT_ROLE==='admin'){
+    nav.innerHTML=`
+      <button class="nav-btn ${CURRENT_VIEW==='admin'?'active':''}" onclick="navigate('admin')">👑 Admin</button>
+      ${ACTIVE_COMP_ID?`<button class="nav-btn ${CURRENT_VIEW==='organizer'?'active':''}" onclick="navigate('organizer')">📋 Yönetim</button>`:''}
+      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 Sonuçlar</button>
+    `;
+    roleEl.textContent='👑 Admin';roleEl.style.color='var(--purple)';
+  } else if(CURRENT_ROLE==='organizer'){
+    const org=ACTIVE_ORG_ID?loadOrganizers().find(o=>o.id===ACTIVE_ORG_ID):null;
+    nav.innerHTML=`
+      <button class="nav-btn" onclick="navigate('comp-select')">◀ ${t('competitions_title')}</button>
+      <button class="nav-btn ${CURRENT_VIEW==='organizer'?'active':''}" onclick="navigate('organizer')">📋 ${t('management')}</button>
+      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
+    `;
+    roleEl.textContent='👤 '+(org?org.name:'Organizatör');roleEl.style.color='var(--gold)';
+  } else if(CURRENT_ROLE==='judge'){
+    const j=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+    nav.innerHTML=`
+      <button class="nav-btn ${CURRENT_VIEW==='judge'?'active':''}" onclick="navigate('judge')">⏱ ${t('judge')}</button>
+      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
+    `;
+    roleEl.textContent='⚖️ '+(j?j.name:t('judge'));roleEl.style.color='var(--blue)';
+  } else {
+    nav.innerHTML=`
+      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
+      <button class="nav-btn ${CURRENT_VIEW==='register'?'active':''}" onclick="navigate('register')">📝 ${t('register')}</button>
+    `;
+    roleEl.textContent='🔄 '+t('switchRole');roleEl.style.color='var(--text2)';
+  }
+}
+
+// ==================== LANDING ====================
+function renderLanding(){
+  return `
+  <div class="landing">
+    <div>
+      <div class="landing-logo">FF<span>CO</span></div>
+      <div class="landing-sub mt-3">${t('tagline')}</div>
+    </div>
+    <div class="role-cards">
+      <div class="role-card" onclick="navigate('admin-pin')" style="border-color:rgba(155,109,255,0.3)">
+        <div class="role-icon">👑</div>
+        <div class="role-name" style="color:var(--purple)">ADMİN</div>
+        <div class="role-desc">${t('adminDesc')}</div>
+      </div>
+      <div class="role-card" onclick="navigate('org-login')">
+        <div class="role-icon">🧑‍✈️</div>
+        <div class="role-name">${t('organizer')}</div>
+        <div class="role-desc">${t('orgDesc')}</div>
+      </div>
+      <div class="role-card" onclick="navigate('judge-pin')">
+        <div class="role-icon">⏱</div>
+        <div class="role-name">${t('judge')}</div>
+        <div class="role-desc">${t('judgeDesc')}</div>
+      </div>
+      <div class="role-card" onclick="guestScoreboard()">
+        <div class="role-icon">📊</div>
+        <div class="role-name">${t('scoreboard')}</div>
+        <div class="role-desc">${t('sbDesc')}</div>
+      </div>
+      <div class="role-card" onclick="guestRegister()">
+        <div class="role-icon">✍️</div>
+        <div class="role-name">${t('register')}</div>
+        <div class="role-desc">${t('regDesc')}</div>
+      </div>
+    </div>
+    <div class="text-sm text-muted">v1.2 · 2026 FFCO · ${t('dataNote')}</div>
+  </div>`;
+}
+function guestScoreboard(){CURRENT_ROLE='public';navigate('scoreboard');}
+function guestRegister(){CURRENT_ROLE='public';navigate('register');}
+
+// ==================== ADMIN ====================
+function renderAdminPin(){
+  return `<div class="pin-screen">
+    <div class="pin-title" style="color:var(--purple)">👑 ${t('adminLogin')}</div>
+    <div class="pin-sub">${t('adminPinHint')}</div>
+    <input class="pin-input" type="password" id="pinInput" maxlength="20" placeholder="••••" autofocus
+      onkeydown="if(event.key==='Enter')doAdminPin()">
+    <div class="pin-error hidden" id="pinError">${t('wrongPin')}</div>
+    <button class="btn btn-primary w-full" style="background:var(--purple);border-color:var(--purple)" onclick="doAdminPin()">${t('login')}</button>
+    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">${t('back')}</button></div>
+    <div class="mt-4 alert alert-info">${t('adminDefaultPin')}</div>
+  </div>`;
+}
+function doAdminPin(){
+  const pin=document.getElementById('pinInput').value;
+  const admin=getAdmin();
+  if(pin===admin.pin){
+    CURRENT_ROLE='admin';
+    // First time: save admin with default PIN so it's stored
+    if(!isAdminSetup()){saveAdmin(admin);}
+    navigate('admin');
+  } else {
+    document.getElementById('pinError').classList.remove('hidden');
+  }
+}
+
+function renderAdmin(){
+  const admin=getAdmin();
+  const orgs=loadOrganizers();
+  const idx=loadIndex();
+  const totalComps=idx.length;
+  const activeComps=idx.filter(e=>!e.archived).length;
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-4">
+      <div class="font-orb text-purple" style="font-size:18px;letter-spacing:2px;">👑 ${t('adminPanel')}</div>
+    </div>
+    <div class="grid-4 mb-4">
+      <div class="stat-box" style="border-color:var(--purple)">
+        <div class="stat-label">${t('statOrgs')}</div>
+        <div class="stat-val">${orgs.length}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">${t('statActiveComps')}</div>
+        <div class="stat-val">${activeComps}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">${t('statTotalComps')}</div>
+        <div class="stat-val">${totalComps}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">${t('statTotalComps2')}</div>
+        <div class="stat-val">${idx.reduce((s,e)=>{const c=loadComp(e.id);return s+(c?c.competitors.length:0);},0)}</div>
+      </div>
+    </div>
+    <div class="tabs mb-4" id="adminTabs">
+      <button class="tab active" onclick="adminTab('orgs',this)">${t('adminTabOrgs')}</button>
+      <button class="tab" onclick="adminTab('comps',this)">${t('adminTabComps')}</button>
+      <button class="tab" onclick="adminTab('settings',this)">${t('adminTabSettings')}</button>
+    </div>
+    <div id="adminContent">${renderAdminOrgs()}</div>
+  </div>`;
+}
+let ADMIN_TAB='orgs';
+function adminTab(tab,el){
+  ADMIN_TAB=tab;
+  document.querySelectorAll('#adminTabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const map={orgs:renderAdminOrgs,comps:renderAdminComps,settings:renderAdminSettings};
+  document.getElementById('adminContent').innerHTML=(map[tab]||renderAdminOrgs)();
+}
+
+function renderAdminOrgs(){
+  const orgs=loadOrganizers();
+  return `<div>
+    <div class="flex justify-between items-center mb-3">
+      <div class="text-sm text-muted">${orgs.length} ${t('organizerCount')}</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddOrgModal()">+ ${t('addOrganizer').replace('+ ','')}</button>
+    </div>
+    ${orgs.length===0?`<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">${t('noOrganizersYet')}</div></div>`:`
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>${t('orgName')}</th><th>PIN</th><th>${t('competitions')}</th><th>${t('createdAt')}</th><th></th></tr></thead>
+      <tbody>
+        ${orgs.map(o=>{
+          const orgComps=loadIndex().filter(e=>e.organizerId===o.id).length;
+          return `<tr>
+            <td><strong>${o.name}</strong></td>
+            <td class="font-mono">${o.pin}</td>
+            <td>${orgComps} ${t('competitions')}</td>
+            <td class="text-sm text-muted">${new Date(o.createdAt).toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'tr')}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="adminEnterAsOrg('${o.id}')">${t('enterAsOrg')}</button>
+              <button class="btn btn-ghost btn-sm" onclick="editOrgModal('${o.id}')">✏️</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteOrg('${o.id}')" style="color:var(--red)">🗑</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`}
+  </div>`;
+}
+
+function renderAdminComps(){
+  const idx=loadIndex();
+  return `<div>
+    <div class="text-sm text-muted mb-3">${idx.length} ${t('statTotalComps').toLowerCase()}</div>
+    ${idx.length===0?`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">${t('noActiveComps')}</div></div>`:`
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>${CURRENT_LANG==='en'?'Competition':'Yarışma'}</th><th>${t('statOrgs')}</th><th>${CURRENT_LANG==='en'?'Date':'Tarih'}</th><th>${CURRENT_LANG==='en'?'Status':'Durum'}</th><th>${t('competitorCount')}</th><th></th></tr></thead>
+      <tbody>
+        ${idx.map(e=>{
+          const comp=loadComp(e.id);
+          if(!comp) return '';
+          const org=loadOrganizers().find(o=>o.id===e.organizerId);
+          const activeRound=comp.rounds.find(r=>r.status==='active');
+          return `<tr>
+            <td><strong>${comp.competition.name||'—'}</strong></td>
+            <td>${org?org.name:e.organizerId==='admin'?'<span class="badge badge-purple">Admin</span>':'—'}</td>
+            <td class="text-sm">${comp.competition.dateStart||'—'}</td>
+            <td>${e.archived?`<span class="badge badge-gray">${t('inArchive')}</span>`:activeRound?`<span class="badge badge-green">${t('liveNow')}</span>`:`<span class="badge badge-blue">${CURRENT_LANG==='en'?'Active':'Aktif'}</span>`}</td>
+            <td>${comp.competitors.length}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="adminEnterComp('${e.id}')">${t('manageComp')}</button>
+              ${!e.archived?`<button class="btn btn-ghost btn-sm" onclick="archiveComp('${e.id}')" title="${t('archiveBtn')}">📦</button>`:`<button class="btn btn-ghost btn-sm" onclick="unarchiveComp('${e.id}')" title="${t('unarchiveBtn')}">↩</button>`}
+              <button class="btn btn-ghost btn-sm" onclick="hardDeleteComp('${e.id}')" style="color:var(--red)" title="${t('hardDeleteBtn')}">🗑</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`}
+  </div>`;
+}
+
+function renderAdminSettings(){
+  const admin=getAdmin();
+  return `<div class="card" style="max-width:480px">
+    <div class="card-header"><div class="card-title">⚙️ ${t('adminTabSettings')}</div></div>
+    <div class="form-group"><label>${t('adminName')}</label><input id="adm-name" value="${admin.name}"></div>
+    <div class="form-group"><label>${t('currentPin')}</label><input id="adm-old" type="password" placeholder="••••"></div>
+    <div class="form-group"><label>${t('newPin')}</label><input id="adm-new" type="password" placeholder="${t('newPinPlaceholder')}"></div>
+    <button class="btn btn-primary" onclick="saveAdminSettings()">💾 ${t('save')}</button>
+  </div>`;}
+function saveAdminSettings(){
+  const admin=getAdmin();
+  const oldPin=document.getElementById('adm-old').value;
+  const newPin=document.getElementById('adm-new').value.trim();
+  if(newPin&&oldPin!==admin.pin){toast(t('wrongCurrentPin'),'error');return;}
+  admin.name=document.getElementById('adm-name').value.trim()||admin.name;
+  if(newPin)admin.pin=newPin;
+  saveAdmin(admin);toast(t('adminSaved'),'success');
+}
+
+function openAddOrgModal(editId){
+  const o=editId?loadOrganizers().find(x=>x.id===editId):{};
+  openModal(editId?t('editOrg'):t('newOrg'),`
+    <div class="form-group"><label>${t('orgName')} *</label><input id="om-name" value="${o.name||''}"></div>
+    <div class="form-group"><label>${t('orgPinLabel')}</label><input id="om-pin" value="${o.pin||''}"></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+    <button class="btn btn-primary" onclick="saveOrgAccount('${editId||''}')">${t('save')}</button>`);
+}
+function editOrgModal(id){openAddOrgModal(id);}
+function saveOrgAccount(editId){
+  const name=document.getElementById('om-name').value.trim();
+  const pin=document.getElementById('om-pin').value.trim();
+  if(!name||!pin){toast(t('pinRequired'),'error');return;}
+  const orgs=loadOrganizers();
+  if(editId){const o=orgs.find(x=>x.id===editId);if(o){o.name=name;o.pin=pin;}}
+  else{orgs.push({id:uid(),name,pin,createdAt:new Date().toISOString()});}
+  saveOrganizers(orgs);closeModal();
+  document.getElementById('adminContent').innerHTML=renderAdminOrgs();
+  toast(`${name} ${t('save').toLowerCase()}d ✓`,'success');
+}
+function deleteOrg(id){
+  const orgs=loadOrganizers();const o=orgs.find(x=>x.id===id);
+  if(!confirm(t('deleteOrg'))) return;
+  saveOrganizers(orgs.filter(x=>x.id!==id));
+  document.getElementById('adminContent').innerHTML=renderAdminOrgs();
+  toast(t('deleted'),'info');
+}
+function adminEnterAsOrg(orgId){
+  ACTIVE_ORG_ID=orgId;
+  CURRENT_ORG_ID=orgId;
+  sessionStorage.setItem('ffco_active_org',orgId);
+  CURRENT_ROLE='organizer';
+  navigate('comp-select');
+  const org=loadOrganizers().find(o=>o.id===orgId);
+  toast(`${org?.name||''} olarak giriş yapıldı`,'info');
+}
+function adminEnterComp(compId){
+  selectComp(compId);CURRENT_ROLE='admin';ORG_TAB='overview';navigate('organizer');
+}
+
+// ==================== ORGANIZER LOGIN ====================
+function renderOrgLogin(){
+  const orgs=loadOrganizers();
+  return `<div style="max-width:420px;margin:40px auto;">
+    <div class="pin-title mb-2" style="font-family:'Orbitron',monospace;font-size:16px;color:var(--gold)">🧑‍✈️ ${t('orgLoginTitle')}</div>
+    <div class="text-sm text-muted mb-4">${t('orgLoginSub')}</div>
+    ${orgs.length===0?`<div class="alert alert-warn mb-3">${t('noOrgsWarning')}</div>`:`
+    <div class="mb-4" style="display:flex;flex-direction:column;gap:8px;">
+      ${orgs.map(o=>`
+        <div class="competitor-chip" onclick="selectOrgAccount('${o.id}',this)" id="orgchip_${o.id}" style="cursor:pointer">
+          <div class="chip-name">👤 ${o.name}</div>
+        </div>`).join('')}
+    </div>`}
+    <div id="org-pin-section" style="${orgs.length===0?'':'display:none'}">
+      <div class="form-group"><label>PIN</label><input class="pin-input" id="orgPinIn" type="password" placeholder="••••" style="font-size:24px;letter-spacing:8px;" onkeydown="if(event.key==='Enter')doOrgLogin()"></div>
+      <div class="pin-error hidden" id="orgPinErr">${t('wrongPin')}</div>
+      <button class="btn btn-primary w-full" onclick="doOrgLogin()">${t('login')}</button>
+    </div>
+    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">${t('back')}</button></div>
+  </div>`;
+}
+let SELECTED_ORG_ID_TMP=null;
+function selectOrgAccount(id,el){
+  SELECTED_ORG_ID_TMP=id;
+  document.querySelectorAll('.competitor-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('org-pin-section').style.display='block';
+  document.getElementById('orgPinIn').focus();
+}
+function doOrgLogin(){
+  const pin=document.getElementById('orgPinIn').value;
+  const orgs=loadOrganizers();
+  const org=SELECTED_ORG_ID_TMP?orgs.find(o=>o.id===SELECTED_ORG_ID_TMP&&o.pin===pin):orgs.find(o=>o.pin===pin);
+  if(org){
+    ACTIVE_ORG_ID=org.id;
+    CURRENT_ORG_ID=org.id;
+    sessionStorage.setItem('ffco_active_org',org.id);
+    CURRENT_ROLE='organizer';
+    navigate('comp-select');
+  } else {
+    document.getElementById('orgPinErr').classList.remove('hidden');
+  }
+}
+function renderOrgRegister(){return renderOrgLogin();}
+
+// ==================== COMPETITION SELECTOR ====================
+let COMP_TAB='active';
+function renderCompSelect(){
+  let idx=loadIndex();
+  // Admin sees ALL, organizer sees only their own
+  if(CURRENT_ROLE==='organizer'&&ACTIVE_ORG_ID){
+    idx=idx.filter(e=>e.organizerId===ACTIVE_ORG_ID);
+  }
+  const active=idx.filter(e=>!e.archived);
+  const archived=idx.filter(e=>e.archived);
+  return `
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+      <div>
+        <div class="font-orb text-blue" style="font-size:18px;letter-spacing:2px;">${t('competitions_title')}</div>
+        <div class="text-sm text-muted">${active.length} ${t('activeComps')} · ${archived.length} ${t('archivedComps')}</div>
+      </div>
+      <div class="flex gap-2">
+        ${COMP_TAB==='active'?`<button class="btn btn-primary" onclick="doCreateComp()">+ ${t('newCompetition').replace('+ ','')}</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="showRoleSwitch()">${t('exitBtn')}</button>
+      </div>
+    </div>
+    <div class="tabs mb-4">
+      <button class="tab ${COMP_TAB==='active'?'active':''}" onclick="COMP_TAB='active';navigate('comp-select')">${t('activeTab')} (${active.length})</button>
+      <button class="tab ${COMP_TAB==='archive'?'active':''}" onclick="COMP_TAB='archive';navigate('comp-select')">${t('archiveTab')} (${archived.length})</button>
+    </div>
+    ${COMP_TAB==='active'?renderCompGrid(active,false):renderCompGrid(archived,true)}
+  </div>`;
+}
+
+function renderCompGrid(list,isArchive){
+  if(list.length===0) return `
+    <div class="empty">
+      <div class="empty-icon">${isArchive?'📦':'🏆'}</div>
+      <div class="empty-text">${isArchive?t('noArchivedComps'):t('noActiveComps')}</div>
+    </div>`;
+  return `
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;">
+    ${list.map(e=>{
+      const comp=loadComp(e.id);
+      if(!comp) return '';
+      const activeRound=comp.rounds.find(r=>r.status==='active');
+      const doneRounds=comp.rounds.filter(r=>r.status==='done').length;
+      const cats=comp.competition.categories;
+      const isSelected=ACTIVE_COMP_ID===e.id;
+      return `
+      <div class="card" style="border-color:${activeRound?'var(--green)':isSelected?'var(--blue)':isArchive?'var(--border)':'var(--border)'};${isArchive?'opacity:.85':''}">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex gap-2 flex-wrap">
+            ${activeRound?'<span class="badge badge-green">🟢 CANLI</span>':''}
+            ${isSelected&&!isArchive?'<span class="badge badge-blue">● Seçili</span>':''}
+            ${isArchive?'<span class="badge badge-gray">📦 Arşiv</span>':''}
+          </div>
+          <div class="flex gap-1">
+            ${!isArchive?`
+              <button class="btn btn-ghost btn-sm" title="${t('archiveBtn')}" onclick="event.stopPropagation();archiveComp('${e.id}')" style="color:var(--gold);padding:3px 7px">📦</button>
+            `:`
+              <button class="btn btn-ghost btn-sm" title="${t('unarchiveBtn')}" onclick="event.stopPropagation();unarchiveComp('${e.id}')" style="color:var(--green);padding:3px 7px">↩</button>
+              <button class="btn btn-ghost btn-sm" title="${t('hardDeleteBtn')}" onclick="event.stopPropagation();hardDeleteComp('${e.id}')" style="color:var(--red);padding:3px 7px">🗑</button>
+            `}
+          </div>
+        </div>
+        <div class="font-orb" style="font-size:14px;color:var(--text);margin-bottom:4px;cursor:${isArchive?'default':'pointer'}" ${!isArchive?`onclick="enterComp('${e.id}')"`:''}>${comp.competition.name||'—'}</div>
+        <div class="text-sm text-muted mb-3">${comp.competition.dateStart||'—'} ${comp.competition.location?'· '+comp.competition.location:''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">
+          ${cats.slice(0,4).map(c=>`<span class="badge badge-blue">${c}</span>`).join('')}
+          ${cats.length>4?`<span class="badge badge-gray">+${cats.length-4}</span>`:''}
+        </div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:${!isArchive?'12':'0'}px;">
+          <span>👥 ${comp.competitors.length}</span>
+          <span>⚖️ ${comp.judges.length}</span>
+          <span>🏁 ${doneRounds}/${comp.rounds.length}</span>
+        </div>
+        ${!isArchive?`
+        <div class="flex gap-2">
+          <button class="btn btn-primary btn-sm flex-1" onclick="enterComp('${e.id}')">${t('manageComp')}</button>
+          <button class="btn btn-ghost btn-sm" onclick="viewArchiveResults('${e.id}')"></button>
+        </div>`:`
+        <div class="flex gap-2 mt-3">
+          <button class="btn btn-ghost btn-sm flex-1" onclick="viewArchiveResults('${e.id}')">${t('archiveResults')}</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportArchiveCSV('${e.id}')">📤 CSV</button>
+        </div>`}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function viewArchiveResults(compId){
+  // Load that comp temporarily to show results
+  const oldState=STATE;
+  const oldActiveId=ACTIVE_COMP_ID;
+  const comp=loadComp(compId);
+  if(!comp){toast('Veri bulunamadı','error');return;}
+  // Show results in modal
+  STATE=comp;
+  const cats=comp.competition.categories;
+  let html=`<div style="font-size:13px;color:var(--text2);margin-bottom:16px;">📦 ${comp.competition.name} — ${comp.competition.dateStart||''}${comp.competition.location?' · '+comp.competition.location:''}</div>`;
+  cats.forEach(cat=>{
+    const catComps=comp.competitors.filter(c=>c.categories.includes(cat));
+    if(!catComps.length) return;
+    const ranked=rankCategory(cat);
+    html+=`<div style="margin-bottom:20px;"><div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--blue);margin-bottom:8px;">🏅 ${cat}</div>`;
+    ranked.slice(0,10).forEach((rc,i)=>{
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <span style="font-family:'Orbitron',monospace;font-weight:700;width:28px">${medal}</span>
+        <span style="flex:1">${rc.competitor.name} ${rc.competitor.surname}</span>
+        <span style="font-family:'Space Mono',monospace;color:var(--gold)">${fmtSec(rc.total)}</span>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  STATE=oldState;
+  openModal(`📦 ${comp.competition.name} — Arşiv Sonuçları`,html,`<button class="btn btn-primary" onclick="closeModal()">Kapat</button>`);
+}
+function exportArchiveCSV(compId){
+  const comp=loadComp(compId);
+  if(!comp) return;
+  const oldState=STATE;
+  STATE=comp;
+  const lines=['Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
+  comp.competition.categories.forEach(cat=>{
+    rankCategory(cat).forEach((rc,i)=>{
+      const c=rc.competitor;
+      lines.push(`${cat},${i+1},${c.name},${c.surname},${c.country||''},${c.faiId||''},${rc.total.toFixed(2)}`);
+    });
+  });
+  STATE=oldState;
+  downloadCSV(`${comp.competition.name||'arsiv'}_sonuclar.csv`,lines.join('\n'));
+  toast('Arşiv CSV indirildi','info');
+}
+
+function doCreateComp(){
+  const id=createNewComp(ACTIVE_ORG_ID||'admin');
+  if(!id) return;
+  selectComp(id);
+  ORG_TAB='setup';
+  navigate('organizer');
+  toast(t('newComp'),'success');
+}
+function enterComp(id){
+  selectComp(id);
+  ORG_TAB='overview';
+  navigate('organizer');
+}
+function confirmDeleteComp(id){
+  const comp=loadComp(id);
+  const name=comp?.competition?.name||'Bu yarışma';
+  if(!confirm(`"${name}" yarışmasını ve tüm verilerini silmek istiyor musunuz? Bu işlem geri alınamaz.`)) return;
+  const idx=loadIndex().filter(e=>e.id!==id);
+  saveIndex(idx);
+  deleteComp(id);
+  if(ACTIVE_COMP_ID===id){ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();}
+  navigate('comp-select');
+  toast(`${name} silindi`,'info');
+}
+
+// ==================== PIN SCREENS ====================
+function renderPinScreen(type){
+  const isOrg=type==='organizer';
+  return `
+  <div class="pin-screen">
+    <div class="pin-title">${isOrg?'🧑‍✈️ '+t('orgLogin'):'⏱ '+t('judgeLogin')}</div>
+    <div class="pin-sub">${isOrg?t('orgPinHint'):t('judgePinHint')}</div>
+    <input class="pin-input" type="password" id="pinInput" maxlength="10" placeholder="••••" autofocus
+      onkeydown="if(event.key==='Enter')checkPin('${type}')">
+    <div class="pin-error hidden" id="pinError">${t('wrongPin')}</div>
+    <button class="btn btn-primary w-full" onclick="checkPin('${type}')">${t('login')}</button>
+    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">${t('back')}</button></div>
+    ${isOrg?`<div class="mt-4 alert alert-info">${t('defaultPin')}</div>`:''}
+  </div>`;
+}
+function checkPin(type){
+  const pin=document.getElementById('pinInput').value;
+  const err=document.getElementById('pinError');
+  if(type==='organizer'){
+    // Check against all competitions' organizer PINs
+    const idx=loadIndex();
+    let found=false;
+    for(const entry of idx){
+      const comp=loadComp(entry.id);
+      if(comp&&comp.competition.organizerPin===pin){found=true;break;}
+    }
+    // Also check current state or default PIN
+    if(!found&&(pin===STATE.competition.organizerPin||pin==='1234')){found=true;}
+    if(found){CURRENT_ROLE='organizer';navigate('comp-select');}
+    else{err.classList.remove('hidden');}
+  } else {
+    if(checkJudgePin(pin)){CURRENT_ROLE='judge';navigate('judge');}
+    else{err.classList.remove('hidden');}
+  }
+}
+
+// ==================== ORGANIZER ====================
+let ORG_TAB='overview';
+function renderOrganizer(){
+  if(!STATE.competition.name) ORG_TAB='setup';
+  return `
+  <div>
+    <div class="tabs">
+      <button class="tab ${ORG_TAB==='overview'?'active':''}" onclick="orgTab('overview')">${t('overview')}</button>
+      <button class="tab ${ORG_TAB==='setup'?'active':''}" onclick="orgTab('setup')">${t('setup')}</button>
+      <button class="tab ${ORG_TAB==='competitors'?'active':''}" onclick="orgTab('competitors')">${t('competitors')}</button>
+      <button class="tab ${ORG_TAB==='judges'?'active':''}" onclick="orgTab('judges')">${t('judges')}</button>
+      <button class="tab ${ORG_TAB==='lanes'?'active':''}" onclick="orgTab('lanes')">${t('lanes')}</button>
+      <button class="tab ${ORG_TAB==='rounds'?'active':''}" onclick="orgTab('rounds')">${t('rounds')}</button>
+      <button class="tab ${ORG_TAB==='results'?'active':''}" onclick="orgTab('results')">${t('resultsTab')}</button>
+    </div>
+    <div id="orgContent">${renderOrgTab()}</div>
+  </div>`;
+}
+function orgTab(tab){
+  ORG_TAB=tab;
+  document.getElementById('orgContent').innerHTML=renderOrgTab();
+  if(tab==='competitors'||tab==='judges'||tab==='lanes'||tab==='results') bindOrgEvents();
+}
+function renderOrgTab(){
+  switch(ORG_TAB){
+    case 'overview': return renderOverview();
+    case 'setup': return renderSetupForm();
+    case 'competitors': return renderCompetitorsList();
+    case 'judges': return renderJudgesList();
+    case 'lanes': return renderLaneManager();
+    case 'rounds': return renderRoundManager();
+    case 'results': return renderResultsPanel();
+    default: return '';
+  }
+}
+function bindOrgEvents(){
+  // sort tables
+  document.querySelectorAll('th[data-sort]').forEach(th=>{
+    th.onclick=()=>sortTable(th);
+  });
+}
+
+// --- OVERVIEW ---
+function renderOverview(){
+  const comp=STATE.competition;
+  const activeRound=STATE.rounds.find(r=>r.status==='active');
+  const doneRounds=STATE.rounds.filter(r=>r.status==='done').length;
+  const totalScores=STATE.scores.length;
+  const flyoffInfo=getFlyoffCandidates();
+  
+  return `
+  <div>
+    ${!comp.name?`<div class="alert alert-warn">⚠️ Henüz yarışma kurulmadı. <a href="#" onclick="orgTab('setup')" style="color:var(--gold)">Ayarlar</a> sekmesinden başlayın.</div>`:''}
+    ${activeRound?`<div class="alert alert-success">🟢 Aktif Raund: <strong>RAUND ${activeRound.number}</strong> — Max süre: ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">Raund Bitir</button></div>`:''}
+    ${comp.name&&!activeRound&&STATE.rounds.length>0&&STATE.rounds.every(r=>r.status==='done')?`
+    <div class="alert alert-info flex justify-between items-center">
+      <span>🏁 Tüm raundlar tamamlandı. Yarışmayı arşivlemek ister misiniz?</span>
+      <button class="btn btn-gold btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')">📦 Arşivle</button>
+    </div>`:''}
+    ${comp.name&&STATE.rounds.length===0?`<div style="text-align:right;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')" style="color:var(--text3)">📦 Arşivle</button></div>`:''}
+    
+    <div class="grid-4 mb-4">
+      <div class="stat-box">
+        <div class="stat-label">Yarışmacılar</div>
+        <div class="stat-val">${STATE.competitors.length}</div>
+        <div class="stat-sub">${STATE.competitors.filter(c=>c.categories.length>0).length} aktif kategori</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Hakemler</div>
+        <div class="stat-val">${STATE.judges.length}</div>
+        <div class="stat-sub">${STATE.lanes.length} kulvar</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Tamamlanan Raund</div>
+        <div class="stat-val">${doneRounds}/${STATE.rounds.length}</div>
+        <div class="progress mt-1"><div class="progress-bar" style="width:${STATE.rounds.length?Math.round(doneRounds/STATE.rounds.length*100):0}%"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Kayıtlı Skor</div>
+        <div class="stat-val">${totalScores}</div>
+        <div class="stat-sub">toplam uçuş</div>
+      </div>
+    </div>
+    
+    ${flyoffInfo.length>0?`
+    <div class="flyoff-banner mb-4">
+      <div class="flyoff-title">⚡ FLYOFF GEREKLİ</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Aşağıdaki yarışmacılar tüm raundları max sürede tamamladı veya toplam süre eşit. Flyoff raund açılması gerekiyor.</p>
+      ${flyoffInfo.map(f=>`
+        <div style="margin-bottom:8px;">
+          <span class="badge badge-purple">${f.category}</span> 
+          ${f.competitors.map(c=>`<span class="badge badge-gray ml-1">${c.name} ${c.surname}</span>`).join('')}
+        </div>
+      `).join('')}
+      <button class="btn btn-primary mt-2" onclick="openAddFlyoffModal()">+ Flyoff Raund Ekle</button>
+    </div>`:''}
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">🏁</span>Raund Durumu</div></div>
+        ${STATE.rounds.length===0?'<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Raund tanımlanmadı</div></div>':
+          STATE.rounds.map(r=>`
+          <div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
+            <div class="round-num">${r.isFlyoff?'FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
+            <div class="round-time">Max: ${fmtSec(r.maxTime)}</div>
+            <div class="round-status">
+              ${r.status==='pending'?'<span class="badge badge-gray">Bekliyor</span>':''}
+              ${r.status==='active'?'<span class="badge badge-green">AKTİF 🟢</span>':''}
+              ${r.status==='done'?'<span class="badge badge-blue">Tamamlandı</span>':''}
+            </div>
+            ${r.status==='pending'?`<button class="btn btn-sm btn-green" onclick="startRound('${r.id}')">▶ Başlat</button>`:''}
+            ${r.status==='active'?`<button class="btn btn-sm btn-red" onclick="endRound('${r.id}')">⏹ Bitir</button>`:''}
+          </div>`).join('')
+        }
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📋</span>Son Skorlar</div></div>
+        ${STATE.scores.length===0?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Henüz skor yok</div></div>':
+          STATE.scores.slice(-8).reverse().map(sc=>{
+            const c=STATE.competitors.find(x=>x.id===sc.competitorId);
+            const r=STATE.rounds.find(x=>x.id===sc.roundId);
+            if(!c||!r) return '';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+              <span class="font-mono text-sm" style="color:var(--text3)">R${r.number||'F'}</span>
+              <span style="flex:1">${c.name} ${c.surname}</span>
+              <span class="font-mono ${sc.finalTime>=r.maxTime?'text-green':'text-gold'}">${fmtSec(sc.finalTime)}</span>
+              ${sc.disqualified?'<span class="badge badge-red">DQ</span>':''}
+            </div>`;
+          }).join('')
+        }
+      </div>
+    </div>
+  </div>`;
+}
+
+// --- SETUP FORM ---
+function renderSetupForm(){
+  const c=STATE.competition;
+  return `
+  <div class="card">
+    <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>Yarışma Ayarları</div></div>
+    <div class="form-row mb-3">
+      <div class="form-group">
+        <label>Yarışma Adı *</label>
+        <input id="sf-name" value="${c.name||''}" placeholder="2026 İsmail Sarıoğlu Kupası">
+      </div>
+      <div class="form-group">
+        <label>Konum</label>
+        <input id="sf-loc" value="${c.location||''}" placeholder="İstanbul / Türkiye">
+      </div>
+    </div>
+    <div class="form-row mb-3">
+      <div class="form-group">
+        <label>Başlangıç Tarihi</label>
+        <input id="sf-date-s" type="date" value="${c.dateStart||''}">
+      </div>
+      <div class="form-group">
+        <label>Bitiş Tarihi</label>
+        <input id="sf-date-e" type="date" value="${c.dateEnd||''}">
+      </div>
+    </div>
+    <div class="form-group mb-3">
+      <label>Bülten URL (PDF bağlantısı)</label>
+      <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://...">
+    </div>
+    <div class="form-group mb-3">
+      <label>${t('categories')}</label>
+      <div class="check-group">
+        ${getAllCats().map(cat=>`
+          <label class="check-item ${c.categories.includes(cat)?'checked':''}">
+            <input type="checkbox" ${c.categories.includes(cat)?'checked':''} onchange="toggleCat('${cat}',this)"> ${cat}
+          </label>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input id="customCatInput" placeholder="${t('customCatPlaceholder')}" style="width:160px;">
+        <button class="btn btn-ghost btn-sm" onclick="addCustomCat()">+ ${t('addCustomCat')}</button>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    <div class="mb-3"><strong>Raund Ayarları</strong></div>
+    <div id="roundsList">${renderRoundInputs()}</div>
+    <div class="flex gap-2 mb-4">
+      <button class="btn btn-ghost btn-sm" onclick="addRound()">+ Raund Ekle</button>
+    </div>
+    
+    <div class="divider"></div>
+    <div class="form-row mb-4">
+      <div class="form-group">
+        <label>Organizatör PIN (Mevcut: ${c.organizerPin})</label>
+        <input id="sf-orgpin" type="password" placeholder="Yeni PIN (boş bırakırsan değişmez)">
+      </div>
+      <div class="form-group">
+        <label>Hakem PIN Ön Eki (Mevcut: ${c.judgePrefix})</label>
+        <input id="sf-judgepin" type="password" placeholder="Hakem PINleri bu şekilde başlar">
+        <div class="form-hint">Hakemler kendi PIN'lerini oluşturursunuz: ön ek + sıra no (örn: 4321, 43212...)</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSetup()">💾 Ayarları Kaydet</button>
+  </div>`;
+}
+function renderRoundInputs(){
+  return STATE.rounds.map((r,i)=>`
+    <div class="form-row mb-2" id="round-row-${r.id}">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <span class="badge badge-blue" style="white-space:nowrap">${r.isFlyoff?'FLYOFF '+r.flyoffNum:'RAUND '+r.number}</span>
+        <input type="number" min="10" max="3600" value="${r.maxTime}" 
+          onchange="updateRoundTime('${r.id}',this.value)" style="width:100px" ${r.status!=='pending'?'disabled':''}>
+        <span class="text-sm text-muted">saniye</span>
+        <span class="text-sm text-muted">(${fmtSec(r.maxTime)})</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="badge ${r.status==='pending'?'badge-gray':r.status==='active'?'badge-green':'badge-blue'}">${r.status==='pending'?'Bekliyor':r.status==='active'?'Aktif':'Bitti'}</span>
+        ${r.status==='pending'?`<button class="btn btn-ghost btn-sm" onclick="removeRound('${r.id}')">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function getAllCats(){
+  // Combine default CATS with any custom ones stored in state
+  const custom=STATE.competition.customCategories||[];
+  return [...CATS,...custom.filter(c=>!CATS.includes(c))];
+}
+function addCustomCat(){
+  const input=document.getElementById('customCatInput');
+  const val=(input.value||'').trim().toUpperCase();
+  if(!val){toast('Kategori adı boş','warn');return;}
+  if(!STATE.competition.customCategories) STATE.competition.customCategories=[];
+  if(getAllCats().includes(val)){toast('Bu kategori zaten var','warn');return;}
+  STATE.competition.customCategories.push(val);
+  // Also add to selected categories
+  if(!STATE.competition.categories.includes(val)) STATE.competition.categories.push(val);
+  save();
+  // Re-render setup
+  document.getElementById('orgContent').innerHTML=renderSetupForm();
+  toast(`${val} kategorisi eklendi ✓`,'success');
+}
+function toggleCat(cat,el){
+  const cats=STATE.competition.categories;
+  if(el.checked){if(!cats.includes(cat))cats.push(cat);}
+  else{const i=cats.indexOf(cat);if(i>-1)cats.splice(i,1);}
+  el.closest('.check-item').classList.toggle('checked',el.checked);
+}
+function addRound(){
+  const num=STATE.rounds.filter(r=>!r.isFlyoff).length+1;
+  STATE.rounds.push({id:uid(),number:num,maxTime:240,status:'pending',isFlyoff:false,startedAt:null,endedAt:null});
+  save();
+  document.getElementById('roundsList').innerHTML=renderRoundInputs();
+  toast('Raund eklendi','info');
+}
+function removeRound(id){
+  const idx=STATE.rounds.findIndex(r=>r.id===id);
+  if(idx>-1){STATE.rounds.splice(idx,1);save();}
+  document.getElementById('roundsList').innerHTML=renderRoundInputs();
+}
+function updateRoundTime(id,val){
+  const r=STATE.rounds.find(r=>r.id===id);
+  if(r){r.maxTime=parseInt(val)||240;save();}
+}
+function saveSetup(){
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){toast('Yarışma adı zorunlu','error');return;}
+  const c=STATE.competition;
+  c.name=name;
+  c.location=document.getElementById('sf-loc').value.trim();
+  c.dateStart=document.getElementById('sf-date-s').value;
+  c.dateEnd=document.getElementById('sf-date-e').value;
+  c.bulletinUrl=document.getElementById('sf-bulletin').value.trim();
+  const newOrgPin=document.getElementById('sf-orgpin').value.trim();
+  const newJudgePin=document.getElementById('sf-judgepin').value.trim();
+  if(newOrgPin)c.organizerPin=newOrgPin;
+  if(newJudgePin)c.judgePrefix=newJudgePin;
+  STATE.setupComplete=true;
+  // Register in index if not already there
+  if(ACTIVE_COMP_ID){
+    const idx=loadIndex();
+    if(!idx.find(e=>e.id===ACTIVE_COMP_ID)){
+      idx.push({id:ACTIVE_COMP_ID,name:c.name,dateStart:c.dateStart,location:c.location,createdAt:new Date().toISOString()});
+    }
+    saveIndex(idx);
+  }
+  save();
+  toast('Yarışma ayarları kaydedildi ✓','success');
+  updateTopbar();
+}
+
+// --- COMPETITORS ---
+function renderCompetitorsList(){
+  const comps=STATE.competitors;
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn btn-primary btn-sm" onclick="openAddCompetitorModal()">+ Yarışmacı Ekle</button>
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 CSV İçe Aktar</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCompetitors()">📤 CSV Dışa Aktar</button>
+      </div>
+      <div class="text-sm text-muted">${comps.length} yarışmacı</div>
+    </div>
+    ${comps.length===0?`<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Henüz yarışmacı yok</div></div>`:`
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="name">Ad Soyad</th>
+            <th>Ülke</th>
+            <th>FAI ID</th>
+            <th>THSF No</th>
+            <th>Kategoriler</th>
+            <th>Sınıf</th>
+            <th>Banket</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${comps.map(c=>`
+          <tr>
+            <td><strong>${c.name} ${c.surname}</strong><div class="text-xs text-muted">${c.email||''}</div></td>
+            <td>${c.country||'—'}</td>
+            <td class="font-mono">${c.faiId||'—'}</td>
+            <td class="font-mono">${c.thsfId||'—'}</td>
+            <td>${c.categories.map(cat=>`<span class="badge badge-blue">${cat}</span>`).join(' ')}</td>
+            <td>${c.senior===false?'<span class="badge badge-purple">Junior</span>':'<span class="badge badge-gray">Senior</span>'}</td>
+            <td>${c.banquet?'✅':'—'}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="editCompetitor('${c.id}')">✏️</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteCompetitor('${c.id}')" style="color:var(--red)">🗑</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+function openAddCompetitorModal(editId){
+  const c=editId?STATE.competitors.find(x=>x.id===editId):{};
+  const title=editId?'Yarışmacı Düzenle':'Yarışmacı Ekle';
+  openModal(title,`
+    <div class="form-row">
+      <div class="form-group"><label>Ad *</label><input id="cm-name" value="${c.name||''}"></div>
+      <div class="form-group"><label>Soyad *</label><input id="cm-surname" value="${c.surname||''}"></div>
+    </div>
+    <div class="form-group"><label>E-posta</label><input id="cm-email" type="email" value="${c.email||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Ülke</label><input id="cm-country" value="${c.country||''}" placeholder="TUR"></div>
+      <div class="form-group"><label>FAI ID</label><input id="cm-fai" value="${c.faiId||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>THSF Lisans No</label><input id="cm-thsf" value="${c.thsfId||''}"></div>
+      <div class="form-group">
+        <label>Sınıf</label>
+        <select id="cm-class">
+          <option value="senior" ${c.senior!==false?'selected':''}>Senior</option>
+          <option value="junior" ${c.senior===false?'selected':''}>Junior</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Kategoriler</label>
+      <div class="check-group" id="cm-cats">
+        ${CATS.map(cat=>`<label class="check-item ${(c.categories||[]).includes(cat)?'checked':''}">
+          <input type="checkbox" value="${cat}" ${(c.categories||[]).includes(cat)?'checked':''}> ${cat}</label>`).join('')}
+      </div>
+    </div>
+    <div class="form-group"><label><input type="checkbox" id="cm-banquet" ${c.banquet?'checked':''}> Bankete katılacak</label></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="saveCompetitor('${editId||''}')">Kaydet</button>`);
+  // bind check-items
+  setTimeout(()=>{
+    document.querySelectorAll('#cm-cats .check-item').forEach(ci=>{
+      ci.onclick=(e)=>{if(e.target.tagName==='INPUT') ci.classList.toggle('checked',e.target.checked);};
+    });
+  },50);
+}
+function saveCompetitor(editId){
+  const name=document.getElementById('cm-name').value.trim();
+  const surname=document.getElementById('cm-surname').value.trim();
+  if(!name||!surname){toast('Ad ve soyad zorunlu','error');return;}
+  const cats=[...document.querySelectorAll('#cm-cats input:checked')].map(i=>i.value);
+  const data={
+    name,surname,
+    email:document.getElementById('cm-email').value.trim(),
+    country:document.getElementById('cm-country').value.trim().toUpperCase(),
+    faiId:document.getElementById('cm-fai').value.trim(),
+    thsfId:document.getElementById('cm-thsf').value.trim(),
+    senior:document.getElementById('cm-class').value==='senior',
+    categories:cats,
+    banquet:document.getElementById('cm-banquet').checked,
+    registered:new Date().toISOString()
+  };
+  if(editId){
+    const idx=STATE.competitors.findIndex(c=>c.id===editId);
+    if(idx>-1)STATE.competitors[idx]={...STATE.competitors[idx],...data};
+  } else {
+    STATE.competitors.push({id:uid(),...data});
+  }
+  save();closeModal();
+  document.getElementById('orgContent').innerHTML=renderCompetitorsList();
+  bindOrgEvents();
+  toast(`${name} ${surname} kaydedildi ✓`,'success');
+}
+function editCompetitor(id){openAddCompetitorModal(id);}
+function deleteCompetitor(id){
+  if(!confirm('Bu yarışmacıyı silmek istiyor musunuz?'))return;
+  STATE.competitors=STATE.competitors.filter(c=>c.id!==id);
+  STATE.scores=STATE.scores.filter(s=>s.competitorId!==id);
+  save();
+  document.getElementById('orgContent').innerHTML=renderCompetitorsList();
+  toast('Silindi','info');
+}
+function openImportModal(){
+  openModal('CSV İçe Aktar',`
+    <div class="alert alert-info mb-3">CSV formatı: <code>Ad,Soyad,Email,Ülke,FAI_ID,THSF_No,Kategoriler(F1A;F1B),Senior(true/false),Banket(true/false)</code></div>
+    <div class="form-group"><label>CSV Dosyası</label><input type="file" id="csvFile" accept=".csv" style="padding:8px;"></div>
+    <div class="form-group"><label>veya CSV Metni Yapıştır</label><textarea id="csvText" placeholder="Ad,Soyad,Email,..."></textarea></div>
+    <div id="csv-preview" class="mt-2"></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="importCSV()">İçe Aktar</button>`);
+  document.getElementById('csvFile').onchange=(e)=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=(ev)=>document.getElementById('csvText').value=ev.target.result;r.readAsText(f);
+  };
+}
+function importCSV(){
+  const text=document.getElementById('csvText').value.trim();
+  if(!text){toast('CSV verisi boş','error');return;}
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  let start=0, added=0;
+  if(lines[0].toLowerCase().includes('ad')||lines[0].toLowerCase().includes('name')) start=1;
+  for(let i=start;i<lines.length;i++){
+    const cols=lines[i].split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+    if(cols.length<2) continue;
+    const cats=(cols[6]||'').split(';').map(s=>s.trim()).filter(s=>CATS.includes(s));
+    STATE.competitors.push({
+      id:uid(),name:cols[0]||'',surname:cols[1]||'',email:cols[2]||'',
+      country:(cols[3]||'').toUpperCase(),faiId:cols[4]||'',thsfId:cols[5]||'',
+      categories:cats,senior:(cols[7]||'true').toLowerCase()!=='false',
+      banquet:(cols[8]||'false').toLowerCase()==='true',registered:new Date().toISOString()
+    });
+    added++;
+  }
+  save();closeModal();
+  document.getElementById('orgContent').innerHTML=renderCompetitorsList();
+  toast(`${added} yarışmacı içe aktarıldı ✓`,'success');
+}
+function exportCompetitors(){
+  const header='Ad,Soyad,Email,Ülke,FAI ID,THSF No,Kategoriler,Sınıf,Banket';
+  const rows=STATE.competitors.map(c=>[c.name,c.surname,c.email,c.country,c.faiId,c.thsfId,c.categories.join(';'),c.senior?'Senior':'Junior',c.banquet?'Evet':'Hayır'].join(','));
+  downloadCSV('yarismacilar.csv',[header,...rows].join('\n'));
+  toast('CSV indirildi','info');
+}
+
+// --- JUDGES ---
+function renderJudgesList(){
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <button class="btn btn-primary btn-sm" onclick="openAddJudgeModal()">+ Hakem Ekle</button>
+      <div class="text-sm text-muted">${STATE.judges.length} hakem · İhtiyaç: ${calcJudgesNeeded()} hakem</div>
+    </div>
+    ${STATE.judges.length===0?`<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">Hakem tanımlanmadı</div></div>`:`
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Ad Soyad</th><th>PIN</th><th>Kategori</th><th>Kulvar</th><th></th></tr></thead>
+        <tbody>
+          ${STATE.judges.map(j=>{
+            const assignedLanes=STATE.lanes.filter(l=>l.judgeIds.includes(j.id));
+            return `<tr>
+              <td><strong>${j.name}</strong></td>
+              <td class="font-mono">${j.pin}</td>
+              <td>${j.category||'<span class="text-muted">Tümü</span>'}</td>
+              <td>${assignedLanes.map(l=>`<span class="badge badge-blue">Kulvar ${l.number}</span>`).join(' ')||'—'}</td>
+              <td>
+                <button class="btn btn-ghost btn-sm" onclick="editJudge('${j.id}')">✏️</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteJudge('${j.id}')" style="color:var(--red)">🗑</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`}
+    ${STATE.judges.length>0?`<div class="mt-3 flex gap-2 flex-wrap">
+      <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">⚡ Otomatik Kulvar Ata</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportJudges()">📤 CSV Dışa Aktar</button>
+      <button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button>
+    </div>`:`<div class="mt-3 flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button></div>`}
+  </div>`;
+}
+function calcJudgesNeeded(){
+  let total=0;
+  STATE.competition.categories.forEach(cat=>{
+    const cnt=STATE.competitors.filter(c=>c.categories.includes(cat)).length;
+    const lanes=Math.ceil(cnt/3);
+    total+=lanes*2;
+  });
+  return total;
+}
+function openAddJudgeModal(editId){
+  const j=editId?STATE.judges.find(x=>x.id===editId):{};
+  const suggestPin=STATE.competition.judgePrefix+(STATE.judges.length+1);
+  openModal(editId?'Hakem Düzenle':'Hakem Ekle',`
+    <div class="form-group"><label>Ad Soyad *</label><input id="jm-name" value="${j.name||''}"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>PIN *</label>
+        <input id="jm-pin" value="${j.pin||suggestPin}">
+        <div class="form-hint">Hakem bu PIN ile giriş yapacak</div>
+      </div>
+      <div class="form-group">
+        <label>Kategori (opsiyonel)</label>
+        <select id="jm-cat">
+          <option value="">Tümü</option>
+          ${STATE.competition.categories.map(cat=>`<option value="${cat}" ${j.category===cat?'selected':''}>${cat}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="saveJudge('${editId||''}')">Kaydet</button>`);
+}
+function saveJudge(editId){
+  const name=document.getElementById('jm-name').value.trim();
+  const pin=document.getElementById('jm-pin').value.trim();
+  if(!name||!pin){toast('Ad ve PIN zorunlu','error');return;}
+  const data={name,pin,category:document.getElementById('jm-cat').value||null};
+  if(editId){
+    const idx=STATE.judges.findIndex(j=>j.id===editId);
+    if(idx>-1)STATE.judges[idx]={...STATE.judges[idx],...data};
+  } else {
+    STATE.judges.push({id:uid(),...data});
+  }
+  save();closeModal();
+  document.getElementById('orgContent').innerHTML=renderJudgesList();
+  toast(`${name} kaydedildi ✓`,'success');
+}
+function editJudge(id){openAddJudgeModal(id);}
+function deleteJudge(id){
+  if(!confirm('Bu hakemi silmek istiyor musunuz?'))return;
+  STATE.judges=STATE.judges.filter(j=>j.id!==id);
+  STATE.lanes.forEach(l=>{l.judgeIds=l.judgeIds.filter(jid=>jid!==id);});
+  save();
+  document.getElementById('orgContent').innerHTML=renderJudgesList();
+  toast('Silindi','info');
+}
+function exportJudges(){
+  const header='Ad Soyad,PIN,Kategori';
+  const rows=STATE.judges.map(j=>[j.name,j.pin,j.category||''].join(','));
+  downloadCSV('hakemler.csv',[header,...rows].join('\n'));
+  toast(t('judgesCSV'),'info');
+}
+function openImportJudgesModal(){
+  openModal('Hakem CSV İçe Aktar',`
+    <div class="alert alert-info mb-3">CSV formatı: <code>Ad Soyad,PIN,Kategori(opsiyonel)</code><br>Örnek: <code>Ahmet Yılmaz,43211,F1A</code></div>
+    <div class="form-group"><label>CSV Dosyası</label><input type="file" id="jCsvFile" accept=".csv" style="padding:8px;"></div>
+    <div class="form-group"><label>veya Metin Yapıştır</label><textarea id="jCsvText" placeholder="Ad Soyad,PIN,Kategori"></textarea></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="importJudgesCSV()">İçe Aktar</button>`);
+  document.getElementById('jCsvFile').onchange=(e)=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=(ev)=>document.getElementById('jCsvText').value=ev.target.result;r.readAsText(f);
+  };
+}
+function importJudgesCSV(){
+  const text=document.getElementById('jCsvText').value.trim();
+  if(!text){toast('CSV verisi boş','error');return;}
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  let start=0,added=0;
+  if(lines[0].toLowerCase().includes('ad')||lines[0].toLowerCase().includes('name')) start=1;
+  for(let i=start;i<lines.length;i++){
+    const cols=lines[i].split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+    if(cols.length<2) continue;
+    const name=cols[0];const pin=cols[1];const cat=cols[2]||null;
+    if(!name||!pin) continue;
+    if(STATE.judges.find(j=>j.pin===pin)){continue;} // skip duplicate PINs
+    STATE.judges.push({id:uid(),name,pin,category:cat&&CATS.includes(cat.toUpperCase())?cat.toUpperCase():null});
+    added++;
+  }
+  save();closeModal();
+  document.getElementById('orgContent').innerHTML=renderJudgesList();
+  toast(`${added} hakem içe aktarıldı ✓`,'success');
+}
+
+// --- LANE ASSIGNMENT ---
+function autoAssignLanes(){
+  if(STATE.competitors.length===0){toast(t('noCompetitors'),'warn');return;}
+  if(STATE.judges.length===0){toast(t('noJudges'),'warn');return;}
+
+  // 1. Önce tüm kulvarları oluştur (hakemsiz)
+  const lanesDraft=[];
+  let laneNum=1;
+  STATE.competition.categories.forEach(cat=>{
+    const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
+    if(!catComps.length) return;
+    const numLanes=Math.ceil(catComps.length/3);
+    for(let i=0;i<numLanes;i++){
+      lanesDraft.push({
+        id:uid(),number:laneNum++,category:cat,
+        judgeIds:[],
+        baseCompetitorIds:catComps.slice(i*3,(i+1)*3).map(c=>c.id)
+      });
+    }
+  });
+
+  const totalLanes=lanesDraft.length;
+  const totalJudges=STATE.judges.length;
+
+  // 2. Hakem sayısı kulvar sayısından azsa imkansız
+  if(totalJudges<totalLanes){
+    toast(`❌ ${totalLanes} kulvar için en az ${totalLanes} hakem gerekli. Şu an ${totalJudges} hakem var — ${totalLanes-totalJudges} hakem daha ekleyin.`,'error');
+    return;
+  }
+
+  // 3. Her kulvara önce 1 hakem ata (kategori önceliğine göre)
+  const judgePool=[...STATE.judges]; // kopya
+  const usedIdx=new Set();
+
+  lanesDraft.forEach(lane=>{
+    // Önce kategoriye özel hakem bul, yoksa genel al
+    let found=-1;
+    for(let i=0;i<judgePool.length;i++){
+      if(usedIdx.has(i)) continue;
+      if(judgePool[i].category===lane.category){found=i;break;}
+    }
+    if(found===-1){
+      for(let i=0;i<judgePool.length;i++){
+        if(usedIdx.has(i)) continue;
+        if(!judgePool[i].category){found=i;break;}
+      }
+    }
+    if(found===-1){
+      // Son çare: herhangi bir atanmamış hakem
+      for(let i=0;i<judgePool.length;i++){
+        if(!usedIdx.has(i)){found=i;break;}
+      }
+    }
+    if(found>-1){lane.judgeIds.push(judgePool[found].id);usedIdx.add(found);}
+  });
+
+  // 4. Kalan hakemleri 2. hakem olarak dağıt (tek hakemlilere öncelik ver)
+  for(let i=0;i<judgePool.length;i++){
+    if(usedIdx.has(i)) continue;
+    const j=judgePool[i];
+    // Bu hakem için uygun, tek hakemli ve farklı hakem olan bir kulvar bul
+    const target=lanesDraft.find(l=>
+      l.judgeIds.length===1 &&
+      !l.judgeIds.includes(j.id) &&
+      (!j.category||j.category===l.category)
+    ) || lanesDraft.find(l=>
+      l.judgeIds.length===1 &&
+      !l.judgeIds.includes(j.id)
+    );
+    if(target){target.judgeIds.push(j.id);usedIdx.add(i);}
+  }
+
+  STATE.lanes=lanesDraft;
+  save();
+
+  // 5. Özet
+  const with2=STATE.lanes.filter(l=>l.judgeIds.length===2).length;
+  const with1=STATE.lanes.filter(l=>l.judgeIds.length===1).length;
+  if(with1===0){
+    toast(`${totalLanes} kulvar oluşturuldu ✓ — Tüm kulvarlar çift hakem`,'success');
+  } else {
+    toast(`${totalLanes} kulvar oluşturuldu ✓ — ${with2} kulvar çift hakem, ${with1} kulvar tek hakem`,'info');
+  }
+  document.getElementById('orgContent').innerHTML=renderLaneManager();
+}
+
+function renderLaneManager(){
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="text-sm text-muted">${STATE.lanes.length} kulvar</div>
+      <div class="flex gap-2">
+        <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">⚡ Yeniden Ata</button>
+      </div>
+    </div>
+    ${STATE.lanes.length===0?`<div class="empty"><div class="empty-icon">🏟</div><div class="empty-text">Kulvar tanımlanmadı — Otomatik Ata butonuna basın</div></div>`:`
+    <div class="lane-grid">
+      ${STATE.lanes.map(l=>{
+        const judges=l.judgeIds.map(jid=>{const j=STATE.judges.find(x=>x.id===jid);return j?j.name:'?';});
+        const comps=getCompetitorsForLaneRound(l.id, STATE.rounds.find(r=>r.status==='active')?.id||null);
+        return `<div class="lane-card">
+          <div class="lane-header">
+            <div class="lane-num">KULVAR ${l.number}</div>
+            <span class="badge badge-blue">${l.category}</span>
+          </div>
+          <div class="lane-judges">⚖️ ${judges.join(' · ')||'Hakem atanmadı'} ${judges.length===1?'<span class="badge badge-gold">Tek Hakem</span>':judges.length===0?'<span class="badge badge-red">Hakem Yok</span>':''}</div>
+          ${comps.map(c=>`<div class="lane-comp">${c.name} ${c.surname}</div>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>`}
+  </div>`;
+}
+
+function getCompetitorsForLaneRound(laneId, roundId){
+  const lane=STATE.lanes.find(l=>l.id===laneId);
+  if(!lane) return [];
+  if(!roundId) return lane.baseCompetitorIds.map(id=>STATE.competitors.find(c=>c.id===id)).filter(Boolean);
+  // rotation logic
+  const catLanes=STATE.lanes.filter(l=>l.category===lane.category).sort((a,b)=>a.number-b.number);
+  const round=STATE.rounds.find(r=>r.id===roundId);
+  if(!round) return lane.baseCompetitorIds.map(id=>STATE.competitors.find(c=>c.id===id)).filter(Boolean);
+  const roundIdx=STATE.rounds.filter(r=>!r.isFlyoff).indexOf(round);
+  const laneIdx=catLanes.indexOf(lane);
+  const numLanes=catLanes.length;
+  const shift=numLanes>=5?roundIdx*2:roundIdx;
+  const sourceLaneIdx=(laneIdx-shift%numLanes+numLanes)%numLanes;
+  const sourceLane=catLanes[sourceLaneIdx];
+  return (sourceLane?.baseCompetitorIds||[]).map(id=>STATE.competitors.find(c=>c.id===id)).filter(Boolean);
+}
+
+// --- ROUND MANAGER ---
+function renderRoundManager(){
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="text-sm text-muted">${STATE.rounds.length} raund tanımlı</div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn btn-ghost btn-sm" onclick="orgTab('setup')">⚙️ Raund Ekle/Düzenle</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAddFlyoffModal()">⚡ Flyoff Ekle</button>
+      </div>
+    </div>
+    ${STATE.rounds.map(r=>{
+      const scoresCount=STATE.scores.filter(s=>s.roundId===r.id).length;
+      const compCount=STATE.competitors.length;
+      return `<div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
+        <div>
+          <div class="round-num">${r.isFlyoff?'⚡ FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
+          <div class="text-sm text-muted">Max: ${fmtSec(r.maxTime)} · ${scoresCount}/${compCount} skor</div>
+        </div>
+        <div class="flex-1"></div>
+        ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="startRound('${r.id}')">▶ Başlat</button>`:''}
+        ${r.status==='active'?`
+          <span class="badge badge-green">🟢 AKTİF</span>
+          <button class="btn btn-red btn-sm" onclick="endRound('${r.id}')">⏹ Bitir</button>`:''}
+        ${r.status==='done'?`<span class="badge badge-blue">✓ Tamamlandı</span>`:''}
+      </div>`;
+    }).join('')}
+    ${STATE.rounds.length===0?`<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Ayarlar sekmesinden raund ekleyin</div></div>`:''}
+  </div>`;
+}
+function startRound(id){
+  const active=STATE.rounds.find(r=>r.status==='active');
+  if(active){toast('Önce aktif raund bitirin: Raund '+active.number,'warn');return;}
+  const r=STATE.rounds.find(r=>r.id===id);
+  if(!r) return;
+  r.status='active';r.startedAt=new Date().toISOString();
+  STATE.currentRoundId=id;save();
+  toast(`${r.isFlyoff?'Flyoff':'Raund '+r.number} başladı! 🚀`,'success');
+  document.getElementById('orgContent').innerHTML=renderRoundManager();
+}
+function endRound(id){
+  if(!confirm('Raund bitmeden kaydedilmemiş skorlar sıfır olarak işaretlenir. Devam?')) return;
+  const r=STATE.rounds.find(r=>r.id===id);
+  if(!r) return;
+  // Auto-zero missing scores
+  STATE.competitors.forEach(c=>{
+    const hasScore=STATE.scores.some(s=>s.competitorId===c.id&&s.roundId===id);
+    if(!hasScore&&c.categories.some(cat=>STATE.competition.categories.includes(cat))){
+      STATE.scores.push({id:uid(),competitorId:c.id,roundId:id,attempts:[],finalTime:0,confirmed:false,disqualified:false,autoZero:true});
+    }
+  });
+  r.status='done';r.endedAt=new Date().toISOString();
+  STATE.currentRoundId=null;save();
+  toast(`Raund ${r.number||''} tamamlandı ✓`,'success');
+  document.getElementById('orgContent').innerHTML=renderRoundManager();
+}
+function openAddFlyoffModal(){
+  const flyoffNum=(STATE.rounds.filter(r=>r.isFlyoff).length)+1;
+  openModal(`Flyoff ${flyoffNum} Ekle`,`
+    <div class="alert alert-info mb-3">Flyoff, tüm raundları max sürede tamamlayan yarışmacılar için açılır.</div>
+    <div class="form-group">
+      <label>Flyoff Max Süresi (saniye)</label>
+      <input id="fo-time" type="number" value="360" min="60" max="3600">
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="fo-height"> Yükseklik ölçümü ekle (süre + metre)</label>
+      <div class="form-hint">Flyoff öncesi yükseklik girişi sistem tarafından hatırlatılır</div>
+    </div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-primary" onclick="addFlyoff()">Flyoff Ekle</button>`);
+}
+function addFlyoff(){
+  const t=parseInt(document.getElementById('fo-time').value)||360;
+  const useHeight=document.getElementById('fo-height').checked;
+  const flyoffNum=(STATE.rounds.filter(r=>r.isFlyoff).length)+1;
+  STATE.rounds.push({id:uid(),isFlyoff:true,flyoffNum,maxTime:t,status:'pending',useHeight,startedAt:null,endedAt:null});
+  save();closeModal();
+  document.getElementById('orgContent').innerHTML=renderRoundManager();
+  toast(`Flyoff ${flyoffNum} eklendi ✓`,'success');
+}
+
+// --- RESULTS ---
+function renderResultsPanel(){
+  const cats=STATE.competition.categories;
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+      <div class="text-sm text-muted">Tüm kategoriler</div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="exportResults()">📤 CSV İndir</button>
+      </div>
+    </div>
+    ${cats.map(cat=>{
+      const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
+      if(catComps.length===0) return '';
+      const ranked=rankCategory(cat);
+      return `<div class="card mb-4">
+        <div class="card-header"><div class="card-title"><span class="icon">🏅</span>${cat} Sonuçları</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Ad Soyad</th><th>Ülke</th>${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>`<th>R${r.number}</th>`).join('')}${STATE.rounds.filter(r=>r.isFlyoff).map(r=>`<th>F${r.flyoffNum}</th>`).join('')}<th>TOPLAM</th></tr></thead>
+            <tbody>
+              ${ranked.map((rc,i)=>{
+                const c=rc.competitor;
+                return `<tr class="${i<3?'rank-'+(i+1)+' rank-row':''}">
+                  <td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+                  <td>${c.name} ${c.surname}${rc.disqualified?'<span class="badge badge-red ml-1">DQ</span>':''}</td>
+                  <td>${c.country||'—'}</td>
+                  ${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>{
+                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+                    return `<td class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}">${sc?fmtSec(sc.finalTime):'—'}</td>`;
+                  }).join('')}
+                  ${STATE.rounds.filter(r=>r.isFlyoff).map(r=>{
+                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+                    return `<td class="font-mono text-purple">${sc?fmtSec(sc.finalTime)+(sc.heightM?' +'+sc.heightM+'m':''):'—'}</td>`;
+                  }).join('')}
+                  <td class="font-mono bold">${fmtSec(rc.total)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ==================== JUDGE PANEL ====================
+let JUDGE_STATE={selectedCompetitorId:null,timerStart:null,timerElapsed:0,timerRunning:false,timerInterval:null,currentAttempt:1,attemptType:null,pendingScore:null};
+
+// Mobile timer persistence — save/restore on page visibility change
+function saveTimerState(){
+  if(!JUDGE_STATE.timerRunning&&JUDGE_STATE.timerElapsed===0) return;
+  localStorage.setItem('ffco_timer',JSON.stringify({
+    selectedCompetitorId:JUDGE_STATE.selectedCompetitorId,
+    timerStart:JUDGE_STATE.timerStart,
+    timerElapsed:JUDGE_STATE.timerElapsed,
+    timerRunning:JUDGE_STATE.timerRunning,
+    currentAttempt:JUDGE_STATE.currentAttempt,
+    attemptType:JUDGE_STATE.attemptType,
+    compId:ACTIVE_COMP_ID,
+    judgeId:CURRENT_JUDGE_ID,
+    savedAt:Date.now()
+  }));
+}
+function restoreTimerState(){
+  try{
+    const s=localStorage.getItem('ffco_timer');
+    if(!s) return;
+    const ts=JSON.parse(s);
+    // Only restore if same competition, same judge, saved within last 10 minutes
+    if(ts.compId!==ACTIVE_COMP_ID||ts.judgeId!==CURRENT_JUDGE_ID) return;
+    if(Date.now()-ts.savedAt>600000) return; // 10 min timeout
+    JUDGE_STATE.selectedCompetitorId=ts.selectedCompetitorId;
+    JUDGE_STATE.currentAttempt=ts.currentAttempt||1;
+    JUDGE_STATE.attemptType=ts.attemptType||null;
+    if(ts.timerRunning&&ts.timerStart){
+      // Recalculate elapsed time
+      const round=STATE.rounds.find(r=>r.status==='active');
+      const elapsed=(Date.now()-ts.timerStart)/1000;
+      JUDGE_STATE.timerElapsed=Math.min(elapsed,round?round.maxTime:elapsed);
+      JUDGE_STATE.timerStart=ts.timerStart;
+      JUDGE_STATE.timerRunning=false; // will restart via UI
+      toast('⚠️ Aktif timer bulundu — devam etmek için yarışmacıyı seçin','warn');
+    } else {
+      JUDGE_STATE.timerElapsed=ts.timerElapsed||0;
+      JUDGE_STATE.timerRunning=false;
+    }
+  }catch(e){}
+}
+function clearTimerState(){localStorage.removeItem('ffco_timer');}
+// Listen for visibility change (phone call, tab switch)
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&CURRENT_ROLE==='judge')saveTimerState();});
+
+function renderJudge(){
+  const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+  if(!judge) return '<div class="empty">Hakem bulunamadı</div>';
+  // Restore timer state if returning from phone call / tab switch
+  if(!JUDGE_STATE.timerRunning&&!JUDGE_STATE.selectedCompetitorId) restoreTimerState();
+  const activeRound=STATE.rounds.find(r=>r.status==='active');
+  return `
+  <div>
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+      <div>
+        <div class="font-orb text-blue" style="font-size:13px">${judge.name}</div>
+        <div class="text-sm text-muted">${activeRound?`Aktif: ${activeRound.isFlyoff?'Flyoff '+activeRound.flyoffNum:'Raund '+activeRound.number} · Max ${fmtSec(activeRound.maxTime)}`:'Aktif raund yok'}</div>
+      </div>
+      ${!activeRound?'<div class="badge badge-gray">Raund Bekleniyor</div>':''}
+    </div>
+    
+    ${!activeRound?`<div class="alert alert-warn">⏳ Organizatör yeni raund başlatana kadar bekleyin.</div>`:renderJudgePanel(judge,activeRound)}
+  </div>`;
+}
+
+function renderJudgePanel(judge,activeRound){
+  const myLanes=STATE.lanes.filter(l=>l.judgeIds.includes(judge.id));
+  const myCompetitors=[];
+  myLanes.forEach(lane=>{
+    const laneComps=getCompetitorsForLaneRound(lane.id,activeRound.id);
+    laneComps.forEach(c=>{if(!myCompetitors.find(x=>x.id===c.id))myCompetitors.push({...c,laneId:lane.id});});
+  });
+  const sel=JUDGE_STATE.selectedCompetitorId;
+  const selComp=myCompetitors.find(c=>c.id===sel);
+  
+  return `
+  <div class="grid-2">
+    <div>
+      <div class="card mb-3">
+        <div class="card-header"><div class="card-title"><span class="icon">👥</span>Yarışmacılarım (${myCompetitors.length})</div></div>
+        ${myCompetitors.length===0?`<div class="alert alert-warn">Bu raund için size atanmış yarışmacı bulunamadı. Kulvar atamaları kontrol edin.</div>`:''}
+        ${myCompetitors.map(c=>{
+          const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
+          return `<div class="competitor-chip ${sel===c.id?'selected':''} ${score?'scored':''}" onclick="selectCompetitor('${c.id}')">
+            <div class="chip-cats">${c.categories.slice(0,2).map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}</div>
+            <div class="chip-name">${c.name} ${c.surname}</div>
+            ${score?`<div class="chip-time">${fmtSec(score.finalTime)} ${score.finalTime>=activeRound.maxTime?'✅':''}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+      
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📋</span>Bu Raund Skorları</div></div>
+        ${myCompetitors.map(c=>{
+          const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
+          if(!score) return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${c.name} ${c.surname} — Bekleniyor</div>`;
+          return `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;">
+            <span style="flex:1">${c.name} ${c.surname}</span>
+            <span class="font-mono ${score.finalTime>=activeRound.maxTime?'text-green':'text-gold'}">${fmtSec(score.finalTime)}</span>
+            ${score.disqualified?'<span class="badge badge-red">DQ</span>':''}
+            <button class="btn btn-ghost btn-sm" onclick="editScore('${score.id}')" style="padding:2px 6px">✏️</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    
+    <div>
+      <div class="card">
+        ${selComp?renderTimerPanel(selComp,activeRound):renderTimerEmpty()}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTimerEmpty(){
+  return `<div class="empty"><div class="empty-icon">⏱</div><div class="empty-text">Sol taraftan yarışmacı seçin</div></div>`;
+}
+
+function renderTimerPanel(comp,round){
+  const existing=STATE.scores.find(s=>s.competitorId===comp.id&&s.roundId===round.id);
+  const elapsed=JUDGE_STATE.timerElapsed;
+  const running=JUDGE_STATE.timerRunning;
+  const stopped=!running&&elapsed>0;
+  
+  return `
+  <div>
+    <div class="card-header">
+      <div class="card-title"><span class="icon">⏱</span>${comp.name} ${comp.surname}</div>
+      <div class="flex gap-2">
+        ${comp.categories.map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}
+      </div>
+    </div>
+    
+    ${JUDGE_STATE.currentAttempt>1?`<div class="alert alert-warn mb-3">⚠️ Deneme Hakkı ${JUDGE_STATE.currentAttempt-1} — ${JUDGE_STATE.attemptType==='sub20'?'20sn altı uçuş':'Kaza/Çarpışma'}</div>`:''}
+    
+    <div class="timer-hero">
+      <div class="timer-display ${running?'running':stopped?'stopped':''}" id="timerDisplay">${fmtTimer(elapsed)}</div>
+      <div class="text-sm text-muted mt-2">Max: ${fmtSec(round.maxTime)} · ${elapsed>=round.maxTime?'<span style="color:var(--green)">✅ MAX UÇUŞ</span>':''}</div>
+      ${elapsed>=round.maxTime&&stopped?'<div class="alert alert-success mt-3">🏆 Maksimum süre tamamlandı!</div>':''}
+    </div>
+    
+    <div class="timer-controls">
+      ${!running&&elapsed===0?`<button class="timer-btn timer-start" onclick="timerStart()">▶ BAŞLAT</button>`:''}
+      ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">⏹ DURDUR</button>`:''}
+      ${stopped&&!existing?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
+      ${stopped||existing?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
+    </div>
+    
+    ${stopped&&elapsed<20&&JUDGE_STATE.currentAttempt===1?`
+    <div class="alert alert-warn mt-3">
+      ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
+      <div class="mt-2 flex gap-2 flex-wrap">
+        <button class="btn btn-gold btn-sm" onclick="grantAttempt('sub20','${comp.id}','${round.id}')">Deneme Hakkı Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">Kaydet (${fmtTimer(elapsed)})</button>
+      </div>
+    </div>`:''}
+    
+    ${JUDGE_STATE.currentAttempt===1&&!running?`
+    <div class="mt-3 card" style="background:var(--bg3)">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">ÇARPIŞMA / KAZA</div>
+      <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
+    </div>`:''}
+    
+    ${existing?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
+    
+    <div class="mt-3">
+      <textarea id="judge-note" placeholder="Opsiyonel not (kaza detayı, deneme sebebi...)" style="height:60px;font-size:12px;"></textarea>
+    </div>
+  </div>`;
+}
+
+function selectCompetitor(id){
+  timerReset();
+  JUDGE_STATE.selectedCompetitorId=id;
+  JUDGE_STATE.currentAttempt=1;
+  JUDGE_STATE.attemptType=null;
+  const round=STATE.rounds.find(r=>r.status==='active');
+  const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+  document.getElementById('mainContent').innerHTML=renderJudge();
+  bindJudgeEvents();
+}
+
+function timerStart(){
+  JUDGE_STATE.timerStart=Date.now()-JUDGE_STATE.timerElapsed*1000;
+  JUDGE_STATE.timerRunning=true;
+  const round=STATE.rounds.find(r=>r.status==='active');
+  const maxMs=round?round.maxTime*1000:999999;
+  JUDGE_STATE.timerInterval=setInterval(()=>{
+    const now=Date.now();
+    JUDGE_STATE.timerElapsed=Math.min((now-JUDGE_STATE.timerStart)/1000,round?round.maxTime:9999);
+    const disp=document.getElementById('timerDisplay');
+    if(disp){
+      disp.textContent=fmtTimer(JUDGE_STATE.timerElapsed);
+      if(JUDGE_STATE.timerElapsed>=(round?.maxTime||9999)){
+        disp.classList.remove('running');
+        disp.style.color='var(--green)';
+        disp.style.textShadow='0 0 40px rgba(0,232,122,0.5)';
+        timerStop();
+      }
+    }
+  },100);
+  const btn=document.querySelector('.timer-btn.timer-start');
+  if(btn){btn.textContent='⏸ DURAKLATILDI';btn.className='timer-btn timer-stop';btn.onclick=timerStop;}
+}
+
+function timerStop(){
+  clearInterval(JUDGE_STATE.timerInterval);
+  JUDGE_STATE.timerRunning=false;
+  const disp=document.getElementById('timerDisplay');
+  if(disp){disp.classList.remove('running');disp.classList.add('stopped');}
+  // re-render to show save button
+  const round=STATE.rounds.find(r=>r.status==='active');
+  const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
+  document.getElementById('mainContent').innerHTML=renderJudge();
+  bindJudgeEvents();
+}
+
+function timerReset(){
+  clearInterval(JUDGE_STATE.timerInterval);
+  JUDGE_STATE.timerRunning=false;
+  JUDGE_STATE.timerElapsed=0;
+  JUDGE_STATE.timerStart=null;
+}
+
+function timerSave(compId,roundId){
+  const elapsed=JUDGE_STATE.timerElapsed;
+  const round=STATE.rounds.find(r=>r.id===roundId);
+  const finalTime=Math.min(Math.round(elapsed*100)/100, round?round.maxTime:elapsed);
+  const note=document.getElementById('judge-note')?.value||'';
+  
+  // Check if score already exists
+  const existIdx=STATE.scores.findIndex(s=>s.competitorId===compId&&s.roundId===roundId);
+  const scoreData={
+    id:uid(),competitorId:compId,roundId,
+    attempts:[...((existIdx>-1?STATE.scores[existIdx].attempts:[])),{time:elapsed,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note}],
+    finalTime,confirmed:false,disqualified:false
+  };
+  if(existIdx>-1) STATE.scores[existIdx]=scoreData;
+  else STATE.scores.push(scoreData);
+  save();
+  timerReset();
+  clearTimerState();
+  JUDGE_STATE.selectedCompetitorId=null;
+  JUDGE_STATE.currentAttempt=1;
+  toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
+  document.getElementById('mainContent').innerHTML=renderJudge();
+  bindJudgeEvents();
+}
+
+function grantAttempt(type,compId,roundId){
+  if(JUDGE_STATE.currentAttempt>1){toast('Bu raund için zaten bir deneme hakkı kullanıldı','error');return;}
+  JUDGE_STATE.currentAttempt=2;
+  JUDGE_STATE.attemptType=type;
+  timerReset();
+  toast('Deneme hakkı verildi — Yeni uçuş başlatılabilir','info');
+  document.getElementById('mainContent').innerHTML=renderJudge();
+  bindJudgeEvents();
+}
+
+function editScore(scoreId){
+  const sc=STATE.scores.find(s=>s.id===scoreId);
+  if(!sc) return;
+  const c=STATE.competitors.find(x=>x.id===sc.competitorId);
+  openModal('Skor Düzenle',`
+    <div class="alert alert-warn mb-3">⚠️ Skor değişikliği log'a kaydedilir.</div>
+    <div class="form-group"><label>Yarışmacı</label><input value="${c?c.name+' '+c.surname:''}" disabled></div>
+    <div class="form-group"><label>Final Süre (saniye)</label><input id="es-time" type="number" value="${sc.finalTime}" step="0.01"></div>
+    <div class="form-group"><label><input type="checkbox" id="es-dq" ${sc.disqualified?'checked':''}> Diskalifiye</label></div>
+    <div class="form-group"><label>Not</label><input id="es-note" value="${sc.editNote||''}"></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+    <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">Değişikliği Kaydet</button>`);
+}
+function saveEditScore(id){
+  const sc=STATE.scores.find(s=>s.id===id);if(!sc) return;
+  const newTime=parseFloat(document.getElementById('es-time').value)||0;
+  const dq=document.getElementById('es-dq').checked;
+  const note=document.getElementById('es-note').value;
+  sc.finalTime=newTime;sc.disqualified=dq;sc.editNote=note;sc.editedAt=new Date().toISOString();
+  STATE.logs.push({id:uid(),type:'score_edit',scoreId:id,newTime,dq,note,ts:new Date().toISOString(),judgeId:CURRENT_JUDGE_ID});
+  save();closeModal();toast('Skor güncellendi','success');
+  document.getElementById('mainContent').innerHTML=renderJudge();bindJudgeEvents();
+}
+
+function bindJudgeEvents(){}
+
+// ==================== SCOREBOARD ====================
+let SB_COMP_ID=null;
+let SB_CAT=null;
+function renderScoreboard(){
+  const idx=loadIndex().filter(e=>!e.archived);
+  if(!SB_COMP_ID){
+    if(ACTIVE_COMP_ID) SB_COMP_ID=ACTIVE_COMP_ID;
+    else if(idx.length===1) SB_COMP_ID=idx[0].id;
+  }
+  const sbState=SB_COMP_ID?loadComp(SB_COMP_ID):null;
+  const comp=sbState?sbState.competition:null;
+  const cats=comp?comp.categories:[];
+  if(!SB_CAT&&cats.length>0) SB_CAT=cats[0];
+  return `
+  <div>
+    ${idx.length>1?`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px;justify-content:center;background:var(--bg2);border-bottom:1px solid var(--border);">
+      ${idx.map(e=>`
+        <button class="sb-cat-btn ${SB_COMP_ID===e.id?'active':''}"
+          style="${SB_COMP_ID===e.id?'border-color:var(--blue);color:var(--blue);background:rgba(0,200,255,0.08)':''}"
+          onclick="sbSelectComp('${e.id}')">
+          🏆 ${e.name||'—'}
+        </button>`).join('')}
+    </div>`:''}
+    ${!comp?`<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">${CURRENT_LANG==='en'?'Select a competition above':'Yukarıdan yarışma seçin'}</div></div>`:`
+    <div class="sb-header">
+      <div class="sb-comp-name">${comp.name||'Free Flight Competition'}</div>
+      <div class="sb-date">${comp.dateStart||''} ${comp.dateEnd&&comp.dateEnd!==comp.dateStart?'– '+comp.dateEnd:''} ${comp.location?'· '+comp.location:''}</div>
+      ${sbState.rounds.find(r=>r.status==='active')?`<div class="alert alert-success" style="display:inline-block;margin-bottom:12px;">🟢 ${sbState.rounds.find(r=>r.status==='active').isFlyoff?'Flyoff':'Raund '+sbState.rounds.find(r=>r.status==='active').number} ${t('activeRound')}</div>`:''}
+      <div class="sb-category-tabs">
+        ${cats.map(cat=>`<button class="sb-cat-btn ${SB_CAT===cat?'active':''}" onclick="sbCat('${cat}')">${cat}</button>`).join('')}
+      </div>
+    </div>
+    <div id="sb-table">${renderSbTable(sbState)}</div>
+    <div class="text-center mt-3"><button class="btn btn-ghost btn-sm" onclick="navigate('scoreboard')">↺ ${t('refresh')}</button></div>`}
+  </div>`;
+}
+function sbSelectComp(id){SB_COMP_ID=id;SB_CAT=null;navigate('scoreboard');}
+function sbCat(cat){
+  SB_CAT=cat;
+  const sbState=SB_COMP_ID?loadComp(SB_COMP_ID):null;
+  const el=document.getElementById('sb-table');
+  if(el&&sbState) el.innerHTML=renderSbTable(sbState);
+}
+function renderSbTable(sbState){
+  if(!sbState) return '';
+  if(!SB_CAT) return `<div class="empty">${t('selectCat')}</div>`;
+  const savedState=STATE; STATE=sbState;
+  const ranked=rankCategory(SB_CAT);
+  STATE=savedState;
+  if(ranked.length===0) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${SB_CAT} — ${t('noCompInCat')}</div></div>`;
+  const normalRounds=sbState.rounds.filter(r=>!r.isFlyoff&&r.status!=='pending');
+  const flyoffs=sbState.rounds.filter(r=>r.isFlyoff&&r.status!=='pending');
+  return `<div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>${CURRENT_LANG==='en'?'Name':'Ad Soyad'}</th>
+          <th>${CURRENT_LANG==='en'?'Country':'Ülke'}</th>
+          ${normalRounds.map(r=>`<th>R${r.number}</th>`).join('')}
+          ${flyoffs.map(r=>`<th>F${r.flyoffNum}</th>`).join('')}
+          <th>${t('total')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${ranked.map((rc,i)=>{
+          const c=rc.competitor;
+          return `<tr class="${i<3?'rank-'+(i+1)+' rank-row':''}">
+            <td style="font-family:'Orbitron',monospace;font-size:${Math.max(13,16-i)}px;font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+            <td><strong>${c.name} ${c.surname}</strong>${rc.disqualified?'<span class="badge badge-red" style="margin-left:4px">DQ</span>':''}</td>
+            <td class="text-sm">${c.country||'—'}</td>
+            ${normalRounds.map(r=>{const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);return `<td class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}">${sc?fmtSec(sc.finalTime):'—'}</td>`;}).join('')}
+            ${flyoffs.map(r=>{const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);return `<td class="font-mono text-purple">${sc?fmtSec(sc.finalTime):'—'}</td>`;}).join('')}
+            <td class="font-mono bold" style="font-size:15px">${fmtSec(rc.total)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ==================== PUBLIC REGISTER ====================
+let REG_COMP_ID=null; // seçilen yarışma
+
+function renderPublicRegister(){
+  const activeComps=loadIndex().filter(e=>!e.archived);
+
+  // Eğer yarışma seçilmediyse önce seçtir
+  if(!REG_COMP_ID){
+    return `
+    <div style="max-width:640px;margin:0 auto;">
+      <div class="card">
+        <div class="card-header"><div class="card-title">✍️ Yarışma Kaydı</div></div>
+        ${activeComps.length===0?`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Şu an kayıt açık yarışma bulunmuyor.</div></div>`:`
+        <div class="text-sm text-muted mb-3">Kayıt olmak istediğiniz yarışmayı seçin:</div>
+        ${activeComps.map(e=>{
+          const comp=loadComp(e.id);
+          if(!comp||!comp.competition.name) return '';
+          const c=comp.competition;
+          return `
+          <div class="competitor-chip" onclick="selectRegComp('${e.id}')" style="margin-bottom:8px;">
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:14px;">${c.name}</div>
+              <div class="text-sm text-muted">${c.dateStart||''}${c.location?' · '+c.location:''}</div>
+              <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                ${c.categories.slice(0,5).map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}
+              </div>
+            </div>
+            <div style="color:var(--blue);font-size:20px;">→</div>
+          </div>`;
+        }).join('')}`}
+        <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← Geri</button></div>
+      </div>
+    </div>`;
+  }
+
+  // Yarışma seçildi — formu göster
+  const comp=loadComp(REG_COMP_ID);
+  if(!comp){REG_COMP_ID=null;navigate('register');return '';}
+  const c=comp.competition;
+
+  return `
+  <div style="max-width:640px;margin:0 auto;">
+    <div class="alert alert-info mb-3" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>🏆 <strong>${c.name}</strong>${c.dateStart?' — '+c.dateStart:''}${c.location?' · '+c.location:''}</span>
+      <button class="btn btn-ghost btn-sm" onclick="REG_COMP_ID=null;navigate('register')">Değiştir</button>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">✍️</span>Kayıt Formu</div>
+      </div>
+      <div class="form-row mb-3">
+        <div class="form-group"><label>Ad *</label><input id="pr-name" placeholder="Adınız"></div>
+        <div class="form-group"><label>Soyad *</label><input id="pr-surname" placeholder="Soyadınız"></div>
+      </div>
+      <div class="form-group mb-3"><label>E-posta</label><input id="pr-email" type="email"></div>
+      <div class="form-row mb-3">
+        <div class="form-group"><label>Ülke (3 harf)</label><input id="pr-country" maxlength="3" placeholder="TUR"></div>
+        <div class="form-group"><label>FAI Lisans ID</label><input id="pr-fai"></div>
+      </div>
+      <div class="form-group mb-3"><label>THSF Lisans No</label><input id="pr-thsf"></div>
+      <div class="form-group mb-3">
+        <label>Kategoriler</label>
+        <div class="check-group" id="pr-cats">
+          ${c.categories.map(cat=>`<label class="check-item"><input type="checkbox" value="${cat}"> ${cat}</label>`).join('')}
+        </div>
+      </div>
+      <div class="form-row mb-3">
+        <div class="form-group">
+          <label>Sınıf</label>
+          <select id="pr-class"><option value="senior">Senior</option><option value="junior">Junior</option></select>
+        </div>
+        <div class="form-group">
+          <label>Banket</label>
+          <select id="pr-banquet"><option value="no">Hayır</option><option value="yes">Evet</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 Kaydı Gönder</button>
+    </div>
+    ${c.bulletinUrl?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>Yarışma Bülteni</div></div><a href="${c.bulletinUrl}" target="_blank" class="btn btn-ghost">📥 Bülteni İndir/Görüntüle</a></div>`:''}
+  </div>`;
+}
+
+function selectRegComp(id){
+  REG_COMP_ID=id;
+  navigate('register');
+}
+
+function submitPublicRegister(){
+  const name=document.getElementById('pr-name').value.trim();
+  const surname=document.getElementById('pr-surname').value.trim();
+  if(!name||!surname){toast('Ad ve soyad zorunlu','error');return;}
+  if(!REG_COMP_ID){toast('Lütfen önce yarışma seçin','error');return;}
+  const cats=[...document.querySelectorAll('#pr-cats input:checked')].map(i=>i.value);
+  // Load the selected comp, add competitor, save back
+  const compState=loadComp(REG_COMP_ID);
+  if(!compState){toast('Yarışma bulunamadı','error');return;}
+  compState.competitors.push({
+    id:uid(),name,surname,
+    email:document.getElementById('pr-email').value.trim(),
+    country:(document.getElementById('pr-country').value||'').toUpperCase(),
+    faiId:document.getElementById('pr-fai').value.trim(),
+    thsfId:document.getElementById('pr-thsf').value.trim(),
+    senior:document.getElementById('pr-class').value==='senior',
+    categories:cats,
+    banquet:document.getElementById('pr-banquet').value==='yes',
+    registered:new Date().toISOString(),
+    selfRegistered:true
+  });
+  saveComp(REG_COMP_ID,compState);
+  // Also update STATE if this is the active comp
+  if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
+  toast(`${name} ${surname} kaydı alındı! ✓`,'success');
+  REG_COMP_ID=null;
+  navigate('scoreboard');
+}
+
+// ==================== BUSINESS LOGIC ====================
+function rankCategory(cat){
+  const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
+  const doneRounds=STATE.rounds.filter(r=>r.status==='done');
+  return catComps.map(c=>{
+    let total=0;
+    const dq=STATE.scores.some(s=>s.competitorId===c.id&&s.disqualified);
+    doneRounds.forEach(r=>{
+      const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+      total+=sc?sc.finalTime:0;
+    });
+    return {competitor:c,total,disqualified:dq};
+  }).sort((a,b)=>{
+    if(a.disqualified&&!b.disqualified) return 1;
+    if(!a.disqualified&&b.disqualified) return -1;
+    return b.total-a.total;
+  });
+}
+
+function getFlyoffCandidates(){
+  const doneRounds=STATE.rounds.filter(r=>!r.isFlyoff&&r.status==='done');
+  if(doneRounds.length===0) return [];
+  const allDone=STATE.rounds.filter(r=>!r.isFlyoff).every(r=>r.status==='done');
+  if(!allDone) return [];
+  const results=[];
+  STATE.competition.categories.forEach(cat=>{
+    const ranked=rankCategory(cat);
+    if(ranked.length<2) return;
+    const top=ranked[0];
+    if(top.disqualified) return;
+    // Check if multiple people have same total AND all rounds maxed
+    const maxTotal=doneRounds.reduce((s,r)=>s+r.maxTime,0);
+    const maxFlyers=ranked.filter(r=>Math.abs(r.total-maxTotal)<0.01&&!r.disqualified);
+    if(maxFlyers.length>1) results.push({category:cat,competitors:maxFlyers.map(f=>f.competitor),reason:'max'});
+    else {
+      // Check tied 2nd/3rd
+      if(ranked.length>=3){
+        const t1=ranked[1].total,t2=ranked[2].total;
+        if(Math.abs(t1-t2)<0.01&&!ranked[1].disqualified&&!ranked[2].disqualified){
+          results.push({category:cat,competitors:[ranked[1].competitor,ranked[2].competitor],reason:'tied23'});
+        }
+      }
+    }
+  });
+  return results;
+}
+
+function exportResults(){
+  const lines=['Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
+  STATE.competition.categories.forEach(cat=>{
+    const ranked=rankCategory(cat);
+    ranked.forEach((rc,i)=>{
+      const c=rc.competitor;
+      lines.push(`${cat},${i+1},${c.name},${c.surname},${c.country||''},${c.faiId||''},${rc.total.toFixed(2)}`);
+    });
+  });
+  downloadCSV('sonuclar.csv',lines.join('\n'));
+  toast('Sonuçlar CSV olarak indirildi','info');
+}
+
+// ==================== MODAL ====================
+function openModal(title,body,footer){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=body;
+  document.getElementById('modalFooter').innerHTML=footer||'';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').onclick=(e)=>{if(e.target===document.getElementById('modal'))closeModal();};
+
+// ==================== UTILS ====================
+function fmtSec(s){
+  if(s===undefined||s===null||isNaN(s)) return '—';
+  const m=Math.floor(s/60);const sec=s%60;
+  return `${m}:${sec.toFixed(s%1?2:0).padStart(sec%1?5:2,'0')}`;
+}
+function fmtTimer(s){
+  const m=Math.floor(s/60);const sec=s%60;
+  return `${String(m).padStart(2,'0')}:${sec.toFixed(1).padStart(4,'0')}`;
+}
+function downloadCSV(filename,content){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(content);
+  a.download=filename;a.click();
+}
+function toast(msg,type='info',duration=3000){
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;el.textContent=msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),duration);
+}
+function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;ACTIVE_ORG_ID=null;sessionStorage.removeItem('ffco_active_org');navigate('landing');}
+function sortTable(th){
+  // simple DOM sort
+  const table=th.closest('table');
+  const tbody=table.querySelector('tbody');
+  const idx=[...th.parentNode.children].indexOf(th);
+  const asc=th.classList.contains('sort-asc');
+  table.querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+  th.classList.add(asc?'sort-desc':'sort-asc');
+  const rows=[...tbody.querySelectorAll('tr')];
+  rows.sort((a,b)=>{
+    const av=a.cells[idx]?.textContent.trim()||'';
+    const bv=b.cells[idx]?.textContent.trim()||'';
+    const an=parseFloat(av),bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn)) return asc?bn-an:an-bn;
+    return asc?bv.localeCompare(av):av.localeCompare(bv);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+// ==================== INIT ====================
+if(ACTIVE_COMP_ID&&!loadComp(ACTIVE_COMP_ID)){
+  ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();
+}
+// Start with Supabase sync
+startupSync();
+
+// Auto-refresh scoreboard from Supabase every 15s
+setInterval(async()=>{
+  if(CURRENT_VIEW==='scoreboard'&&SB_COMP_ID){
+    const rows=await sbGet('ffco_comps',`?id=eq.${SB_COMP_ID}`);
+    if(rows&&rows.length>0){
+      localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
+      document.getElementById('mainContent').innerHTML=renderScoreboard();
+    }
+  }
+},15000);
+</script>
+</body>
+</html>
