@@ -776,6 +776,7 @@ function renderApp(){
   const main=document.getElementById('mainContent');
   switch(CURRENT_VIEW){
     case 'landing':      main.innerHTML=renderLanding(); break;
+    case 'login-select': main.innerHTML=renderLoginSelect(); break;
     case 'admin-pin':    main.innerHTML=renderAdminPin(); break;
     case 'admin':        main.innerHTML=renderAdmin(); break;
     case 'org-login':    main.innerHTML=renderOrgLogin(); break;
@@ -838,34 +839,53 @@ function renderLanding(){
       <div class="landing-logo">FF<span>CO</span></div>
       <div class="landing-sub mt-3">${t('tagline')}</div>
     </div>
-    <div class="role-cards">
-      <div class="role-card" onclick="navigate('admin-pin')" style="border-color:rgba(155,109,255,0.3)">
-        <div class="role-icon">👑</div>
-        <div class="role-name" style="color:var(--purple)">ADMİN</div>
-        <div class="role-desc">${t('adminDesc')}</div>
-      </div>
-      <div class="role-card" onclick="navigate('org-login')">
-        <div class="role-icon">🧑‍✈️</div>
-        <div class="role-name">${t('organizer')}</div>
-        <div class="role-desc">${t('orgDesc')}</div>
-      </div>
-      <div class="role-card" onclick="navigate('judge-pin')">
-        <div class="role-icon">⏱</div>
-        <div class="role-name">${t('judge')}</div>
-        <div class="role-desc">${t('judgeDesc')}</div>
-      </div>
-      <div class="role-card" onclick="guestScoreboard()">
+
+    <div class="role-cards" style="grid-template-columns:1fr 1fr;max-width:440px;">
+      <div class="role-card" onclick="guestScoreboard()" style="text-align:center;">
         <div class="role-icon">📊</div>
         <div class="role-name">${t('scoreboard')}</div>
         <div class="role-desc">${t('sbDesc')}</div>
       </div>
-      <div class="role-card" onclick="guestRegister()">
+      <div class="role-card" onclick="guestRegister()" style="text-align:center;">
         <div class="role-icon">✍️</div>
         <div class="role-name">${t('register')}</div>
         <div class="role-desc">${t('regDesc')}</div>
       </div>
     </div>
+
+    <button class="btn btn-ghost" onclick="navigate('login-select')"
+      style="margin-top:8px;padding:10px 32px;font-size:13px;letter-spacing:.5px;">
+      ${CURRENT_LANG==='en'?'Log In →':'Giriş Yap →'}
+    </button>
+
     <div class="text-sm text-muted">v1.2 · 2026 FFCO · ${t('dataNote')}</div>
+  </div>`;
+}
+function renderLoginSelect(){
+  return `
+  <div class="landing">
+    <div>
+      <div class="landing-logo" style="font-size:30px;">FF<span>CO</span></div>
+      <div class="landing-sub mt-2">${CURRENT_LANG==='en'?'Select your account type':'Hesap türünüzü seçin'}</div>
+    </div>
+    <div class="role-cards" style="grid-template-columns:repeat(3,1fr);max-width:580px;">
+      <div class="role-card" onclick="navigate('admin-pin')" style="border-color:rgba(155,109,255,0.2);text-align:center;">
+        <div class="role-icon">👑</div>
+        <div class="role-name" style="color:var(--purple)">ADMİN</div>
+        <div class="role-desc">${CURRENT_LANG==='en'?'Full system access':'Tüm sistemi yönet'}</div>
+      </div>
+      <div class="role-card" onclick="navigate('org-login')" style="text-align:center;">
+        <div class="role-icon">🧑‍✈️</div>
+        <div class="role-name" style="color:var(--gold)">${t('organizer')}</div>
+        <div class="role-desc">${t('orgDesc')}</div>
+      </div>
+      <div class="role-card" onclick="navigate('judge-pin')" style="text-align:center;">
+        <div class="role-icon">⏱</div>
+        <div class="role-name" style="color:var(--blue)">${t('judge')}</div>
+        <div class="role-desc">${t('judgeDesc')}</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← ${t('back')}</button>
   </div>`;
 }
 function guestScoreboard(){CURRENT_ROLE='public';navigate('scoreboard');}
@@ -2573,7 +2593,7 @@ function renderScoreboard(){
       <span id="sb-last-update" class="text-xs text-muted"></span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);">
         <span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;"></span>
-        ${CURRENT_LANG==='en'?'Live · updates every 8s':'Canlı · 8sn\'de bir güncellenir'}
+        ${CURRENT_LANG==='en'?'Live · updates every 5s':'Canlı · 5sn\'de bir güncellenir'}
       </span>
     </div>`}
   </div>`;
@@ -2751,11 +2771,12 @@ function submitPublicRegister(){
 // ==================== BUSINESS LOGIC ====================
 function rankCategory(cat){
   const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
-  const doneRounds=STATE.rounds.filter(r=>r.status==='done');
+  // Include both done AND active rounds in total (active round scores are real)
+  const countedRounds=STATE.rounds.filter(r=>r.status==='done'||r.status==='active');
   return catComps.map(c=>{
     let total=0;
     const dq=STATE.scores.some(s=>s.competitorId===c.id&&s.disqualified);
-    doneRounds.forEach(r=>{
+    countedRounds.forEach(r=>{
       const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
       total+=sc?sc.finalTime:0;
     });
@@ -2763,7 +2784,7 @@ function rankCategory(cat){
   }).sort((a,b)=>{
     if(a.disqualified&&!b.disqualified) return 1;
     if(!a.disqualified&&b.disqualified) return -1;
-    return b.total-a.total;
+    return b.total-a.total; // highest total first
   });
 }
 
@@ -2844,7 +2865,7 @@ function toast(msg,type='info',duration=3000){
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(()=>el.remove(),duration);
 }
-function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;ACTIVE_ORG_ID=null;sessionStorage.removeItem('ffco_active_org');navigate('landing');}
+function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;CURRENT_ORG_ID=null;ACTIVE_ORG_ID=null;sessionStorage.removeItem('ffco_active_org');sessionStorage.removeItem('ffco_active_comp');navigate('landing');}
 function sortTable(th){
   // simple DOM sort
   const table=th.closest('table');
