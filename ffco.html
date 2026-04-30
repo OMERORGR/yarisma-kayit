@@ -806,7 +806,7 @@ function renderApp(){
     case 'admin':        main.innerHTML=renderAdmin(); break;
     case 'org-login':    main.innerHTML=renderOrgLogin(); break;
     case 'org-register': main.innerHTML=renderOrgRegister(); break;
-    case 'judge-pin':    main.innerHTML=renderPinScreen('judge'); break;
+    case 'judge-pin':    main.innerHTML=renderJudgeCompSelect(); break;
     case 'comp-select':  main.innerHTML=renderCompSelect(); break;
     case 'organizer':    main.innerHTML=renderOrganizer(); bindOrgEvents(); break;
     case 'judge':        main.innerHTML=renderJudge(); bindJudgeEvents(); break;
@@ -1311,6 +1311,69 @@ function confirmDeleteComp(id){
 }
 
 // ==================== PIN SCREENS ====================
+// Judge competition selector — Step 1
+let JUDGE_SELECTED_COMP_ID=null;
+function renderJudgeCompSelect(){
+  const idx=loadIndex().filter(e=>!e.archived);
+  return `
+  <div class="pin-screen" style="max-width:420px;">
+    <div class="pin-title" style="color:var(--blue)">⏱ ${t('judgeLogin')}</div>
+    <div class="pin-sub">${CURRENT_LANG==='en'?'Select your competition first':'Önce yarışmanızı seçin'}</div>
+    <div style="width:100%;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;">
+      ${idx.length===0
+        ?`<div class="alert alert-warn">${CURRENT_LANG==='en'?'No active competitions found.':'Aktif yarışma bulunamadı.'}</div>`
+        :idx.map(e=>{
+          const comp=loadComp(e.id);
+          if(!comp||!comp.competition.name) return '';
+          const c=comp.competition;
+          const activeRound=comp.rounds.find(r=>r.status==='active');
+          return `
+          <div class="competitor-chip ${JUDGE_SELECTED_COMP_ID===e.id?'selected':''}"
+            onclick="selectJudgeComp('${e.id}',this)"
+            style="cursor:pointer;">
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:14px;">${c.name}</div>
+              <div class="text-sm text-muted">${c.dateStart||''}${c.location?' · '+c.location:''}</div>
+            </div>
+            ${activeRound?`<span class="badge badge-green">🟢 ${CURRENT_LANG==='en'?'Live':'Canlı'}</span>`:''}
+            ${JUDGE_SELECTED_COMP_ID===e.id?'<span style="color:var(--blue);font-size:18px;">✓</span>':''}
+          </div>`;
+        }).join('')}
+    </div>
+    ${JUDGE_SELECTED_COMP_ID?`
+    <div class="form-group" style="width:100%;">
+      <label>${CURRENT_LANG==='en'?'Enter your PIN':'PIN kodunuzu girin'}</label>
+      <input class="pin-input" type="password" id="judgePinInput" maxlength="10" placeholder="••••" autofocus
+        onkeydown="if(event.key==='Enter')checkJudgePinForComp()">
+      <div class="pin-error hidden" id="judgePinError">${t('wrongPin')}</div>
+    </div>
+    <button class="btn btn-primary w-full" onclick="checkJudgePinForComp()">${t('login')}</button>`
+    :`<button class="btn btn-primary w-full" disabled style="opacity:.4;">${CURRENT_LANG==='en'?'Select a competition first':'Önce yarışma seçin'}</button>`}
+    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('login-select')">${t('back')}</button></div>
+  </div>`;
+}
+function selectJudgeComp(id, el){
+  JUDGE_SELECTED_COMP_ID=id;
+  // Re-render to show PIN input
+  document.getElementById('mainContent').innerHTML=renderJudgeCompSelect();
+  setTimeout(()=>document.getElementById('judgePinInput')?.focus(),100);
+}
+function checkJudgePinForComp(){
+  const pin=document.getElementById('judgePinInput')?.value;
+  const err=document.getElementById('judgePinError');
+  if(!pin||!JUDGE_SELECTED_COMP_ID){return;}
+  // Only search in the selected competition
+  const comp=loadComp(JUDGE_SELECTED_COMP_ID);
+  if(!comp){err.classList.remove('hidden');return;}
+  const j=comp.judges.find(j=>j.pin===pin);
+  if(j){
+    CURRENT_JUDGE_ID=j.id;
+    judgeLoginWithSync(JUDGE_SELECTED_COMP_ID,j.id);
+  } else {
+    err.classList.remove('hidden');
+  }
+}
+
 function renderPinScreen(type){
   const isOrg=type==='organizer';
   return `
@@ -1321,7 +1384,7 @@ function renderPinScreen(type){
       onkeydown="if(event.key==='Enter')checkPin('${type}')">
     <div class="pin-error hidden" id="pinError">${t('wrongPin')}</div>
     <button class="btn btn-primary w-full" onclick="checkPin('${type}')">${t('login')}</button>
-    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">${t('back')}</button></div>
+    <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('login-select')">${t('back')}</button></div>
     ${isOrg?`<div class="mt-4 alert alert-info">${t('defaultPin')}</div>`:''}
   </div>`;
 }
@@ -1538,11 +1601,6 @@ function renderSetupForm(){
         <label>Organizatör PIN (Mevcut: ${c.organizerPin})</label>
         <input id="sf-orgpin" type="password" placeholder="Yeni PIN (boş bırakırsan değişmez)">
       </div>
-      <div class="form-group">
-        <label>Hakem PIN Ön Eki (Mevcut: ${c.judgePrefix})</label>
-        <input id="sf-judgepin" type="password" placeholder="Hakem PINleri bu şekilde başlar">
-        <div class="form-hint">Hakemler kendi PIN'lerini oluşturursunuz: ön ek + sıra no (örn: 4321, 43212...)</div>
-      </div>
     </div>
     <button class="btn btn-primary" onclick="saveSetup()">💾 Ayarları Kaydet</button>
   </div>`;
@@ -1614,9 +1672,7 @@ function saveSetup(){
   c.dateEnd=document.getElementById('sf-date-e').value;
   c.bulletinUrl=document.getElementById('sf-bulletin').value.trim();
   const newOrgPin=document.getElementById('sf-orgpin').value.trim();
-  const newJudgePin=document.getElementById('sf-judgepin').value.trim();
   if(newOrgPin)c.organizerPin=newOrgPin;
-  if(newJudgePin)c.judgePrefix=newJudgePin;
   STATE.setupComplete=true;
   // Register in index if not already there
   if(ACTIVE_COMP_ID){
@@ -1856,27 +1912,33 @@ function isPinUsedGlobally(pin, excludeJudgeId=''){
   if(conflict) return {comp:STATE.competition.name||'Bu yarışma', judge:conflict.name};
   return null;
 }
-function generateUniquePin(prefix, baseNum){
-  let n=baseNum;
-  while(true){
-    const pin=prefix+n;
-    if(!isPinUsedGlobally(pin)) return pin;
-    n++;
-  }
+function generateRandomPin(length=6){
+  // Random alphanumeric — no sequential numbers, no ambiguous chars (0,O,I,1,l)
+  const chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let pin='';
+  for(let i=0;i<length;i++) pin+=chars[Math.floor(Math.random()*chars.length)];
+  return pin;
+}
+function generateUniquePin(){
+  let pin;
+  let tries=0;
+  do{
+    pin=generateRandomPin(6);
+    tries++;
+  }while(isPinUsedGlobally(pin)&&tries<100);
+  return pin;
 }
 
 function openAddJudgeModal(editId){
   const j=editId?STATE.judges.find(x=>x.id===editId):{};
-  const prefix=STATE.competition.judgePrefix||'4321';
-  const baseNum=STATE.judges.length+1;
-  const suggestPin=editId?j.pin:generateUniquePin(prefix,baseNum);
+  const suggestPin=editId?j.pin:generateUniquePin();
   openModal(editId?'Hakem Düzenle':'Hakem Ekle',`
     <div class="form-group"><label>Ad Soyad *</label><input id="jm-name" value="${j.name||''}"></div>
     <div class="form-row">
       <div class="form-group">
         <label>PIN *</label>
         <input id="jm-pin" value="${suggestPin}" oninput="checkPinUnique(this,'${editId||''}')">
-        <div class="form-hint" id="pin-hint" style="color:var(--text3)">Hakem bu PIN ile giriş yapacak — tüm yarışmalarda benzersiz olmalı</div>
+        <div class="form-hint" id="pin-hint" style="color:var(--text3)">Rastgele oluşturuldu — değiştirebilirsiniz</div>
       </div>
       <div class="form-group">
         <label>Kategori (opsiyonel)</label>
@@ -3085,7 +3147,7 @@ function toast(msg,type='info',duration=3000){
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(()=>el.remove(),duration);
 }
-function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;CURRENT_ORG_ID=null;ACTIVE_ORG_ID=null;sessionStorage.removeItem('ffco_active_org');sessionStorage.removeItem('ffco_active_comp');navigate('landing');}
+function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;CURRENT_ORG_ID=null;ACTIVE_ORG_ID=null;JUDGE_SELECTED_COMP_ID=null;sessionStorage.removeItem('ffco_active_org');sessionStorage.removeItem('ffco_active_comp');navigate('landing');}
 function sortTable(th){
   // simple DOM sort
   const table=th.closest('table');
