@@ -757,14 +757,39 @@ let CURRENT_ROLE='public'; // 'admin'|'organizer'|'judge'|'public'
 let CURRENT_JUDGE_ID=null;
 
 function checkJudgePin(pin){
+  // First check local cache to find which comp this judge belongs to
   const idx=loadIndex();
   for(const entry of idx){
     const comp=loadComp(entry.id);
     if(!comp) continue;
     const j=comp.judges.find(j=>j.pin===pin);
-    if(j){selectComp(entry.id);CURRENT_JUDGE_ID=j.id;return true;}
+    if(j){
+      CURRENT_JUDGE_ID=j.id;
+      // Always sync fresh data from Supabase on judge login
+      judgeLoginWithSync(entry.id,j.id);
+      return true;
+    }
   }
   return false;
+}
+async function judgeLoginWithSync(compId,judgeId){
+  CURRENT_ROLE='judge';
+  CURRENT_JUDGE_ID=judgeId;
+  // Show loading briefly
+  document.getElementById('mainContent').innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;">
+      <div style="width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div>
+      <div style="font-size:12px;color:var(--text2);">Yarışma verisi güncelleniyor...</div>
+    </div>`;
+  // Sync fresh data from Supabase
+  try{
+    const rows=await sbGet('ffco_comps',`?id=eq.${compId}`);
+    if(rows&&rows.length>0){
+      localStorage.setItem('ffco_comp_'+compId,JSON.stringify(rows[0].data));
+    }
+  }catch(e){}
+  selectComp(compId);
+  navigate('judge');
 }
 
 // ==================== ROUTER ====================
@@ -1304,20 +1329,20 @@ function checkPin(type){
   const pin=document.getElementById('pinInput').value;
   const err=document.getElementById('pinError');
   if(type==='organizer'){
-    // Check against all competitions' organizer PINs
     const idx=loadIndex();
     let found=false;
     for(const entry of idx){
       const comp=loadComp(entry.id);
       if(comp&&comp.competition.organizerPin===pin){found=true;break;}
     }
-    // Also check current state or default PIN
     if(!found&&(pin===STATE.competition.organizerPin||pin==='1234')){found=true;}
     if(found){CURRENT_ROLE='organizer';navigate('comp-select');}
     else{err.classList.remove('hidden');}
   } else {
-    if(checkJudgePin(pin)){CURRENT_ROLE='judge';navigate('judge');}
-    else{err.classList.remove('hidden');}
+    // checkJudgePin now handles async login internally
+    const found=checkJudgePin(pin);
+    if(!found){err.classList.remove('hidden');}
+    // If found, judgeLoginWithSync handles navigation
   }
 }
 
@@ -2332,11 +2357,17 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
         <div class="card-header"><div class="card-title"><span class="icon">📋</span>Bu Raund Skorları</div></div>
         ${myCompetitors.map(c=>{
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
-          if(!score) return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${c.name} ${c.surname} — Bekleniyor</div>`;
+          if(!score){
+            // Round closed + no score = auto 0
+            const label=roundClosed?`<span class="font-mono" style="color:var(--text3)">0:00</span><span class="text-xs text-muted" style="margin-left:4px">otomatik</span>`:`<span style="color:var(--text3)">— ${t('waiting')}</span>`;
+            return `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;">
+              <span style="flex:1">${c.name} ${c.surname}</span>${label}</div>`;
+          }
           return `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;">
             <span style="flex:1">${c.name} ${c.surname}</span>
             <span class="font-mono ${score.finalTime>=activeRound.maxTime?'text-green':'text-gold'}">${fmtSec(score.finalTime)}</span>
             ${score.disqualified?'<span class="badge badge-red">DQ</span>':''}
+            ${score.autoZero?'<span class="badge badge-gray">oto</span>':''}
             <button class="btn btn-ghost btn-sm" onclick="editScore('${score.id}')" style="padding:2px 6px">✏️</button>
           </div>`;
         }).join('')}
@@ -2892,8 +2923,9 @@ if(ACTIVE_COMP_ID&&!loadComp(ACTIVE_COMP_ID)){
 // Start with Supabase sync
 startupSync();
 
-// Auto-refresh scoreboard from Supabase every 5s
+// Auto-refresh scoreboard + judge view from Supabase every 5s
 setInterval(async()=>{
+  // Scoreboard refresh
   if(CURRENT_VIEW==='scoreboard'&&SB_COMP_ID){
     const rows=await sbGet('ffco_comps',`?id=eq.${SB_COMP_ID}&select=id,data,updated_at`);
     if(rows&&rows.length>0){
@@ -2902,11 +2934,32 @@ setInterval(async()=>{
       const sbTs=rows[0].updated_at||'';
       if(sbTs>localTs){
         localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
-        // Only refresh the table, not the full page (avoids scroll jump)
         const el=document.getElementById('sb-table');
         const sbState=loadComp(SB_COMP_ID);
         if(el&&sbState) el.innerHTML=renderSbTable(sbState);
         syncOK();
+      }
+    }
+  }
+  // Judge view refresh — detect new rounds
+  if(CURRENT_VIEW==='judge'&&ACTIVE_COMP_ID&&CURRENT_ROLE==='judge'){
+    const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}&select=id,data,updated_at`);
+    if(rows&&rows.length>0){
+      const localRaw=localStorage.getItem('ffco_comp_'+ACTIVE_COMP_ID);
+      const localTs=localRaw?JSON.parse(localRaw).competition?.updatedAt||'':'';
+      const sbTs=rows[0].updated_at||'';
+      if(sbTs>localTs){
+        const oldActiveRoundId=STATE.rounds.find(r=>r.status==='active')?.id;
+        localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(rows[0].data));
+        STATE=rows[0].data;
+        const newActiveRoundId=STATE.rounds.find(r=>r.status==='active')?.id;
+        // Re-render if round changed and no flight in progress
+        if(oldActiveRoundId!==newActiveRoundId&&!JUDGE_STATE.timerRunning){
+          JUDGE_STATE.selectedCompetitorId=null;
+          navigate('judge');
+          if(newActiveRoundId) toast('🏁 Yeni raund başladı!','success');
+          else toast('⏹ Raund kapandı','info');
+        }
       }
     }
   }
