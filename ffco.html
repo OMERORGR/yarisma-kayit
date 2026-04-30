@@ -2392,6 +2392,17 @@ function renderJudge(){
   const activeRound=STATE.rounds.find(r=>r.status==='active');
   const compName=STATE.competition.name||'—';
 
+  // Check for pending extra flight request for this judge
+  const pendingReq=(STATE.extraFlightRequests||[]).find(r=>
+    r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending'&&
+    r.roundId===activeRound?.id
+  );
+  const approvedReq=(STATE.extraFlightRequests||[]).find(r=>
+    r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved'&&
+    r.roundId===activeRound?.id&&
+    !JUDGE_STATE.attemptMemory?.[r.competitorId+'_'+r.roundId]?.used
+  );
+
   // Schedule auto-start after DOM renders
   if(JUDGE_STATE._pendingAutoStart){
     JUDGE_STATE._pendingAutoStart=false;
@@ -2433,6 +2444,16 @@ function renderJudge(){
     </div>
 
     ${roundClosed?`<div class="alert alert-warn">⚠️ Raund organizatör tarafından kapatıldı. <strong>Devam eden uçuşunuzu kaydedebilirsiniz</strong> ancak yeni uçuş başlatamazsınız.</div>`:''}
+    ${pendingReq?`
+    <div class="alert alert-warn">
+      ⏳ <strong>${pendingReq.competitorName}</strong> için ek uçuş talebi gönderildi — baş hakem onayı bekleniyor...
+      <div style="font-size:11px;margin-top:4px;color:var(--text2)">Onaylanırsa bu ekran otomatik güncellenecek</div>
+    </div>`:''}
+    ${approvedReq?`
+    <div class="alert alert-success">
+      ✅ <strong>${approvedReq.competitorName}</strong> için ek uçuş <strong>ONAYLANDI!</strong>
+      Yarışmacıyı seçip yeniden başlatın.
+    </div>`:''}
     ${!workingRound&&!flightInProgress?`<div class="alert alert-warn">⏳ ${t('waitRound')}</div>`:renderJudgePanel(judge,workingRound,roundClosed)}
   </div>`;
 }
@@ -2563,7 +2584,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
     </div>
 
-    ${stopped&&!roundClosed&&JUDGE_STATE.currentAttempt===1?`
+    ${(stopped||running)&&!roundClosed&&JUDGE_STATE.currentAttempt===1?`
     <div class="mt-3 card" style="background:var(--bg3);border-color:var(--border2);">
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ SORUN / YANLIŞ BAŞLATMA</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -2797,16 +2818,20 @@ function submitExtraFlightRequest(type,compId,roundId){
   const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
   const comp=STATE.competitors.find(c=>c.id===compId);
   const req={
-    id:uid(),type,compId,roundId,
+    id:uid(),type,roundId,
     judgeId:CURRENT_JUDGE_ID,judgeName:judge?.name||'Hakem',
     competitorId:compId,competitorName:comp?comp.name+' '+comp.surname:'?',
     note,status:'pending',requestedAt:new Date().toISOString()
   };
   if(!STATE.extraFlightRequests) STATE.extraFlightRequests=[];
   STATE.extraFlightRequests.push(req);
+  // Stop timer, save request
+  clearInterval(JUDGE_STATE.timerInterval);
+  JUDGE_STATE.timerRunning=false;
+  JUDGE_STATE.timerElapsed=0;
+  JUDGE_STATE.timerStart=null;
   save();closeModal();
-  toast('Talep gönderildi — baş hakem/jüri onayı bekleniyor','info');
-  timerReset();
+  toast('📨 Talep gönderildi — baş hakem onayı bekleniyor...','info');
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
@@ -2814,9 +2839,11 @@ function approveExtraFlight(reqId){
   const req=STATE.extraFlightRequests?.find(r=>r.id===reqId);
   if(!req) return;
   req.status='approved';req.approvedAt=new Date().toISOString();req.approvedBy=CURRENT_ROLE;
-  // Grant attempt in attemptMemory for that judge's competitor
+  // Set attempt memory so judge can do second flight
   const memKey=req.competitorId+'_'+req.roundId;
-  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type,note:'Onaylandı: '+req.note};
+  if(!JUDGE_STATE.attemptMemory) JUDGE_STATE.attemptMemory={};
+  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:'Onaylandı: '+req.note};
+  STATE.logs.push({id:uid(),type:'extra_flight_approved',reqId,ts:new Date().toISOString()});
   save();
   toast(`${req.competitorName} için ek uçuş onaylandı ✓`,'success');
   document.getElementById('orgContent').innerHTML=renderOverview();
@@ -2825,6 +2852,7 @@ function rejectExtraFlight(reqId){
   const req=STATE.extraFlightRequests?.find(r=>r.id===reqId);
   if(!req) return;
   req.status='rejected';req.rejectedAt=new Date().toISOString();req.rejectedBy=CURRENT_ROLE;
+  STATE.logs.push({id:uid(),type:'extra_flight_rejected',reqId,ts:new Date().toISOString()});
   save();
   toast('Talep reddedildi','info');
   document.getElementById('orgContent').innerHTML=renderOverview();
@@ -3255,10 +3283,10 @@ setInterval(async()=>{
       const sbTs=rows[0].updated_at||'';
       if(sbTs>localTs){
         const oldActiveRoundId=STATE.rounds.find(r=>r.status==='active')?.id;
+        const prevData=STATE; // save before overwrite
         localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(rows[0].data));
         STATE=rows[0].data;
         const newActiveRoundId=STATE.rounds.find(r=>r.status==='active')?.id;
-        // Re-render ONLY if round changed AND no flight in progress (timer not running AND no elapsed time)
         const flightInProgress=JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0;
         if(oldActiveRoundId!==newActiveRoundId&&!flightInProgress){
           JUDGE_STATE.selectedCompetitorId=null;
@@ -3266,9 +3294,15 @@ setInterval(async()=>{
           if(newActiveRoundId) toast('🏁 Yeni raund başladı!','success');
           else toast('⏹ Raund kapandı','info');
         } else if(oldActiveRoundId!==newActiveRoundId&&flightInProgress){
-          // Round changed but flight in progress — show warning only
           if(newActiveRoundId) toast('🏁 Yeni raund başladı — uçuşu tamamlayın ve kaydedin','warn');
           else toast('⏹ Raund kapandı — uçuşu tamamlayın ve kaydedin','warn');
+        }
+        // Check if a pending extra flight request was approved
+        const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
+        const nowApproved=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved');
+        if(prevPending.length>0&&nowApproved.length>prevPending.filter(r=>r.status==='approved').length){
+          toast('✅ Ek uçuş talebiniz onaylandı!','success');
+          navigate('judge');
         }
       }
     }
