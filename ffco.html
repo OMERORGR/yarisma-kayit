@@ -2306,13 +2306,14 @@ function renderJudge(){
   const flightInProgress=JUDGE_STATE.timerElapsed>0||JUDGE_STATE.timerRunning;
   // Use saved roundId from timer state if available (survives browser refresh)
   const savedRound=JUDGE_STATE.roundId?STATE.rounds.find(r=>r.id===JUDGE_STATE.roundId):null;
-  const lastClosedRound=!activeRound&&flightInProgress
-    ?(savedRound||STATE.rounds.filter(r=>r.status==='done').sort((a,b)=>new Date(b.endedAt||0)-new Date(a.endedAt||0))[0])
-    :null;
 
-  // The round to work with: active > savedRound (restored) > lastClosed > null
-  const workingRound=activeRound||lastClosedRound||null;
-  const roundClosed=!!lastClosedRound&&!activeRound;
+  // KEY RULE: if a flight is in progress for a SPECIFIC saved round,
+  // that round takes priority over whatever round is currently active.
+  // This prevents round2 from overwriting an ongoing round1 flight after browser refresh.
+  const workingRound=(flightInProgress&&savedRound)
+    ? savedRound                              // in-progress flight → use its round
+    : (activeRound||null);                    // no flight → use active round
+  const roundClosed=workingRound?workingRound.status==='done':false;
 
   return `
   <div>
@@ -2362,7 +2363,13 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
     laneComps.forEach(c=>{if(!myCompetitors.find(x=>x.id===c.id))myCompetitors.push({...c,laneId:lane.id});});
   });
   const sel=JUDGE_STATE.selectedCompetitorId;
-  const selComp=myCompetitors.find(c=>c.id===sel);
+  // If timer is in progress for a competitor, ensure they show even if round rotation changed
+  let selComp=myCompetitors.find(c=>c.id===sel);
+  if(!selComp&&sel&&(JUDGE_STATE.timerElapsed>0||JUDGE_STATE.timerRunning)){
+    // Restored flight: competitor might not be in current rotation — find from full list
+    const found=STATE.competitors.find(c=>c.id===sel);
+    if(found) selComp={...found,_restoredFlight:true};
+  }
   
   return `
   <div class="grid-2">
