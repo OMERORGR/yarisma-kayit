@@ -2654,50 +2654,67 @@ function timerReset(){
   clearTimerState();
 }
 
-function timerSave(compId,roundId){
+async function timerSave(compId,roundId){
   const elapsed=JUDGE_STATE.timerElapsed;
   const round=STATE.rounds.find(r=>r.id===roundId);
-  // Kural 2: Max süreyi asla geçme
   const finalTime=Math.min(Math.round(elapsed), round?round.maxTime:elapsed);
   const note=document.getElementById('judge-note')?.value||'';
+
+  // Sync latest data from Supabase before saving to get other judge's score
+  try{
+    const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}`);
+    if(rows&&rows.length>0){
+      const freshData=rows[0].data;
+      // Merge fresh scores into STATE (don't overwrite whole STATE to preserve local timer)
+      freshData.scores.forEach(freshScore=>{
+        const localIdx=STATE.scores.findIndex(s=>s.id===freshScore.id);
+        if(localIdx>-1) STATE.scores[localIdx]=freshScore;
+        else STATE.scores.push(freshScore);
+      });
+      localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify({...freshData,scores:STATE.scores}));
+    }
+  }catch(e){/* offline — use local */}
 
   const existIdx=STATE.scores.findIndex(s=>s.competitorId===compId&&s.roundId===roundId);
 
   if(existIdx>-1){
     const existing=STATE.scores[existIdx];
-    // Kural 1: Pozitif ayrımcılık — yüksek değer kazanır
-    if(finalTime>existing.finalTime){
-      // Yeni değer daha yüksek → güncelle, önceki ölçümü kayıt altında tut
-      STATE.scores[existIdx]={
-        ...existing,
-        finalTime,
-        attempts:[...existing.attempts,{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID,replacedPrevious:existing.finalTime}],
-      };
-      STATE.logs.push({id:uid(),type:'score_higher_wins',competitorId:compId,roundId,prev:existing.finalTime,new:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
+    if(existing.autoZero&&existing.finalTime===0){
+      // Overwrite auto-zero with real score
+      STATE.scores[existIdx]={...existing,finalTime,autoZero:false,
+        attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',
+          attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}]};
+      toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
+    } else if(finalTime>existing.finalTime){
+      // Higher score wins
+      STATE.scores[existIdx]={...existing,finalTime,
+        attempts:[...existing.attempts,{time:elapsed,finalTime,
+          type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,
+          note,judgeId:CURRENT_JUDGE_ID,replacedPrevious:existing.finalTime}]};
+      STATE.logs.push({id:uid(),type:'score_higher_wins',competitorId:compId,roundId,
+        prev:existing.finalTime,new:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
       toast(`${fmtSec(finalTime)} kaydedildi ✓ (önceki: ${fmtSec(existing.finalTime)} — yüksek değer alındı)`,'success');
     } else {
-      // Yeni değer daha düşük veya eşit → mevcut korunur
-      STATE.scores[existIdx]={
-        ...existing,
-        attempts:[...existing.attempts,{time:elapsed,finalTime,type:'lower_ignored',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
-      };
-      STATE.logs.push({id:uid(),type:'score_lower_ignored',competitorId:compId,roundId,kept:existing.finalTime,ignored:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
-      toast(`Mevcut skor korundu: ${fmtSec(existing.finalTime)} (yeni ölçüm ${fmtSec(finalTime)} daha düşük — görmezden gelindi)`,'warn');
+      // Lower or equal — keep existing
+      STATE.scores[existIdx]={...existing,
+        attempts:[...existing.attempts,{time:elapsed,finalTime,type:'lower_ignored',
+          attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}]};
+      STATE.logs.push({id:uid(),type:'score_lower_ignored',competitorId:compId,roundId,
+        kept:existing.finalTime,ignored:finalTime,judgeId:CURRENT_JUDGE_ID,ts:new Date().toISOString()});
+      toast(`Mevcut skor korundu: ${fmtSec(existing.finalTime)} (${fmtSec(finalTime)} daha düşük)`,'warn');
     }
   } else {
-    // İlk kayıt
-    STATE.scores.push({
-      id:uid(),competitorId:compId,roundId,
-      attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
-      finalTime,confirmed:false,disqualified:false
-    });
+    // First score for this competitor+round
+    STATE.scores.push({id:uid(),competitorId:compId,roundId,
+      attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',
+        attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
+      finalTime,confirmed:false,disqualified:false});
     toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
   }
 
   save();
   timerReset();
   clearTimerState();
-  // Clear attempt memory for this competitor+round
   delete JUDGE_STATE.attemptMemory[compId+'_'+roundId];
   JUDGE_STATE.selectedCompetitorId=null;
   JUDGE_STATE.currentAttempt=1;
