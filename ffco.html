@@ -2257,16 +2257,19 @@ function restoreTimerState(){
     JUDGE_STATE.currentAttempt=ts.currentAttempt||1;
     JUDGE_STATE.attemptType=ts.attemptType||null;
     if(ts.timerRunning&&ts.timerStart){
-      // Recalculate elapsed time
-      const round=STATE.rounds.find(r=>r.status==='active');
+      // Recalculate elapsed time based on when it was saved
+      const round=STATE.rounds.find(r=>r.status==='active')||STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
       const elapsed=(Date.now()-ts.timerStart)/1000;
       JUDGE_STATE.timerElapsed=Math.min(elapsed,round?round.maxTime:elapsed);
-      JUDGE_STATE.timerStart=ts.timerStart;
-      JUDGE_STATE.timerRunning=false; // will restart via UI
-      toast('⚠️ Aktif timer bulundu — devam etmek için yarışmacıyı seçin','warn');
+      JUDGE_STATE.timerStart=ts.timerStart; // keep original start so timer is accurate
+      JUDGE_STATE.timerRunning=false;
+      // Auto-restart timer after DOM renders
+      JUDGE_STATE._pendingAutoStart=true;
+      toast('🔄 Uçuş devam ediyor...','info');
     } else {
       JUDGE_STATE.timerElapsed=ts.timerElapsed||0;
       JUDGE_STATE.timerRunning=false;
+      if(ts.timerElapsed>0) toast('⚠️ Durdurulmuş uçuş bulundu — kaydedin veya sıfırlayın','warn');
     }
   }catch(e){}
 }
@@ -2282,6 +2285,16 @@ function renderJudge(){
   if(!JUDGE_STATE.timerRunning&&!JUDGE_STATE.selectedCompetitorId) restoreTimerState();
   const activeRound=STATE.rounds.find(r=>r.status==='active');
   const compName=STATE.competition.name||'—';
+
+  // Schedule auto-start after DOM renders
+  if(JUDGE_STATE._pendingAutoStart){
+    JUDGE_STATE._pendingAutoStart=false;
+    setTimeout(()=>{
+      if(!JUDGE_STATE.timerRunning&&JUDGE_STATE.timerElapsed>0&&JUDGE_STATE.selectedCompetitorId){
+        timerStart();
+      }
+    },150);
+  }
 
   // Special case: round was closed while a flight was in progress
   // Find the most recently closed round if timer has elapsed time
