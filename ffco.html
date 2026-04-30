@@ -2187,10 +2187,8 @@ function renderResultsPanel(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-      <div class="text-sm text-muted">Tüm kategoriler</div>
-      <div class="flex gap-2">
-        <button class="btn btn-ghost btn-sm" onclick="exportResults()">📤 CSV İndir</button>
-      </div>
+      <div class="text-sm text-muted">Tüm kategoriler · ✏️ ile skor düzenleyebilirsiniz</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportResults()">📤 CSV İndir</button>
     </div>
     ${cats.map(cat=>{
       const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
@@ -2206,15 +2204,28 @@ function renderResultsPanel(){
                 const c=rc.competitor;
                 return `<tr class="${i<3?'rank-'+(i+1)+' rank-row':''}">
                   <td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
-                  <td>${c.name} ${c.surname}${rc.disqualified?'<span class="badge badge-red ml-1">DQ</span>':''}</td>
+                  <td>${c.name} ${c.surname}${rc.disqualified?'<span class="badge badge-red" style="margin-left:4px">DQ</span>':''}</td>
                   <td>${c.country||'—'}</td>
                   ${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>{
                     const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
-                    return `<td class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}">${sc?fmtSec(sc.finalTime):'—'}</td>`;
+                    const juryEdit=sc&&sc.juryEdited;
+                    return `<td>
+                      <span class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}" 
+                        style="${juryEdit?'color:var(--orange);':''}">
+                        ${sc?fmtSec(sc.finalTime):'—'}${juryEdit?'*':''}
+                      </span>
+                      ${sc?`<button class="btn btn-ghost btn-sm" onclick="editScore('${sc.id}')" style="padding:1px 5px;margin-left:4px;font-size:10px;">✏️</button>`:''}
+                    </td>`;
                   }).join('')}
                   ${STATE.rounds.filter(r=>r.isFlyoff).map(r=>{
                     const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
-                    return `<td class="font-mono text-purple">${sc?fmtSec(sc.finalTime)+(sc.heightM?' +'+sc.heightM+'m':''):'—'}</td>`;
+                    const juryEdit=sc&&sc.juryEdited;
+                    return `<td>
+                      <span class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'}">
+                        ${sc?fmtSec(sc.finalTime)+(sc.heightM?' +'+sc.heightM+'m':''):'—'}${juryEdit?'*':''}
+                      </span>
+                      ${sc?`<button class="btn btn-ghost btn-sm" onclick="editScore('${sc.id}')" style="padding:1px 5px;margin-left:4px;font-size:10px;">✏️</button>`:''}
+                    </td>`;
                   }).join('')}
                   <td class="font-mono bold">${fmtSec(rc.total)}</td>
                 </tr>`;
@@ -2222,6 +2233,8 @@ function renderResultsPanel(){
             </tbody>
           </table>
         </div>
+        ${STATE.scores.some(s=>s.juryEdited&&STATE.competitors.find(c=>c.categories.includes(cat)&&c.id===s.competitorId))
+          ?`<div style="padding:8px 14px;font-size:11px;color:var(--orange);">* Jüri/organizatör tarafından düzenlenmiş skor</div>`:''}
       </div>`;
     }).join('')}
   </div>`;
@@ -2453,7 +2466,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
     </div>
 
     <div class="timer-controls">
-      ${canStart?`<button class="timer-btn timer-start" onclick="timerStart()">▶ BAŞLAT</button>`:''}
+      ${canStart?`<button class="timer-btn timer-start" id="startBtn" onclick="handleStartBtn(this)">▶ BAŞLAT</button>`:''}
       ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">⏹ DURDUR</button>`:''}
       ${stopped&&(!existing||isAutoZero)?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
       ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
@@ -2494,6 +2507,12 @@ function selectCompetitor(id){
 }
 
 function timerStart(){
+  // If timer was already running and has elapsed time, ask for confirmation
+  if(JUDGE_STATE.timerElapsed>0&&!JUDGE_STATE.timerRunning){
+    if(!confirm('Kronometreyi sıfırlayıp yeniden başlatmak istiyor musunuz? Mevcut süre silinecek.')) return;
+    JUDGE_STATE.timerElapsed=0;
+    JUDGE_STATE.timerStart=null;
+  }
   JUDGE_STATE.timerStart=Date.now()-JUDGE_STATE.timerElapsed*1000;
   JUDGE_STATE.timerRunning=true;
   const round=STATE.rounds.find(r=>r.status==='active')||STATE.rounds.filter(r=>r.status==='done').slice(-1)[0];
@@ -2593,36 +2612,99 @@ function timerSave(compId,roundId){
 
 function grantAttempt(type,compId,roundId){
   if(JUDGE_STATE.currentAttempt>1){toast('Bu raund için zaten bir deneme hakkı kullanıldı','error');return;}
+  const typeLabel=type==='sub20'?'20 saniye altı uçuş':'Kaza / Çarpışma';
+  openModal('⚠️ Deneme Hakkı Ver',`
+    <div class="alert alert-warn mb-3">Bu işlem <strong>geri alınamaz</strong>. Emin misiniz?</div>
+    <div class="form-group"><label>Sebep</label><input value="${typeLabel}" disabled></div>
+    <div class="form-group">
+      <label>Açıklama (zorunlu) *</label>
+      <textarea id="attempt-note" placeholder="Deneme hakkı verilme sebebini kısaca açıklayın..." style="height:80px"></textarea>
+    </div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">❌ İptal</button>
+    <button class="btn btn-gold" onclick="confirmGrantAttempt('${type}','${compId}','${roundId}')">✅ Evet, Deneme Hakkı Ver</button>`);
+  setTimeout(()=>document.getElementById('attempt-note')?.focus(),100);
+}
+function confirmGrantAttempt(type,compId,roundId){
+  const note=document.getElementById('attempt-note')?.value.trim();
+  if(!note){toast('Açıklama zorunlu — sebebi yazın','error');return;}
   JUDGE_STATE.currentAttempt=2;
   JUDGE_STATE.attemptType=type;
+  JUDGE_STATE.attemptNote=note;
   timerReset();
+  closeModal();
   toast('Deneme hakkı verildi — Yeni uçuş başlatılabilir','info');
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
+}
+function resetJudgeAttempt(){
+  // Organizer can reset attempt flag on current selected competitor
+  if(!confirm('Deneme hakkını sıfırlamak istiyor musunuz?')) return;
+  JUDGE_STATE.currentAttempt=1;
+  JUDGE_STATE.attemptType=null;
+  JUDGE_STATE.attemptNote=null;
+  toast('Deneme hakkı sıfırlandı','info');
+  document.getElementById('mainContent').innerHTML=renderJudge();
+}
+
+// Double-tap START protection
+let _startBtnArmed=false;
+let _startBtnTimer=null;
+function handleStartBtn(btn){
+  if(!_startBtnArmed){
+    // First tap — arm it
+    _startBtnArmed=true;
+    btn.textContent='Tekrar Bas! ✓';
+    btn.style.background='var(--gold)';
+    btn.style.color='#000';
+    _startBtnTimer=setTimeout(()=>{
+      // Reset if not confirmed in 2s
+      _startBtnArmed=false;
+      if(btn){btn.textContent='▶ BAŞLAT';btn.style.background='';btn.style.color='';}
+    },2000);
+  } else {
+    // Second tap — actually start
+    clearTimeout(_startBtnTimer);
+    _startBtnArmed=false;
+    timerStart();
+  }
 }
 
 function editScore(scoreId){
   const sc=STATE.scores.find(s=>s.id===scoreId);
   if(!sc) return;
   const c=STATE.competitors.find(x=>x.id===sc.competitorId);
-  openModal('Skor Düzenle',`
-    <div class="alert alert-warn mb-3">⚠️ Skor değişikliği log'a kaydedilir.</div>
+  const round=STATE.rounds.find(r=>r.id===sc.roundId);
+  openModal('✏️ Skor Düzenle',`
+    <div class="alert alert-warn mb-3">⚠️ Skor değişikliği log'a kaydedilir ve skorbordta işaretlenir.</div>
     <div class="form-group"><label>Yarışmacı</label><input value="${c?c.name+' '+c.surname:''}" disabled></div>
-    <div class="form-group"><label>Final Süre (saniye)</label><input id="es-time" type="number" value="${sc.finalTime}" step="0.01"></div>
+    <div class="form-group"><label>Raund</label><input value="${round?'Raund '+round.number:'—'}" disabled></div>
+    <div class="form-group"><label>Mevcut Süre</label><input value="${fmtSec(sc.finalTime)}" disabled></div>
+    <div class="form-group"><label>Yeni Süre (saniye) *</label><input id="es-time" type="number" value="${sc.finalTime}" step="1" min="0" max="${round?round.maxTime:999}"></div>
     <div class="form-group"><label><input type="checkbox" id="es-dq" ${sc.disqualified?'checked':''}> Diskalifiye</label></div>
-    <div class="form-group"><label>Not</label><input id="es-note" value="${sc.editNote||''}"></div>
+    <div class="form-group"><label>Değişiklik Sebebi (zorunlu) *</label><textarea id="es-note" style="height:70px" placeholder="Jüri kararı, hata düzeltmesi...">${sc.editNote||''}</textarea></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
-    <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">Değişikliği Kaydet</button>`);
+    <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">💾 Değişikliği Kaydet</button>`);
+  setTimeout(()=>document.getElementById('es-time')?.focus(),100);
 }
 function saveEditScore(id){
   const sc=STATE.scores.find(s=>s.id===id);if(!sc) return;
-  const newTime=parseFloat(document.getElementById('es-time').value)||0;
+  const note=document.getElementById('es-note').value.trim();
+  if(!note){toast('Değişiklik sebebi zorunlu','error');return;}
+  const newTime=parseInt(document.getElementById('es-time').value)||0;
+  const round=STATE.rounds.find(r=>r.id===sc.roundId);
+  const cappedTime=round?Math.min(newTime,round.maxTime):newTime;
   const dq=document.getElementById('es-dq').checked;
-  const note=document.getElementById('es-note').value;
-  sc.finalTime=newTime;sc.disqualified=dq;sc.editNote=note;sc.editedAt=new Date().toISOString();
-  STATE.logs.push({id:uid(),type:'score_edit',scoreId:id,newTime,dq,note,ts:new Date().toISOString(),judgeId:CURRENT_JUDGE_ID});
-  save();closeModal();toast('Skor güncellendi','success');
-  document.getElementById('mainContent').innerHTML=renderJudge();bindJudgeEvents();
+  const prevTime=sc.finalTime;
+  sc.finalTime=cappedTime;sc.disqualified=dq;sc.editNote=note;
+  sc.editedAt=new Date().toISOString();
+  sc.juryEdited=true; // flag for scoreboard highlight
+  sc.editedBy=CURRENT_ROLE==='admin'?'Admin':(STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID)?.name||'Jüri');
+  STATE.logs.push({id:uid(),type:'score_edit',scoreId:id,prevTime,newTime:cappedTime,dq,note,ts:new Date().toISOString(),editedBy:sc.editedBy});
+  save();closeModal();
+  toast(`Skor güncellendi: ${fmtSec(prevTime)} → ${fmtSec(cappedTime)}`,'success');
+  // Refresh current view
+  if(CURRENT_VIEW==='organizer') document.getElementById('orgContent').innerHTML=renderResultsPanel();
+  else if(CURRENT_VIEW==='judge'){document.getElementById('mainContent').innerHTML=renderJudge();bindJudgeEvents();}
 }
 
 function bindJudgeEvents(){}
@@ -2715,15 +2797,28 @@ function renderSbTable(sbState){
             <td style="font-family:'Orbitron',monospace;font-size:${Math.max(13,16-i)}px;font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
             <td><strong>${c.name} ${c.surname}</strong>${rc.disqualified?'<span class="badge badge-red" style="margin-left:4px">DQ</span>':''}</td>
             <td class="text-sm">${c.country||'—'}</td>
-            ${normalRounds.map(r=>{const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);return `<td class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}">${sc?fmtSec(sc.finalTime):'—'}</td>`;}).join('')}
-            ${flyoffs.map(r=>{const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);return `<td class="font-mono text-purple">${sc?fmtSec(sc.finalTime):'—'}</td>`;}).join('')}
+            ${normalRounds.map(r=>{
+              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+              const juryEdit=sc&&sc.juryEdited;
+              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':sc&&sc.finalTime>=r.maxTime?'var(--green)':'inherit'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?'⚠️ Jüri tarafından düzenlendi: '+sc.editedBy+' — '+sc.editNote:''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
+            }).join('')}
+            ${flyoffs.map(r=>{
+              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+              const juryEdit=sc&&sc.juryEdited;
+              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?'⚠️ Jüri tarafından düzenlendi':''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
+            }).join('')}
             <td class="font-mono bold" style="font-size:15px">${fmtSec(rc.total)}</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>
-  </div>`;
-}
+  </div>
+  ${sbState.scores.some(s=>s.juryEdited)?
+    `<div style="padding:10px 16px;font-size:11px;color:var(--orange);display:flex;align-items:center;gap:6px;">
+      <span>*</span>
+      <span>${CURRENT_LANG==='en'?'Score marked with * has been modified by the jury/organizer after initial entry.':'* ile işaretlenmiş skor, jüri/organizatör tarafından ilk girişin ardından düzenlenmiştir.'}</span>
+    </div>`:''}
+  `;
 
 // ==================== PUBLIC REGISTER ====================
 let REG_COMP_ID=null; // seçilen yarışma
