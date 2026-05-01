@@ -3389,26 +3389,44 @@ function renderPublicRegister(){
         <div class="form-group"><label>Ad *</label><input id="pr-name" placeholder="Adınız"></div>
         <div class="form-group"><label>Soyad *</label><input id="pr-surname" placeholder="Soyadınız"></div>
       </div>
+      <div class="form-group mb-3">
+        <label>Kayıt Türü *</label>
+        <select id="pr-regtype" onchange="updateRegForm(this.value)">
+          <option value="competitor">Yarışmacı</option>
+          <option value="judge">Hakem (Timekeeper)</option>
+          <option value="jury">Jüri</option>
+          <option value="organizer">Organizatör</option>
+          <option value="chief">Baş Hakem</option>
+          <option value="jurychief">Jüri Başkanı</option>
+        </select>
+      </div>
       <div class="form-group mb-3"><label>E-posta</label><input id="pr-email" type="email"></div>
       <div class="form-row mb-3">
         <div class="form-group"><label>Ülke (3 harf)</label><input id="pr-country" maxlength="3" placeholder="TUR"></div>
         <div class="form-group"><label>FAI Lisans ID</label><input id="pr-fai"></div>
       </div>
       <div class="form-group mb-3"><label>THSF Lisans No</label><input id="pr-thsf"></div>
-      <div class="form-group mb-3">
-        <label>Kategoriler</label>
-        <div class="check-group" id="pr-cats">
-          ${c.categories.map(cat=>`<label class="check-item"><input type="checkbox" value="${cat}"> ${cat}</label>`).join('')}
+      <div id="pr-competitor-fields">
+        <div class="form-group mb-3">
+          <label>Kategoriler</label>
+          <div class="check-group" id="pr-cats">
+            ${c.categories.map(cat=>`<label class="check-item"><input type="checkbox" value="${cat}"> ${cat}</label>`).join('')}
+          </div>
+        </div>
+        <div class="form-row mb-3">
+          <div class="form-group">
+            <label>Sınıf</label>
+            <select id="pr-class"><option value="senior">Senior</option><option value="junior">Junior</option></select>
+          </div>
+          <div class="form-group">
+            <label>Banket</label>
+            <select id="pr-banquet"><option value="no">Hayır</option><option value="yes">Evet</option></select>
+          </div>
         </div>
       </div>
-      <div class="form-row mb-3">
-        <div class="form-group">
-          <label>Sınıf</label>
-          <select id="pr-class"><option value="senior">Senior</option><option value="junior">Junior</option></select>
-        </div>
-        <div class="form-group">
-          <label>Banket</label>
-          <select id="pr-banquet"><option value="no">Hayır</option><option value="yes">Evet</option></select>
+      <div id="pr-judge-info" style="display:none;">
+        <div class="alert alert-info mb-3">
+          ⚖️ Hakem olarak kayıt olunca sisteme otomatik eklenir ve size özel bir <strong>giriş PIN kodu</strong> atanır. PIN bilginiz e-posta adresinize gönderilmez — yarışma organizatöründen alabilirsiniz.
         </div>
       </div>
       <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 Kaydı Gönder</button>
@@ -3426,31 +3444,71 @@ function selectRegComp(id){
   navigate('register');
 }
 
+function updateRegForm(type){
+  const isJudge=type==='judge';
+  const isCompetitor=type==='competitor';
+  document.getElementById('pr-competitor-fields').style.display=isCompetitor?'block':'none';
+  document.getElementById('pr-judge-info').style.display=isJudge?'block':'none';
+}
+
 function submitPublicRegister(){
   const name=document.getElementById('pr-name').value.trim();
   const surname=document.getElementById('pr-surname').value.trim();
   if(!name||!surname){toast('Ad ve soyad zorunlu','error');return;}
   if(!REG_COMP_ID){toast('Lütfen önce yarışma seçin','error');return;}
-  const cats=[...document.querySelectorAll('#pr-cats input:checked')].map(i=>i.value);
-  // Load the selected comp, add competitor, save back
+  const regType=document.getElementById('pr-regtype').value;
   const compState=loadComp(REG_COMP_ID);
   if(!compState){toast('Yarışma bulunamadı','error');return;}
-  compState.competitors.push({
+
+  const baseData={
     id:uid(),name,surname,
     email:document.getElementById('pr-email').value.trim(),
     country:(document.getElementById('pr-country').value||'').toUpperCase(),
     faiId:document.getElementById('pr-fai').value.trim(),
     thsfId:document.getElementById('pr-thsf').value.trim(),
-    senior:document.getElementById('pr-class').value==='senior',
-    categories:cats,
-    banquet:document.getElementById('pr-banquet').value==='yes',
     registered:new Date().toISOString(),
     selfRegistered:true
-  });
-  saveComp(REG_COMP_ID,compState);
-  // Also update STATE if this is the active comp
-  if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
-  toast(`${name} ${surname} kaydı alındı! ✓`,'success');
+  };
+
+  if(regType==='judge'){
+    // Add to judges list with auto PIN
+    const pin=generateRandomPin(6);
+    compState.judges.push({
+      id:uid(),
+      name:name+' '+surname,
+      pin,
+      category:null,
+      selfRegistered:true,
+      email:baseData.email,
+      country:baseData.country,
+      faiId:baseData.faiId
+    });
+    // Also add to competitors list for visibility
+    compState.competitors.push({
+      ...baseData,
+      categories:['Hakem'],
+      senior:true,banquet:false
+    });
+    saveComp(REG_COMP_ID,compState);
+    if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
+    toast(`${name} ${surname} hakem olarak kaydedildi ✓ — PIN organizatörden alınabilir`,'success');
+  } else {
+    // Non-judge: add to competitors
+    const roleLabel={competitor:'',jury:'Jüri',organizer:'Organizatör',chief:'Baş Hakem',jurychief:'Jüri Başkanı'};
+    const cats=regType==='competitor'
+      ?[...document.querySelectorAll('#pr-cats input:checked')].map(i=>i.value)
+      :[roleLabel[regType]||regType];
+    compState.competitors.push({
+      ...baseData,
+      categories:cats,
+      senior:document.getElementById('pr-class')?.value==='senior',
+      banquet:document.getElementById('pr-banquet')?.value==='yes'
+    });
+    saveComp(REG_COMP_ID,compState);
+    if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
+    toast(`${name} ${surname} kaydı alındı ✓`,'success');
+  }
+
   REG_COMP_ID=null;
   navigate('scoreboard');
 }
