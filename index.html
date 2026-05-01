@@ -505,7 +505,7 @@ const LANGS={
     orgLogin:'Organizatör Girişi', judgeLogin:'Hakem Girişi',
     orgPinHint:'Organizatör PIN kodunu girin', judgePinHint:'Hakem PIN kodunuzu girin',
     login:'Giriş', wrongPin:'❌ Hatalı PIN', back:'← Geri',
-    defaultPin:'Varsayılan PIN: <strong>1234</strong><br>Yarışma kurulumundan değiştirebilirsiniz.',
+    defaultPin:'',
     // Tabs
     overview:'📊 Genel Bakış', setup:'⚙️ Yarışma Ayarları', competitors:'👥 Yarışmacılar',
     judges:'⚖️ Hakemler', lanes:'🏟 Kulvarlar', rounds:'🏁 Raundlar', resultsTab:'🏆 Sonuçlar',
@@ -579,7 +579,7 @@ const LANGS={
     activeRoundLabel:'Aktif Raund',
     // Admin
     adminLogin:'Admin Girişi', adminPinHint:'Admin PIN kodunu girin',
-    adminDefaultPin:'Varsayılan Admin PIN: <strong>admin1234</strong><br>Admin panelinden değiştirin.',
+    adminDefaultPin:'',
     adminPanel:'ADMİN PANELİ', adminDesc:'Tüm sistemi yönet, organizatör hesapları oluştur, her yarışmaya müdahale et.',
     adminTabOrgs:'👤 Organizatörler', adminTabComps:'🏆 Tüm Yarışmalar', adminTabSettings:'⚙️ Admin Ayarları',
     addOrganizer:'+ Organizatör Ekle', noOrganizersYet:'Henüz organizatör hesabı yok',
@@ -639,7 +639,7 @@ const LANGS={
     orgLogin:'Organizer Login', judgeLogin:'Timekeeper Login',
     orgPinHint:'Enter organizer PIN code', judgePinHint:'Enter your timekeeper PIN code',
     login:'Login', wrongPin:'❌ Wrong PIN', back:'← Back',
-    defaultPin:'Default PIN: <strong>1234</strong><br>You can change it in competition setup.',
+    defaultPin:'',
     overview:'📊 Overview', setup:'⚙️ Competition Setup', competitors:'👥 Competitors',
     judges:'⚖️ Timekeepers', lanes:'🏟 Lanes', rounds:'🏁 Rounds', resultsTab:'🏆 Results',
     compName:'Competition Name', location:'Location', startDate:'Start Date', endDate:'End Date',
@@ -703,7 +703,7 @@ const LANGS={
     activeRoundLabel:'Active Round',
     // Admin
     adminLogin:'Admin Login', adminPinHint:'Enter admin PIN code',
-    adminDefaultPin:'Default Admin PIN: <strong>admin1234</strong><br>Change it in the Admin Settings tab.',
+    adminDefaultPin:'',
     adminPanel:'ADMIN PANEL', adminDesc:'Manage the entire system, create organizer accounts, intervene in any competition.',
     adminTabOrgs:'👤 Organizers', adminTabComps:'🏆 All Competitions', adminTabSettings:'⚙️ Admin Settings',
     addOrganizer:'+ Add Organizer', noOrganizersYet:'No organizer accounts yet',
@@ -803,6 +803,7 @@ function renderApp(){
   switch(CURRENT_VIEW){
     case 'landing':      main.innerHTML=renderLanding(); break;
     case 'login-select': main.innerHTML=renderLoginSelect(); break;
+    case 'participants': main.innerHTML=renderParticipants(); break;
     case 'admin-pin':    main.innerHTML=renderAdminPin(); break;
     case 'admin':        main.innerHTML=renderAdmin(); break;
     case 'org-login':    main.innerHTML=renderOrgLogin(); break;
@@ -851,6 +852,7 @@ function updateTopbar(){
   } else {
     nav.innerHTML=`
       <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
+      <button class="nav-btn ${CURRENT_VIEW==='participants'?'active':''}" onclick="navigate('participants')">👥 ${CURRENT_LANG==='en'?'Participants':'Katılımcılar'}</button>
       <button class="nav-btn ${CURRENT_VIEW==='register'?'active':''}" onclick="navigate('register')">📝 ${t('register')}</button>
     `;
     roleEl.textContent='🔄 '+t('switchRole');roleEl.style.color='var(--text2)';
@@ -866,11 +868,16 @@ function renderLanding(){
       <div class="landing-sub mt-3">${t('tagline')}</div>
     </div>
 
-    <div class="role-cards" style="grid-template-columns:1fr 1fr;max-width:440px;">
+    <div class="role-cards" style="grid-template-columns:repeat(3,1fr);max-width:620px;">
       <div class="role-card" onclick="guestScoreboard()" style="text-align:center;">
         <div class="role-icon">📊</div>
         <div class="role-name">${t('scoreboard')}</div>
         <div class="role-desc">${t('sbDesc')}</div>
+      </div>
+      <div class="role-card" onclick="navigate('participants')" style="text-align:center;">
+        <div class="role-icon">👥</div>
+        <div class="role-name">${CURRENT_LANG==='en'?'PARTICIPANTS':'KATILIMCILAR'}</div>
+        <div class="role-desc">${CURRENT_LANG==='en'?'View registered competitors and officials.':'Kayıtlı yarışmacı ve görevlileri gör.'}</div>
       </div>
       <div class="role-card" onclick="guestRegister()" style="text-align:center;">
         <div class="role-icon">✍️</div>
@@ -917,7 +924,133 @@ function renderLoginSelect(){
 function guestScoreboard(){CURRENT_ROLE='public';navigate('scoreboard');}
 function guestRegister(){CURRENT_ROLE='public';navigate('register');}
 
+// ==================== PARTICIPANTS ====================
+let PART_COMP_ID=null;
+let PART_TAB='competitors'; // 'competitors' | 'judges'
+function renderParticipants(){
+  const idx=loadIndex().filter(e=>!e.archived);
+  // Auto-select if only one competition
+  if(!PART_COMP_ID&&idx.length===1) PART_COMP_ID=idx[0].id;
+  const partState=PART_COMP_ID?loadComp(PART_COMP_ID):null;
+  return `
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="flex justify-between items-center mb-4">
+      <div class="font-orb text-blue" style="font-size:16px;letter-spacing:2px;">👥 ${CURRENT_LANG==='en'?'PARTICIPANTS':'KATILIMCILAR'}</div>
+      <button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← ${t('back')}</button>
+    </div>
+
+    ${idx.length>1?`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      ${idx.map(e=>`
+        <button class="sb-cat-btn ${PART_COMP_ID===e.id?'active':''}"
+          style="${PART_COMP_ID===e.id?'border-color:var(--blue);color:var(--blue);background:rgba(0,200,255,0.08)':''}"
+          onclick="PART_COMP_ID='${e.id}';PART_TAB='competitors';navigate('participants')">
+          🏆 ${e.name||'—'}
+        </button>`).join('')}
+    </div>`:''}
+
+    ${!partState?`<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">${CURRENT_LANG==='en'?'Select a competition above':'Yukarıdan yarışma seçin'}</div></div>`:`
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="font-orb" style="font-size:14px;color:var(--text)">${partState.competition.name}</div>
+          <div class="text-sm text-muted">${partState.competition.dateStart||''} ${partState.competition.location?'· '+partState.competition.location:''}</div>
+        </div>
+        <div class="flex gap-2">
+          <span class="badge badge-blue">${partState.competitors.length} ${CURRENT_LANG==='en'?'competitors':'yarışmacı'}</span>
+          <span class="badge badge-gray">${partState.judges.length} ${CURRENT_LANG==='en'?'officials':'görevli'}</span>
+        </div>
+      </div>
+
+      <div class="tabs mb-4">
+        <button class="tab ${PART_TAB==='competitors'?'active':''}" onclick="PART_TAB='competitors';document.getElementById('part-content').innerHTML=renderPartContent('${PART_COMP_ID}')">
+          🏅 ${CURRENT_LANG==='en'?'Competitors':'Yarışmacılar'} (${partState.competitors.filter(c=>c.categories.some(cat=>['F1A','F1B','F1C','F1G','F1H','F1Q','P30','F2A','F2B','F2C','F3A','F3B','F3D','F3F'].includes(cat))).length})
+        </button>
+        <button class="tab ${PART_TAB==='judges'?'active':''}" onclick="PART_TAB='judges';document.getElementById('part-content').innerHTML=renderPartContent('${PART_COMP_ID}')">
+          ⚖️ ${CURRENT_LANG==='en'?'Officials':'Görevliler'} (${partState.judges.length+partState.competitors.filter(c=>c.categories.some(cat=>!['F1A','F1B','F1C','F1G','F1H','F1Q','P30','F2A','F2B','F2C','F3A','F3B','F3D','F3F'].includes(cat))).length})
+        </button>
+      </div>
+
+      <div id="part-content">${renderPartContent(PART_COMP_ID)}</div>
+    </div>`}
+  </div>`;
+}
+function renderPartContent(compId){
+  const ps=loadComp(compId);if(!ps) return '';
+  const flightCats=['F1A','F1B','F1C','F1G','F1H','F1Q','P30','F2A','F2B','F2C','F3A','F3B','F3D','F3F'];
+  if(PART_TAB==='competitors'){
+    const comps=ps.competitors.filter(c=>c.categories.some(cat=>flightCats.includes(cat)));
+    if(!comps.length) return `<div class="empty"><div class="empty-icon">🏅</div><div class="empty-text">${CURRENT_LANG==='en'?'No competitors registered yet':'Henüz yarışmacı kaydı yok'}</div></div>`;
+    // Group by category
+    const catGroups={};
+    ps.competition.categories.filter(c=>flightCats.includes(c)).forEach(cat=>{
+      const catComps=comps.filter(c=>c.categories.includes(cat));
+      if(catComps.length>0) catGroups[cat]=catComps;
+    });
+    return Object.entries(catGroups).map(([cat,list])=>`
+      <div class="mb-4">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+          ${cat} — ${list.length} ${CURRENT_LANG==='en'?'competitor':'yarışmacı'}
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th>
+              <th>${CURRENT_LANG==='en'?'Name':'Ad Soyad'}</th>
+              <th>${CURRENT_LANG==='en'?'Country':'Ülke'}</th>
+              <th>FAI ID</th>
+              <th>${CURRENT_LANG==='en'?'Class':'Sınıf'}</th>
+            </tr></thead>
+            <tbody>
+              ${list.map((c,i)=>`<tr>
+                <td style="color:var(--text3)">${i+1}</td>
+                <td><strong>${c.name} ${c.surname}</strong></td>
+                <td>${c.country||'—'}</td>
+                <td class="font-mono">${c.faiId||'—'}</td>
+                <td>${c.senior===false?`<span class="badge badge-purple">Junior</span>`:`<span class="badge badge-gray">Senior</span>`}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`).join('');
+  } else {
+    // Officials: judges from system + non-flight category competitors
+    const officials=ps.judges.map(j=>({name:j.name,role:j.category||'Hakem',src:'judge'}));
+    const regOfficials=ps.competitors.filter(c=>c.categories.some(cat=>!flightCats.includes(cat)));
+    regOfficials.forEach(c=>officials.push({name:c.name+' '+c.surname,role:c.categories.filter(cat=>!flightCats.includes(cat)).join(', '),country:c.country,src:'reg'}));
+    if(!officials.length) return `<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">${CURRENT_LANG==='en'?'No officials registered yet':'Henüz görevli kaydı yok'}</div></div>`;
+    return `<div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>#</th>
+        <th>${CURRENT_LANG==='en'?'Name':'Ad Soyad'}</th>
+        <th>${CURRENT_LANG==='en'?'Role':'Görev'}</th>
+        <th>${CURRENT_LANG==='en'?'Country':'Ülke'}</th>
+      </tr></thead>
+      <tbody>
+        ${officials.map((o,i)=>`<tr>
+          <td style="color:var(--text3)">${i+1}</td>
+          <td><strong>${o.name}</strong></td>
+          <td><span class="badge badge-blue">${o.role}</span></td>
+          <td>${o.country||'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  }
+}
+
 // ==================== ADMIN ====================
+function doAdminPin(){
+  const pin=document.getElementById('pinInput').value;
+  const admin=getAdmin();
+  if(pin===admin.pin){
+    CURRENT_ROLE='admin';
+    if(!isAdminSetup()) saveAdmin(admin);
+    navigate('admin');
+  } else {
+    document.getElementById('pinError').classList.remove('hidden');
+  }
+}
+
 function renderAdminPin(){
   return `<div class="pin-screen">
     <div class="pin-title" style="color:var(--purple)">👑 ${t('adminLogin')}</div>
@@ -927,20 +1060,7 @@ function renderAdminPin(){
     <div class="pin-error hidden" id="pinError">${t('wrongPin')}</div>
     <button class="btn btn-primary w-full" style="background:var(--purple);border-color:var(--purple)" onclick="doAdminPin()">${t('login')}</button>
     <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">${t('back')}</button></div>
-    <div class="mt-4 alert alert-info">${t('adminDefaultPin')}</div>
   </div>`;
-}
-function doAdminPin(){
-  const pin=document.getElementById('pinInput').value;
-  const admin=getAdmin();
-  if(pin===admin.pin){
-    CURRENT_ROLE='admin';
-    // First time: save admin with default PIN so it's stored
-    if(!isAdminSetup()){saveAdmin(admin);}
-    navigate('admin');
-  } else {
-    document.getElementById('pinError').classList.remove('hidden');
-  }
 }
 
 function renderAdmin(){
@@ -1439,7 +1559,7 @@ function renderPinScreen(type){
     <div class="pin-error hidden" id="pinError">${t('wrongPin')}</div>
     <button class="btn btn-primary w-full" onclick="checkPin('${type}')">${t('login')}</button>
     <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('login-select')">${t('back')}</button></div>
-    ${isOrg?`<div class="mt-4 alert alert-info">${t('defaultPin')}</div>`:''}
+    
   </div>`;
 }
 function checkPin(type){
@@ -1452,7 +1572,7 @@ function checkPin(type){
       const comp=loadComp(entry.id);
       if(comp&&comp.competition.organizerPin===pin){found=true;break;}
     }
-    if(!found&&(pin===STATE.competition.organizerPin||pin==='1234')){found=true;}
+    if(!found&&pin===STATE.competition.organizerPin){found=true;}
     if(found){CURRENT_ROLE='organizer';navigate('comp-select');}
     else{err.classList.remove('hidden');}
   } else {
@@ -1644,8 +1764,41 @@ function renderSetupForm(){
       </div>
     </div>
     <div class="form-group mb-3">
-      <label>Bülten URL (PDF bağlantısı)</label>
-      <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://...">
+      <label>${CURRENT_LANG==='en'?'Bulletin URL (PDF link)':'Bülten URL (PDF bağlantısı)'}
+        <span onclick="toggleBulletinHelp()" style="cursor:pointer;margin-left:6px;font-size:11px;color:var(--blue);font-weight:400;">❓ Nasıl eklerim?</span>
+      </label>
+      <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://drive.google.com/... veya dropbox.com/...">
+      <div id="bulletin-help" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:14px;margin-top:8px;font-size:12px;">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:10px;">☁️ PDF'inizi nasıl paylaşırsınız?</div>
+        <div style="margin-bottom:10px;">
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🟡 Google Drive (Önerilen)</div>
+          <div style="color:var(--text2);line-height:1.7;">
+            1. drive.google.com'a git → PDF'i yükle<br>
+            2. Dosyaya sağ tık → <strong>Paylaş</strong><br>
+            3. "Bağlantısı olan herkes görüntüleyebilir" seç<br>
+            4. <strong>Bağlantıyı kopyala</strong> → buraya yapıştır
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🔵 Dropbox</div>
+          <div style="color:var(--text2);line-height:1.7;">
+            1. dropbox.com'a yükle<br>
+            2. <strong>Paylaş → Bağlantı oluştur</strong><br>
+            3. Linki kopyala → buraya yapıştır
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🟠 OneDrive</div>
+          <div style="color:var(--text2);line-height:1.7;">
+            1. onedrive.com'a yükle<br>
+            2. Dosyaya sağ tık → <strong>Paylaş → Bağlantı kopyala</strong><br>
+            3. Buraya yapıştır
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--text3);font-size:11px;">
+          💡 WeTransfer, Yandex Disk, iCloud Drive gibi servisler de çalışır. Önemli olan linkin herkese açık olması.
+        </div>
+      </div>
     </div>
     <div class="form-group mb-3">
       <label>${t('categories')}</label>
@@ -1734,6 +1887,10 @@ function removeRound(id){
 function updateRoundTime(id,val){
   const r=STATE.rounds.find(r=>r.id===id);
   if(r){r.maxTime=parseInt(val)||240;save();}
+}
+function toggleBulletinHelp(){
+  const el=document.getElementById('bulletin-help');
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
 }
 function saveSetup(){
   const name=document.getElementById('sf-name').value.trim();
