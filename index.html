@@ -269,19 +269,44 @@ th[data-sort]:hover{color:var(--blue);}
 
 /* RESPONSIVE */
 @media(max-width:768px){
-  .main{padding:12px;}
+  .main{padding:10px;}
   .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
   .form-row,.form-row-3{grid-template-columns:1fr;}
   .topbar-nav{display:none;}
   .timer-display{font-size:56px;}
   .landing-logo{font-size:32px;}
-  .role-cards{grid-template-columns:1fr 1fr;}
-  .tabs{gap:2px;}
-  .tab{padding:6px 10px;font-size:12px;}
+  .role-cards{grid-template-columns:1fr!important;max-width:100%!important;}
+  .role-card{padding:18px 16px;display:flex;align-items:center;gap:14px;text-align:left!important;}
+  .role-icon{font-size:28px;margin-bottom:0!important;min-width:36px;}
+  .role-name{font-size:13px;margin-bottom:2px;}
+  .role-desc{font-size:11px;}
+  .tabs{gap:1px;overflow-x:auto;flex-wrap:nowrap;padding:3px;}
+  .tab{padding:7px 10px;font-size:11px;white-space:nowrap;}
+  .timer-btn{padding:16px 20px;font-size:13px;min-width:100px;}
+  .competitor-chip{padding:12px 10px;}
+  .chip-name{font-size:13px;}
+  .tbl-wrap{font-size:12px;}
+  td,th{padding:8px 10px;}
+  .card{padding:14px;}
+  .card-header{margin-bottom:10px;padding-bottom:8px;}
+  /* Topbar compact */
+  .topbar{padding:0 12px;height:52px;}
+  .topbar-logo{font-size:14px;}
+  .topbar-comp{font-size:11px;}
+  .topbar-role{font-size:10px;padding:3px 8px;}
+  /* Judge panel full width on mobile */
+  .grid-2{grid-template-columns:1fr;}
 }
 @media(max-width:480px){
-  .role-cards{grid-template-columns:1fr;}
-  .timer-display{font-size:48px;}
+  .timer-display{font-size:52px;letter-spacing:2px;}
+  .timer-btn{padding:18px 16px;font-size:14px;flex:1;}
+  .timer-controls{gap:8px;}
+  .landing-logo{font-size:28px;letter-spacing:4px;}
+  .main{padding:8px;}
+  .tab{padding:6px 8px;font-size:10px;}
+  /* Make start/stop buttons full width on phone */
+  .timer-controls{flex-direction:column;align-items:stretch;}
+  .timer-btn{min-width:unset;width:100%;}
 }
 </style>
 </head>
@@ -891,7 +916,7 @@ function renderLanding(){
       ${CURRENT_LANG==='en'?'Log In →':'Giriş Yap →'}
     </button>
 
-    <div class="text-sm text-muted">v1.2 · 2026 FFCO · ${t('dataNote')}</div>
+    <div class="text-sm text-muted">v1.2 · 2026 FFCO · ${CURRENT_LANG==='en'?'Cloud sync via Supabase':'Supabase ile bulut senkronizasyonu'}</div>
   </div>`;
 }
 function renderLoginSelect(){
@@ -1025,10 +1050,26 @@ function renderPartContent(compId){
         </div>
       </div>`).join('');
   } else {
-    // Officials: judges from system + non-flight category competitors
-    const officials=ps.judges.map(j=>({name:j.name,role:j.category||'Hakem',src:'judge'}));
-    const regOfficials=ps.competitors.filter(c=>c.categories.some(cat=>!flightCats.includes(cat)));
-    regOfficials.forEach(c=>officials.push({name:c.name+' '+c.surname,role:c.categories.filter(cat=>!flightCats.includes(cat)).join(', '),country:c.country,src:'reg'}));
+    // Officials: judges (always shown as Hakem) + non-flight competitors (Jüri, Org etc.)
+    const officials=[];
+    // Judges — role is always Hakem, category field = which branch they judge (internal info)
+    ps.judges.forEach(j=>{
+      officials.push({
+        name:j.name,
+        role:CURRENT_LANG==='en'?'Timekeeper':'Hakem',
+        roleDetail:j.category?'('+j.category+')':'',
+        country:j.country||'—'
+      });
+    });
+    // Non-flight category competitors (Jüri, Organizatör, Baş Hakem etc.)
+    ps.competitors
+      .filter(c=>c.categories.length>0&&c.categories.every(cat=>!flightCats.includes(cat)))
+      .forEach(c=>{
+        const fullName=(c.name+' '+c.surname).trim();
+        if(!officials.find(o=>o.name===fullName)){
+          officials.push({name:fullName,role:c.categories.join(', '),roleDetail:'',country:c.country||'—'});
+        }
+      });
     if(!officials.length) return `<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">${CURRENT_LANG==='en'?'No officials registered yet':'Henüz görevli kaydı yok'}</div></div>`;
     return `<div class="tbl-wrap"><table>
       <thead><tr>
@@ -1041,7 +1082,7 @@ function renderPartContent(compId){
         ${officials.map((o,i)=>`<tr>
           <td style="color:var(--text3)">${i+1}</td>
           <td><strong>${o.name}</strong></td>
-          <td><span class="badge badge-blue">${o.role}</span></td>
+          <td><span class="badge badge-blue">${o.role}</span>${o.roleDetail?`<span class="text-xs text-muted" style="margin-left:4px">${o.roleDetail}</span>`:''}</td>
           <td>${o.country||'—'}</td>
         </tr>`).join('')}
       </tbody>
