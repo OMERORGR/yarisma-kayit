@@ -929,8 +929,17 @@ let PART_COMP_ID=null;
 let PART_TAB='competitors'; // 'competitors' | 'judges'
 function renderParticipants(){
   const idx=loadIndex().filter(e=>!e.archived);
-  // Auto-select if only one competition
   if(!PART_COMP_ID&&idx.length===1) PART_COMP_ID=idx[0].id;
+  // Always sync fresh from Supabase
+  if(PART_COMP_ID){
+    sbGet('ffco_comps',`?id=eq.${PART_COMP_ID}`).then(rows=>{
+      if(rows&&rows.length>0){
+        localStorage.setItem('ffco_comp_'+PART_COMP_ID,JSON.stringify(rows[0].data));
+        const el=document.getElementById('part-content');
+        if(el) el.innerHTML=renderPartContent(PART_COMP_ID);
+      }
+    });
+  }
   const partState=PART_COMP_ID?loadComp(PART_COMP_ID):null;
   return `
   <div style="max-width:900px;margin:0 auto;">
