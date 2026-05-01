@@ -3483,12 +3483,6 @@ function submitPublicRegister(){
       country:baseData.country,
       faiId:baseData.faiId
     });
-    // Also add to competitors list for visibility
-    compState.competitors.push({
-      ...baseData,
-      categories:['Hakem'],
-      senior:true,banquet:false
-    });
     saveComp(REG_COMP_ID,compState);
     if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
     toast(`${name} ${surname} hakem olarak kaydedildi ✓ — PIN organizatörden alınabilir`,'success');
