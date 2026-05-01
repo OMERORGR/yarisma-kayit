@@ -779,7 +779,7 @@ const LANGS={
     registerSuccess:'registration received! ✓',
     disqualify:'Disqualify', editScore:'Edit Score', scoreEditWarn:'⚠️ Score changes are logged.',
     saveChange:'Save Change', note:'Note', competitor:'Competitor',
-    noCompFound:'Competitor not found', noRoundFound:'Timekeeper not found',
+    noCompFound:'Competitor not found', noRoundFound:'Round not found',
     csvFormat:'CSV format: Name,Surname,Email,Country,FAI_ID,THSF_No,Categories(F1A;F1B),Senior(true/false),Banquet(true/false)',
     csvPaste:'or Paste CSV Text', importBtn:'Import', imported:'competitors imported ✓',
     csvEmpty:'CSV data is empty', nameRequired:'First name and last name are required', pinRequired:'Name and PIN are required',
@@ -3660,9 +3660,10 @@ function renderPublicRegister(){
     return `
     <div style="max-width:640px;margin:0 auto;">
       <div class="card">
-        <div class="card-header"><div class="card-title">✍️ Yarışma Kaydı</div></div>
-        ${activeComps.length===0?`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Şu an kayıt açık yarışma bulunmuyor.</div></div>`:`
-        <div class="text-sm text-muted mb-3">Kayıt olmak istediğiniz yarışmayı seçin:</div>
+        <div class="card-header"><div class="card-title">✍️ ${CURRENT_LANG==='en'?'Competition Registration':'Yarışma Kaydı'}</div></div>
+        ${activeComps.length===0
+          ?`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">${CURRENT_LANG==='en'?'No competitions open for registration at this time.':'Şu an kayıt açık yarışma bulunmuyor.'}</div></div>`
+          :`<div class="text-sm text-muted mb-3">${CURRENT_LANG==='en'?'Select the competition you want to register for:':'Kayıt olmak istediğiniz yarışmayı seçin:'}</div>
         ${activeComps.map(e=>{
           const comp=loadComp(e.id);
           if(!comp||!comp.competition.name) return '';
@@ -3679,7 +3680,7 @@ function renderPublicRegister(){
             <div style="color:var(--blue);font-size:20px;">→</div>
           </div>`;
         }).join('')}`}
-        <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← Geri</button></div>
+        <div class="mt-3 text-center"><button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← ${t('back')}</button></div>
       </div>
     </div>`;
   }
@@ -3693,57 +3694,61 @@ function renderPublicRegister(){
   <div style="max-width:640px;margin:0 auto;">
     <div class="alert alert-info mb-3" style="display:flex;align-items:center;justify-content:space-between;">
       <span>🏆 <strong>${c.name}</strong>${c.dateStart?' — '+c.dateStart:''}${c.location?' · '+c.location:''}</span>
-      <button class="btn btn-ghost btn-sm" onclick="REG_COMP_ID=null;navigate('register')">Değiştir</button>
+      <button class="btn btn-ghost btn-sm" onclick="REG_COMP_ID=null;navigate('register')">${CURRENT_LANG==='en'?'Change':'Değiştir'}</button>
     </div>
     <div class="card mb-4">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">✍️</span>Kayıt Formu</div>
+        <div class="card-header">
+          <div class="card-title">✍️ ${CURRENT_LANG==='en'?'Registration Form':'Kayıt Formu'}</div>
+        </div>
+        <div class="card-header"><div class="card-title">✍️ ${CURRENT_LANG==='en'?'Competition Registration':'Kayıt Formu'}</div></div>
       </div>
       <div class="form-row mb-3">
-        <div class="form-group"><label>Ad *</label><input id="pr-name" placeholder="Adınız"></div>
-        <div class="form-group"><label>Soyad *</label><input id="pr-surname" placeholder="Soyadınız"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'First Name':'Ad'} *</label><input id="pr-name" placeholder="${CURRENT_LANG==='en'?'Your first name':'Adınız'}"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'Last Name':'Soyad'} *</label><input id="pr-surname" placeholder="${CURRENT_LANG==='en'?'Your last name':'Soyadınız'}"></div>
       </div>
       <div class="form-group mb-3">
-        <label>Kayıt Türü *</label>
+        <label>${CURRENT_LANG==='en'?'Registration Type':'Kayıt Türü'} *</label>
         <select id="pr-regtype" onchange="updateRegForm(this.value)">
-          <option value="competitor">Yarışmacı</option>
-          <option value="judge">Hakem (Timekeeper)</option>
-          <option value="jury">Jüri</option>
-          <option value="organizer">Organizatör</option>
-          <option value="chief">Baş Hakem</option>
-          <option value="jurychief">Jüri Başkanı</option>
+          <option value="competitor">${CURRENT_LANG==='en'?'Competitor':'Yarışmacı'}</option>
+          <option value="judge">${CURRENT_LANG==='en'?'Timekeeper':'Hakem (Timekeeper)'}</option>
+          <option value="jury">${CURRENT_LANG==='en'?'Jury':'Jüri'}</option>
+          <option value="organizer">${CURRENT_LANG==='en'?'Organizer':'Organizatör'}</option>
+          <option value="chief">${CURRENT_LANG==='en'?'Chief Timekeeper':'Baş Hakem'}</option>
+          <option value="jurychief">${CURRENT_LANG==='en'?'Jury President':'Jüri Başkanı'}</option>
         </select>
       </div>
-      <div class="form-group mb-3"><label>E-posta</label><input id="pr-email" type="email"></div>
+      <div class="form-group mb-3"><label>${CURRENT_LANG==='en'?'Email':'E-posta'}</label><input id="pr-email" type="email"></div>
       <div class="form-row mb-3">
-        <div class="form-group"><label>Ülke (3 harf)</label><input id="pr-country" maxlength="3" placeholder="TUR"></div>
-        <div class="form-group"><label>FAI Lisans ID</label><input id="pr-fai"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'Country (3 letters)':'Ülke (3 harf)'}</label><input id="pr-country" maxlength="3" placeholder="${CURRENT_LANG==='en'?'GBR':'TUR'}"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'FAI License ID':'FAI Lisans ID'}</label><input id="pr-fai"></div>
       </div>
-      <div class="form-group mb-3"><label>THSF Lisans No</label><input id="pr-thsf"></div>
+      <div class="form-group mb-3"><label>${CURRENT_LANG==='en'?'THSF License No':'THSF Lisans No'}</label><input id="pr-thsf"></div>
       <div id="pr-competitor-fields">
         <div class="form-group mb-3">
-          <label>Kategoriler</label>
+          <label>${CURRENT_LANG==='en'?'Categories':'Kategoriler'}</label>
           <div class="check-group" id="pr-cats">
             ${c.categories.map(cat=>`<label class="check-item"><input type="checkbox" value="${cat}"> ${cat}</label>`).join('')}
           </div>
         </div>
         <div class="form-row mb-3">
           <div class="form-group">
-            <label>Sınıf</label>
+            <label>${CURRENT_LANG==='en'?'Class':'Sınıf'}</label>
             <select id="pr-class"><option value="senior">Senior</option><option value="junior">Junior</option></select>
           </div>
           <div class="form-group">
-            <label>Banket</label>
-            <select id="pr-banquet"><option value="no">Hayır</option><option value="yes">Evet</option></select>
+            <label>${CURRENT_LANG==='en'?'Banquet':'Banket'}</label>
+            <select id="pr-banquet"><option value="no">${CURRENT_LANG==='en'?'No':'Hayır'}</option><option value="yes">${CURRENT_LANG==='en'?'Yes':'Evet'}</option></select>
           </div>
         </div>
       </div>
       <div id="pr-judge-info" style="display:none;">
         <div class="alert alert-info mb-3">
-          ⚖️ Hakem olarak kayıt olunca sisteme otomatik eklenir ve size özel bir <strong>giriş PIN kodu</strong> atanır. PIN bilginiz e-posta adresinize gönderilmez — yarışma organizatöründen alabilirsiniz.
+          ⚖️ ${CURRENT_LANG==='en'
+            ?'When registered as a timekeeper, you will be automatically added to the system and assigned a unique <strong>login PIN</strong>. Your PIN will not be sent by email — please contact the competition organizer.'
+            :'Hakem olarak kayıt olunca sisteme otomatik eklenir ve size özel bir <strong>giriş PIN kodu</strong> atanır. PIN bilginiz e-posta adresinize gönderilmez — yarışma organizatöründen alabilirsiniz.'}
         </div>
       </div>
-      <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 Kaydı Gönder</button>
+      <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 ${CURRENT_LANG==='en'?'Submit Registration':'Kaydı Gönder'}</button>
     </div>
     ${(c.bulletinUrl||c.bulletinUrlEn)?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>Yarışma Bülteni</div></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -3768,11 +3773,11 @@ function updateRegForm(type){
 function submitPublicRegister(){
   const name=document.getElementById('pr-name').value.trim();
   const surname=document.getElementById('pr-surname').value.trim();
-  if(!name||!surname){toast('Ad ve soyad zorunlu','error');return;}
-  if(!REG_COMP_ID){toast('Lütfen önce yarışma seçin','error');return;}
+  if(!name||!surname){toast(CURRENT_LANG==='en'?'First and last name are required':'Ad ve soyad zorunlu','error');return;}
+  if(!REG_COMP_ID){toast(CURRENT_LANG==='en'?'Please select a competition first':'Lütfen önce yarışma seçin','error');return;}
   const regType=document.getElementById('pr-regtype').value;
   const compState=loadComp(REG_COMP_ID);
-  if(!compState){toast('Yarışma bulunamadı','error');return;}
+  if(!compState){toast(CURRENT_LANG==='en'?'Competition not found':'Yarışma bulunamadı','error');return;}
 
   const baseData={
     id:uid(),name,surname,
@@ -3799,7 +3804,7 @@ function submitPublicRegister(){
     });
     saveComp(REG_COMP_ID,compState);
     if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
-    toast(`${name} ${surname} hakem olarak kaydedildi ✓ — PIN organizatörden alınabilir`,'success');
+    toast(`${name} ${surname} ${CURRENT_LANG==='en'?'registered as timekeeper ✓ — get your PIN from the organizer':'hakem olarak kaydedildi ✓ — PIN organizatörden alınabilir'}`,'success');
   } else {
     // Non-judge: add to competitors
     const roleLabel={competitor:'',jury:'Jüri',organizer:'Organizatör',chief:'Baş Hakem',jurychief:'Jüri Başkanı'};
@@ -3814,7 +3819,7 @@ function submitPublicRegister(){
     });
     saveComp(REG_COMP_ID,compState);
     if(ACTIVE_COMP_ID===REG_COMP_ID) STATE=compState;
-    toast(`${name} ${surname} kaydı alındı ✓`,'success');
+    toast(`${name} ${surname} ${CURRENT_LANG==='en'?'registration received ✓':'kaydı alındı ✓'}`,'success');
   }
 
   REG_COMP_ID=null;
