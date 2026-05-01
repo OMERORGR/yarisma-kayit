@@ -999,6 +999,7 @@ function renderPartContent(compId){
               <th>${CURRENT_LANG==='en'?'Name':'Ad Soyad'}</th>
               <th>${CURRENT_LANG==='en'?'Country':'Ülke'}</th>
               <th>FAI ID</th>
+              <th>THSF No</th>
               <th>${CURRENT_LANG==='en'?'Class':'Sınıf'}</th>
             </tr></thead>
             <tbody>
@@ -1007,6 +1008,7 @@ function renderPartContent(compId){
                 <td><strong>${c.name} ${c.surname}</strong></td>
                 <td>${c.country||'—'}</td>
                 <td class="font-mono">${c.faiId||'—'}</td>
+                <td class="font-mono">${c.thsfId||'—'}</td>
                 <td>${c.senior===false?`<span class="badge badge-purple">Junior</span>`:`<span class="badge badge-gray">Senior</span>`}</td>
               </tr>`).join('')}
             </tbody>
