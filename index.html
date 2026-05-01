@@ -308,6 +308,52 @@ th[data-sort]:hover{color:var(--blue);}
   .timer-controls{flex-direction:column;align-items:stretch;}
   .timer-btn{min-width:unset;width:100%;}
 }
+
+/* ☀️ DAYLIGHT MODE — hakem ekranına özel */
+body.daylight-mode {
+  background:#F5F7FA !important;
+}
+body.daylight-mode .app-shell { background:#F5F7FA; }
+body.daylight-mode .topbar { background:#FFFFFF; border-bottom:2px solid #1565C0; }
+body.daylight-mode .topbar-logo { color:#1565C0; }
+body.daylight-mode .main { background:#F5F7FA; }
+body.daylight-mode .card,
+body.daylight-mode .competitor-chip,
+body.daylight-mode .round-card { background:#FFFFFF; border-color:#CBD5E1; color:#1A2B3C; }
+body.daylight-mode .card-header { border-color:#CBD5E1; }
+body.daylight-mode .card-title { color:#1A2B3C; }
+body.daylight-mode input, body.daylight-mode select, body.daylight-mode textarea {
+  background:#FFFFFF; border-color:#CBD5E1; color:#1A2B3C;
+}
+body.daylight-mode .badge-blue { background:rgba(21,101,192,0.15); color:#1565C0; }
+body.daylight-mode .badge-green { background:rgba(0,150,80,0.15); color:#006633; }
+body.daylight-mode .badge-gray { background:#E2E8F0; color:#475569; }
+body.daylight-mode .badge-gold { background:rgba(180,100,0,0.15); color:#8B5000; }
+body.daylight-mode .text-muted, body.daylight-mode .text-sm { color:#475569; }
+body.daylight-mode .text-blue { color:#1565C0; }
+body.daylight-mode .font-orb { color:#1565C0; }
+/* Timer büyük ve kontrastlı */
+body.daylight-mode .timer-display { 
+  color:#1A2B3C !important; 
+  text-shadow:none !important;
+  font-size:88px !important;
+}
+body.daylight-mode .timer-display.running { color:#006633 !important; }
+body.daylight-mode .timer-display.stopped { color:#8B5000 !important; }
+body.daylight-mode .timer-btn.timer-start { background:#006633; color:#FFF; box-shadow:none; }
+body.daylight-mode .timer-btn.timer-stop { background:#8B5000; color:#FFF; box-shadow:none; }
+body.daylight-mode .timer-btn.timer-save { background:#1565C0; color:#FFF; box-shadow:none; }
+body.daylight-mode .timer-btn.timer-reset { background:#E2E8F0; color:#1A2B3C; border:1px solid #CBD5E1; }
+body.daylight-mode .competitor-chip.selected { border-color:#1565C0; background:rgba(21,101,192,0.08); }
+body.daylight-mode .competitor-chip.scored { border-color:#006633; background:rgba(0,100,50,0.06); }
+body.daylight-mode .chip-name { color:#1A2B3C; }
+body.daylight-mode .chip-time { color:#475569; }
+body.daylight-mode .alert-warn { background:#FFF8E1; border-color:#8B5000; color:#8B5000; }
+body.daylight-mode .alert-success { background:#E8F5E9; border-color:#006633; color:#006633; }
+body.daylight-mode .alert-info { background:#E3F2FD; border-color:#1565C0; color:#1565C0; }
+body.daylight-mode .btn-ghost { border-color:#CBD5E1; color:#475569; }
+body.daylight-mode .btn-ghost:hover { border-color:#1565C0; color:#1565C0; }
+
 </style>
 </head>
 <body>
@@ -318,7 +364,7 @@ th[data-sort]:hover{color:var(--blue);}
     <nav class="topbar-nav" id="topbarNav"></nav>
     <div class="topbar-role" id="topbarRole" onclick="showRoleSwitch()">🔄 Rol Değiştir</div>
     <div style="display:flex;gap:4px;margin-left:8px;align-items:center;">
-      <div id="syncDot" title="Supabase sync" style="width:8px;height:8px;border-radius:50%;background:var(--border2);transition:background .3s;cursor:help;"></div>
+      <div id="syncDot" title="Supabase sync" style="width:10px;height:10px;border-radius:50%;background:var(--border2);transition:background .5s;cursor:help;flex-shrink:0;"></div>
       <button onclick="setLang('tr')" id="langTR" style="padding:4px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;" title="Türkçe">TR</button>
       <button onclick="setLang('en')" id="langEN" style="padding:4px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;" title="English">EN</button>
     </div>
@@ -463,8 +509,24 @@ function hardDeleteComp(id){
 }
 
 // ---- SYNC INDICATOR ----
-function syncOK(){const el=document.getElementById('syncDot');if(el){el.style.background='var(--green)';el.title='Kaydedildi ✓';setTimeout(()=>{el.style.background='var(--border2)';},2000);}}
-function syncERR(){const el=document.getElementById('syncDot');if(el){el.style.background='var(--red)';el.title='Bağlantı hatası';setTimeout(()=>{el.style.background='var(--border2)';},4000);}}
+function syncOK(){
+  const el=document.getElementById('syncDot');
+  if(el){
+    el.style.background='#00E87A';
+    el.style.boxShadow='0 0 6px #00E87A';
+    el.title='Kaydedildi ✓';
+    setTimeout(()=>{el.style.background='#2a3d5a';el.style.boxShadow='none';},2500);
+  }
+}
+function syncERR(){
+  const el=document.getElementById('syncDot');
+  if(el){
+    el.style.background='#FF4757';
+    el.style.boxShadow='0 0 6px #FF4757';
+    el.title='Bağlantı hatası!';
+    setTimeout(()=>{el.style.background='#2a3d5a';el.style.boxShadow='none';},5000);
+  }
+}
 
 // ---- STARTUP SYNC ----
 async function startupSync(){
@@ -839,6 +901,7 @@ function renderApp(){
     case 'judge':        main.innerHTML=renderJudge(); bindJudgeEvents(); break;
     case 'scoreboard':   main.innerHTML=renderScoreboard(); break;
     case 'register':     main.innerHTML=renderPublicRegister(); break;
+    case 'org-apply':    main.innerHTML=renderOrgApply(); break;
     default:             main.innerHTML=renderLanding();
   }
 }
@@ -911,6 +974,9 @@ function renderLanding(){
       </div>
     </div>
 
+    <button class="btn btn-ghost btn-sm" onclick="navigate('org-apply')" style="font-size:12px;color:var(--text3);padding:6px 16px;">
+      🏁 ${CURRENT_LANG==='en'?'Become an Organizer':'Organizatör Ol →'}
+    </button>
     <button class="btn btn-ghost" onclick="navigate('login-select')"
       style="margin-top:8px;padding:10px 32px;font-size:13px;letter-spacing:.5px;">
       ${CURRENT_LANG==='en'?'Log In →':'Giriş Yap →'}
@@ -1121,6 +1187,15 @@ function renderAdmin(){
   const idx=loadIndex();
   const totalComps=idx.length;
   const activeComps=idx.filter(e=>!e.archived).length;
+  // Check pending applications badge in background
+  setTimeout(()=>{
+    sbGet('ffco_kv','?key=eq.org_applications').then(rows=>{
+      const apps=rows&&rows.length>0?rows[0].value:[];
+      const pending=apps.filter(a=>a.status==='pending').length;
+      const badge=document.getElementById('appBadge');
+      if(badge&&pending>0) badge.innerHTML=` <span class="badge badge-red" style="font-size:9px;padding:1px 5px;">${pending}</span>`;
+    });
+  },500);
   return `
   <div>
     <div class="flex justify-between items-center mb-4">
@@ -1148,6 +1223,7 @@ function renderAdmin(){
       <button class="tab active" onclick="adminTab('orgs',this)">${t('adminTabOrgs')}</button>
       <button class="tab" onclick="adminTab('comps',this)">${t('adminTabComps')}</button>
       <button class="tab" onclick="adminTab('settings',this)">${t('adminTabSettings')}</button>
+      <button class="tab" onclick="adminTab('applications',this)">📋 ${CURRENT_LANG==='en'?'Applications':'Başvurular'}<span id="appBadge"></span></button>
     </div>
     <div id="adminContent">${renderAdminOrgs()}</div>
   </div>`;
@@ -1157,9 +1233,15 @@ function adminTab(tab,el){
   ADMIN_TAB=tab;
   document.querySelectorAll('#adminTabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  const map={orgs:renderAdminOrgs,comps:renderAdminComps,settings:renderAdminSettings};
-  document.getElementById('adminContent').innerHTML=(map[tab]||renderAdminOrgs)();
-  if(tab==='settings') setTimeout(loadSBUsage,200);
+  const syncContent=document.getElementById('adminContent');
+  if(tab==='applications'){
+    syncContent.innerHTML='<div class="empty"><div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin:40px auto;"></div></div>';
+    renderAdminApplications();
+  } else {
+    const map={orgs:renderAdminOrgs,comps:renderAdminComps,settings:renderAdminSettings};
+    syncContent.innerHTML=(map[tab]||renderAdminOrgs)();
+    if(tab==='settings') setTimeout(loadSBUsage,200);
+  }
 }
 
 function renderAdminOrgs(){
@@ -1246,6 +1328,97 @@ function renderAdminSettings(){
   </div>
   </div>`;
 }
+
+async function renderAdminApplications(){
+  const panel=document.getElementById('adminContent');
+  if(!panel) return '';
+  // Fetch applications from Supabase
+  const rows=await sbGet('ffco_kv','?key=eq.org_applications');
+  const apps=rows&&rows.length>0?rows[0].value:[];
+  const pending=apps.filter(a=>a.status==='pending');
+  const done=apps.filter(a=>a.status!=='pending');
+  // Update badge
+  const badge=document.getElementById('appBadge');
+  if(badge) badge.innerHTML=pending.length>0?` <span class="badge badge-red" style="font-size:9px;padding:1px 5px;">${pending.length}</span>`:'';
+  panel.innerHTML=`
+  <div>
+    <div class="flex justify-between items-center mb-3">
+      <div class="text-sm text-muted">${apps.length} ${CURRENT_LANG==='en'?'total applications':'toplam başvuru'} · ${pending.length} ${CURRENT_LANG==='en'?'pending':'bekliyor'}</div>
+    </div>
+    ${pending.length===0&&done.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No applications yet':'Henüz başvuru yok'}</div></div>`:''}
+    ${pending.length>0?`
+    <div class="mb-3" style="font-weight:700;color:var(--red);font-size:13px;">⏳ ${CURRENT_LANG==='en'?'Pending':'Bekleyen Başvurular'} (${pending.length})</div>
+    ${pending.map(a=>`
+      <div class="card mb-3" style="border-color:var(--gold);">
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div>
+            <div style="font-weight:700;font-size:14px;">${a.name} ${a.surname}</div>
+            <div class="text-sm text-muted">${a.email} · ${a.country||'—'} ${a.club?'· '+a.club:''}</div>
+          </div>
+          <div class="text-xs text-muted">${new Date(a.appliedAt).toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'tr-TR')}</div>
+        </div>
+        <div class="mb-2"><span class="badge badge-blue">${CURRENT_LANG==='en'?'Competition:':'Yarışma:'}</span> ${a.competition}</div>
+        ${a.note?`<div class="text-sm text-muted mb-2">${a.note}</div>`:''}
+        <div class="flex gap-2 mt-2">
+          <button class="btn btn-green btn-sm" onclick="approveOrgApp('${a.id}')">✅ ${CURRENT_LANG==='en'?'Approve & Create Account':'Onayla & Hesap Oluştur'}</button>
+          <button class="btn btn-red btn-sm" onclick="rejectOrgApp('${a.id}')">❌ ${CURRENT_LANG==='en'?'Reject':'Reddet'}</button>
+        </div>
+      </div>`).join('')}`:''}
+    ${done.length>0?`
+    <div class="mb-2 mt-3" style="font-size:12px;color:var(--text3);">${CURRENT_LANG==='en'?'Processed':'İşlenenler'} (${done.length})</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>${CURRENT_LANG==='en'?'Name':'Ad Soyad'}</th><th>Email</th><th>${CURRENT_LANG==='en'?'Competition':'Yarışma'}</th><th>${CURRENT_LANG==='en'?'Status':'Durum'}</th></tr></thead>
+        <tbody>
+          ${done.map(a=>`<tr>
+            <td>${a.name} ${a.surname}</td>
+            <td class="text-sm">${a.email}</td>
+            <td class="text-sm">${a.competition}</td>
+            <td>${a.status==='approved'?'<span class="badge badge-green">✅ Onaylandı</span>':'<span class="badge badge-red">❌ Reddedildi</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`:''}
+  </div>`;
+}
+async function approveOrgApp(appId){
+  const rows=await sbGet('ffco_kv','?key=eq.org_applications');
+  const apps=rows&&rows.length>0?rows[0].value:[];
+  const app=apps.find(a=>a.id===appId);
+  if(!app) return;
+  // Create organizer account
+  const orgs=loadOrganizers();
+  const pin=generateRandomPin(6);
+  orgs.push({id:uid(),name:app.name+' '+app.surname,pin,email:app.email,country:app.country,createdAt:new Date().toISOString()});
+  saveOrganizers(orgs);
+  // Mark approved
+  app.status='approved';app.approvedAt=new Date().toISOString();app.assignedPin=pin;
+  await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
+  toast(`${app.name} ${app.surname} onaylandı! PIN: ${pin} — not edin, kendisine iletin.`,'success');
+  openModal('✅ Hesap Oluşturuldu',`
+    <div class="alert alert-success mb-3">Organizatör hesabı oluşturuldu!</div>
+    <div class="form-group"><label>Ad Soyad</label><input value="${app.name} ${app.surname}" disabled></div>
+    <div class="form-group"><label>Email</label><input value="${app.email}" disabled></div>
+    <div class="form-group">
+      <label>Giriş PIN'i (Organizatöre İletin)</label>
+      <input value="${pin}" style="font-size:24px;font-family:monospace;font-weight:700;color:var(--blue);letter-spacing:4px;" readonly onclick="this.select()">
+      <div class="form-hint">Bu PIN'i WhatsApp, email veya başka bir yolla organizatöre iletin.</div>
+    </div>
+  `,`<button class="btn btn-primary" onclick="closeModal()">Tamam, Not Aldım</button>`);
+  renderAdminApplications();
+}
+async function rejectOrgApp(appId){
+  if(!confirm('Bu başvuruyu reddetmek istiyor musunuz?')) return;
+  const rows=await sbGet('ffco_kv','?key=eq.org_applications');
+  const apps=rows&&rows.length>0?rows[0].value:[];
+  const app=apps.find(a=>a.id===appId);
+  if(!app) return;
+  app.status='rejected';app.rejectedAt=new Date().toISOString();
+  await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
+  toast('Başvuru reddedildi','info');
+  renderAdminApplications();
+}
+
 async function loadSBUsage(){
   const panel=document.getElementById('sb-usage-panel');
   if(!panel) return;
@@ -1455,7 +1628,7 @@ function renderCompGrid(list,isArchive){
         ${!isArchive?`
         <div class="flex gap-2">
           <button class="btn btn-primary btn-sm flex-1" onclick="enterComp('${e.id}')">${t('manageComp')}</button>
-          <button class="btn btn-ghost btn-sm" onclick="viewArchiveResults('${e.id}')"></button>
+          <button class="btn btn-ghost btn-sm" onclick="viewArchiveResults('${e.id}')" title="${CURRENT_LANG==='en'?'View Results':'Sonuçları Gör'}">📊</button>
         </div>`:`
         <div class="flex gap-2 mt-3">
           <button class="btn btn-ghost btn-sm flex-1" onclick="viewArchiveResults('${e.id}')">${t('archiveResults')}</button>
@@ -2800,6 +2973,7 @@ function renderJudge(){
             :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':'Raund bekleniyor'}</span>`}
       </div>
       <button class="btn btn-ghost btn-sm" onclick="judgeSyncComp()" title="Sunucudan güncelle">🔄</button>
+      <button class="btn btn-ghost btn-sm" id="daylightBtn" onclick="toggleDaylight()" title="Gün Işığı Modu" style="font-size:16px;padding:4px 8px;">☀️</button>
     </div>
 
     ${roundClosed?`<div class="alert alert-warn">⚠️ Raund organizatör tarafından kapatıldı. <strong>Devam eden uçuşunuzu kaydedebilirsiniz</strong> ancak yeni uçuş başlatamazsınız.</div>`:''}
@@ -3655,6 +3829,23 @@ function toast(msg,type='info',duration=3000){
   document.getElementById('toastContainer').appendChild(el);
   setTimeout(()=>el.remove(),duration);
 }
+
+let DAYLIGHT_MODE=localStorage.getItem('ffco_daylight')==='1';
+function toggleDaylight(){
+  DAYLIGHT_MODE=!DAYLIGHT_MODE;
+  localStorage.setItem('ffco_daylight',DAYLIGHT_MODE?'1':'0');
+  applyDaylight();
+  const btn=document.getElementById('daylightBtn');
+  if(btn) btn.style.background=DAYLIGHT_MODE?'#FFC107':'';
+  toast(DAYLIGHT_MODE?'☀️ Gün Işığı Modu açık':'🌙 Normal Mod','info');
+}
+function applyDaylight(){
+  if(DAYLIGHT_MODE) document.body.classList.add('daylight-mode');
+  else document.body.classList.remove('daylight-mode');
+}
+// Apply on load
+applyDaylight();
+
 function showRoleSwitch(){CURRENT_ROLE='public';CURRENT_JUDGE_ID=null;CURRENT_ORG_ID=null;ACTIVE_ORG_ID=null;JUDGE_SELECTED_COMP_ID=null;sessionStorage.removeItem('ffco_active_org');sessionStorage.removeItem('ffco_active_comp');navigate('landing');}
 function sortTable(th){
   // simple DOM sort
@@ -3673,6 +3864,78 @@ function sortTable(th){
     return asc?bv.localeCompare(av):av.localeCompare(bv);
   });
   rows.forEach(r=>tbody.appendChild(r));
+}
+
+
+// ==================== ORGANIZER APPLICATION ====================
+function renderOrgApply(){
+  return `
+  <div style="max-width:560px;margin:0 auto;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🏁</span>${CURRENT_LANG==='en'?'Organizer Application':'Organizatör Başvurusu'}</div>
+      </div>
+      <div class="alert alert-info mb-3">
+        ${CURRENT_LANG==='en'
+          ?'Fill in this form to apply for an organizer account. The admin will review your application and contact you.'
+          :'Organizatör hesabı başvurusu için bu formu doldurun. Admin başvurunuzu inceleyip sizinle iletişime geçecektir.'}
+      </div>
+      <div class="form-row mb-3">
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'First Name':'Ad'} *</label><input id="oa-name" placeholder="${CURRENT_LANG==='en'?'Your name':'Adınız'}"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'Last Name':'Soyad'} *</label><input id="oa-surname" placeholder="${CURRENT_LANG==='en'?'Your surname':'Soyadınız'}"></div>
+      </div>
+      <div class="form-group mb-3"><label>${CURRENT_LANG==='en'?'Email':'E-posta'} *</label><input id="oa-email" type="email" placeholder="ornek@email.com"></div>
+      <div class="form-row mb-3">
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'Country':'Ülke'} *</label><input id="oa-country" maxlength="3" placeholder="TUR"></div>
+        <div class="form-group"><label>${CURRENT_LANG==='en'?'Club / Federation':'Kulüp / Federasyon'}</label><input id="oa-club" placeholder="${CURRENT_LANG==='en'?'e.g. FAI TUR':'örn: THSF'}"></div>
+      </div>
+      <div class="form-group mb-3">
+        <label>${CURRENT_LANG==='en'?'Planned Competition':'Planlanan Yarışma'} *</label>
+        <input id="oa-comp" placeholder="${CURRENT_LANG==='en'?'Competition name and approximate date':'Yarışma adı ve yaklaşık tarihi'}">
+      </div>
+      <div class="form-group mb-3">
+        <label>${CURRENT_LANG==='en'?'Additional Notes':'Ek Notlar'}</label>
+        <textarea id="oa-note" placeholder="${CURRENT_LANG==='en'?'Category, number of competitors, location...':'Kategori, yarışmacı sayısı, lokasyon...'}" style="height:80px"></textarea>
+      </div>
+      <button class="btn btn-primary w-full" onclick="submitOrgApply()">
+        📨 ${CURRENT_LANG==='en'?'Submit Application':'Başvuruyu Gönder'}
+      </button>
+    </div>
+    <div class="mt-3 text-center">
+      <button class="btn btn-ghost btn-sm" onclick="navigate('landing')">← ${t('back')}</button>
+    </div>
+  </div>`;
+}
+async function submitOrgApply(){
+  const name=document.getElementById('oa-name').value.trim();
+  const surname=document.getElementById('oa-surname').value.trim();
+  const email=document.getElementById('oa-email').value.trim();
+  const country=document.getElementById('oa-country').value.trim().toUpperCase();
+  const comp=document.getElementById('oa-comp').value.trim();
+  if(!name||!surname||!email||!comp){
+    toast(CURRENT_LANG==='en'?'Please fill required fields':'Zorunlu alanları doldurun','error');
+    return;
+  }
+  const application={
+    id:uid(),
+    name,surname,email,country,
+    club:document.getElementById('oa-club').value.trim(),
+    competition:comp,
+    note:document.getElementById('oa-note').value.trim(),
+    status:'pending',
+    appliedAt:new Date().toISOString()
+  };
+  // Save to Supabase kv store
+  const existing=await sbGet('ffco_kv','?key=eq.org_applications');
+  const apps=existing&&existing.length>0?existing[0].value:[];
+  apps.push(application);
+  const ok=await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
+  if(ok){
+    toast(CURRENT_LANG==='en'?'Application submitted! Admin will contact you soon.':'Başvurunuz alındı! Admin yakında sizinle iletişime geçecek.','success');
+    navigate('landing');
+  } else {
+    toast(CURRENT_LANG==='en'?'Error submitting application. Please try again.':'Başvuru gönderilemedi. Tekrar deneyin.','error');
+  }
 }
 
 // ==================== INIT ====================
