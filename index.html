@@ -3166,7 +3166,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ SORUN / YANLIŞ BAŞLATMA</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">🤚 Yanlış Başlattım</button>
-        <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma</button>
+        ${JUDGE_STATE.currentAttempt<2?`<button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma</button>`:''}
       </div>
       <div class="form-hint mt-1">Baş hakem / jüri onayı gerektirir</div>
     </div>`:''}
@@ -3180,7 +3180,12 @@ function renderTimerPanel(comp,round,roundClosed=false){
       </div>
     </div>`:''}
 
-    ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed?`
+    ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===2&&!roundClosed?`
+    <div class="alert alert-info mt-3">
+      ℹ️ 2. uçuş 20 saniyenin altında — bu raund için deneme hakkı zaten kullanıldı. Skor kaydedilecek.
+    </div>`:''}
+
+    ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed&&elapsed===0?`
     <div class="mt-3 card" style="background:var(--bg3)">
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">ÇARPIŞMA / KAZA</div>
       <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
@@ -3213,6 +3218,7 @@ function selectCompetitor(id){
   const memKey=id+'_'+newRoundId;
   const mem=JUDGE_STATE.attemptMemory[memKey];
   if(mem){
+    // Restore attempt state — including "used" completed attempts
     JUDGE_STATE.currentAttempt=mem.attempt||1;
     JUDGE_STATE.attemptType=mem.type||null;
     JUDGE_STATE.attemptNote=mem.note||null;
@@ -3342,7 +3348,14 @@ async function timerSave(compId,roundId){
   save();
   timerReset();
   clearTimerState();
-  delete JUDGE_STATE.attemptMemory[compId+'_'+roundId];
+  // Mark attempt as used for this round (store attempt count so returning to competitor shows no more retries)
+  const attemptUsed=JUDGE_STATE.currentAttempt;
+  if(attemptUsed>1){
+    // Keep a "used" marker so re-selecting this competitor shows attempt was used
+    JUDGE_STATE.attemptMemory[compId+'_'+roundId]={attempt:attemptUsed,type:JUDGE_STATE.attemptType,used:true};
+  } else {
+    delete JUDGE_STATE.attemptMemory[compId+'_'+roundId];
+  }
   JUDGE_STATE.selectedCompetitorId=null;
   JUDGE_STATE.currentAttempt=1;
   JUDGE_STATE.attemptType=null;
@@ -3371,6 +3384,8 @@ function confirmGrantAttempt(type,compId,roundId){
   JUDGE_STATE.currentAttempt=2;
   JUDGE_STATE.attemptType=type;
   JUDGE_STATE.attemptNote=note;
+  // Save to memory immediately so it survives competitor switching
+  JUDGE_STATE.attemptMemory[compId+'_'+roundId]={attempt:2,type,note,used:false};
   timerReset();
   closeModal();
   toast('Deneme hakkı verildi — Yeni uçuş başlatılabilir','info');
@@ -3421,7 +3436,7 @@ function approveExtraFlight(reqId){
   // Set attempt memory so judge can do second flight
   const memKey=req.competitorId+'_'+req.roundId;
   if(!JUDGE_STATE.attemptMemory) JUDGE_STATE.attemptMemory={};
-  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:'Onaylandı: '+req.note};
+  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:'Onaylandı: '+req.note,used:false};
   // If this judge is currently logged in on same device, reset timer immediately
   if(CURRENT_JUDGE_ID===req.judgeId){
     JUDGE_STATE.currentAttempt=2;
@@ -4076,6 +4091,9 @@ function setupRealtime(){
               const newlyApproved=nowApproved.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='approved'));
               const newlyRejected=nowRejected.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='rejected'));
               if(newlyApproved.length>0){
+                const app=newlyApproved[0];
+                const memKey=(app.competitorId||JUDGE_STATE.selectedCompetitorId)+'_'+(app.roundId||JUDGE_STATE.roundId);
+                if(memKey!=='undefined_undefined') JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:app.type||'accidental',note:app.note||'',used:false};
                 toast('✅ Ek uçuş talebiniz onaylandı!','success');
                 timerReset();JUDGE_STATE.currentAttempt=2;
                 navigate('judge');
@@ -4146,6 +4164,9 @@ setInterval(async()=>{
           const newlyApproved=nowApproved.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='approved'));
           const newlyRejected=nowRejected.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='rejected'));
           if(newlyApproved.length>0){
+            const app=newlyApproved[0];
+            const memKey=(app.competitorId||JUDGE_STATE.selectedCompetitorId)+'_'+(app.roundId||JUDGE_STATE.roundId);
+            JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:app.type||'accidental',note:app.note||'',used:false};
             toast('✅ Ek uçuş talebiniz onaylandı!','success');
             timerReset();JUDGE_STATE.currentAttempt=2;
             navigate('judge');
