@@ -1827,6 +1827,27 @@ function renderOrganizer(){
     <div id="orgContent">${renderOrgTab()}</div>
   </div>`;
 }
+async function orgManualRefresh(){
+  if(!ACTIVE_COMP_ID) return;
+  const btn=document.querySelector('[onclick="orgManualRefresh()"]');
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  try{
+    const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}`);
+    if(rows&&rows.length>0){
+      localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(rows[0].data));
+      STATE=rows[0].data;
+      const content=document.getElementById('orgContent');
+      if(content) content.innerHTML=renderOrgTab();
+      const ts=document.getElementById('org-last-sync');
+      if(ts) ts.textContent=(CURRENT_LANG==='en'?'Updated: ':'Güncellendi: ')+new Date().toLocaleTimeString();
+      syncOK();
+      toast(CURRENT_LANG==='en'?'Updated ✓':'Güncellendi ✓','success');
+    }
+  }catch(e){
+    toast(CURRENT_LANG==='en'?'Connection error':'Bağlantı hatası','error');
+  }
+  if(btn){btn.textContent='🔄 '+(CURRENT_LANG==='en'?'Refresh':'Güncelle');btn.disabled=false;}
+}
 function orgTab(tab){
   ORG_TAB=tab;
   document.getElementById('orgContent').innerHTML=renderOrgTab();
@@ -1862,6 +1883,10 @@ function renderOverview(){
   
   return `
   <div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:8px;">
+      <span id="org-last-sync" class="text-xs text-muted"></span>
+      <button class="btn btn-ghost btn-sm" onclick="orgManualRefresh()" title="${CURRENT_LANG==='en'?'Refresh from server':'Sunucudan güncelle'}">🔄 ${CURRENT_LANG==='en'?'Refresh':'Güncelle'}</button>
+    </div>
     ${!comp.name?`<div class="alert alert-warn">⚠️ Henüz yarışma kurulmadı. <a href="#" onclick="orgTab('setup')" style="color:var(--gold)">Ayarlar</a> sekmesinden başlayın.</div>`:''}
     ${activeRound?`<div class="alert alert-success">🟢 Aktif Raund: <strong>RAUND ${activeRound.number}</strong> — Max süre: ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">Raund Bitir</button></div>`:''}
     ${comp.name&&!activeRound&&STATE.rounds.length>0&&STATE.rounds.every(r=>r.status==='done')?`
@@ -4097,6 +4122,25 @@ setInterval(async()=>{
   // Update realtime connection indicator
   const dot=document.getElementById('syncDot');
   if(dot) dot.title=SB_REALTIME_CHANNEL?'🟢 Realtime bağlı':'🟡 Polling modu';
+
+  // Organizer overview auto-refresh
+  if(CURRENT_VIEW==='organizer'&&ACTIVE_COMP_ID&&(CURRENT_ROLE==='organizer'||CURRENT_ROLE==='admin')){
+    if(ORG_TAB==='overview'||ORG_TAB==='rounds'||ORG_TAB==='results'){
+      const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}&select=id,data,updated_at`);
+      if(rows&&rows.length>0){
+        const localRaw=localStorage.getItem('ffco_comp_'+ACTIVE_COMP_ID);
+        const localTs=localRaw?JSON.parse(localRaw).competition?.updatedAt||'':'';
+        if(rows[0].updated_at>localTs){
+          localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(rows[0].data));
+          STATE=rows[0].data;
+          // Silently update only the content area, not the full page
+          const content=document.getElementById('orgContent');
+          if(content) content.innerHTML=renderOrgTab();
+          syncOK();
+        }
+      }
+    }
+  }
 },15000);
 
 // Start Realtime on load
