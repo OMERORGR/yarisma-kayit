@@ -371,7 +371,7 @@ function saveIndex(idx){
 function getInitialState(compId){
   const id=compId||uid();
   return{
-    competition:{id,name:'',location:'',dateStart:'',dateEnd:'',categories:[],customCategories:[],bulletinUrl:'',organizerPin:'1234',judgePrefix:'4321',createdAt:new Date().toISOString()},
+    competition:{id,name:'',location:'',dateStart:'',dateEnd:'',categories:[],customCategories:[],bulletinUrl:'',bulletinUrlEn:'',organizerPin:'1234',judgePrefix:'4321',createdAt:new Date().toISOString()},
     rounds:[],competitors:[],judges:[],lanes:[],scores:[],logs:[],
     setupComplete:false,extraFlightRequests:[]
   };
@@ -1766,10 +1766,11 @@ function renderSetupForm(){
       </div>
     </div>
     <div class="form-group mb-3">
-      <label>${CURRENT_LANG==='en'?'Bulletin URL (PDF link)':'Bülten URL (PDF bağlantısı)'}
+      <label>${CURRENT_LANG==='en'?'Bulletin PDF — Turkish':'Bülten PDF — Türkçe'}
         <span onclick="toggleBulletinHelp()" style="cursor:pointer;margin-left:6px;font-size:11px;color:var(--blue);font-weight:400;">❓ Nasıl eklerim?</span>
       </label>
-      <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://drive.google.com/... veya dropbox.com/...">
+      <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://drive.google.com/... (TR)">
+      <div class="form-hint mt-1">Türkçe bülten PDF linki</div>
       <div id="bulletin-help" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:14px;margin-top:8px;font-size:12px;">
         <div style="font-weight:700;color:var(--blue);margin-bottom:10px;">☁️ PDF'inizi nasıl paylaşırsınız?</div>
         <div style="margin-bottom:10px;">
@@ -1798,9 +1799,14 @@ function renderSetupForm(){
           </div>
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--text3);font-size:11px;">
-          💡 WeTransfer, Yandex Disk, iCloud Drive gibi servisler de çalışır. Önemli olan linkin herkese açık olması.
+          💡 WeTransfer, Yandex Disk, iCloud Drive gibi servisler de çalışır.
         </div>
       </div>
+    </div>
+    <div class="form-group mb-3">
+      <label>${CURRENT_LANG==='en'?'Bulletin PDF — English':'Bülten PDF — İngilizce'}</label>
+      <input id="sf-bulletin-en" value="${c.bulletinUrlEn||''}" placeholder="https://drive.google.com/... (EN)">
+      <div class="form-hint mt-1">İngilizce bülten PDF linki (opsiyonel)</div>
     </div>
     <div class="form-group mb-3">
       <label>${t('categories')}</label>
@@ -1903,6 +1909,7 @@ function saveSetup(){
   c.dateStart=document.getElementById('sf-date-s').value;
   c.dateEnd=document.getElementById('sf-date-e').value;
   c.bulletinUrl=document.getElementById('sf-bulletin').value.trim();
+  c.bulletinUrlEn=document.getElementById('sf-bulletin-en')?.value.trim()||'';
   const newOrgPin=document.getElementById('sf-orgpin').value.trim();
   if(newOrgPin)c.organizerPin=newOrgPin;
   STATE.setupComplete=true;
@@ -3406,7 +3413,11 @@ function renderPublicRegister(){
       </div>
       <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 Kaydı Gönder</button>
     </div>
-    ${c.bulletinUrl?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>Yarışma Bülteni</div></div><a href="${c.bulletinUrl}" target="_blank" class="btn btn-ghost">📥 Bülteni İndir/Görüntüle</a></div>`:''}
+    ${(c.bulletinUrl||c.bulletinUrlEn)?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>Yarışma Bülteni</div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${c.bulletinUrl?`<a href="${c.bulletinUrl}" target="_blank" class="btn btn-ghost">📥 ${CURRENT_LANG==='en'?'Bulletin (TR)':'Bülten (TR)'}</a>`:''}
+        ${c.bulletinUrlEn?`<a href="${c.bulletinUrlEn}" target="_blank" class="btn btn-ghost">📥 ${CURRENT_LANG==='en'?'Bulletin (EN)':'Bülten (EN)'}</a>`:''}
+      </div></div>`:''}
   </div>`;
 }
 
