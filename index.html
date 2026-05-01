@@ -3163,11 +3163,8 @@ function renderTimerPanel(comp,round,roundClosed=false){
 
     ${(stopped||running)&&!roundClosed?`
     <div class="mt-3 card" style="background:var(--bg3);border-color:var(--border2);">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ SORUN / YANLIŞ BAŞLATMA</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">🤚 Yanlış Başlattım</button>
-        ${JUDGE_STATE.currentAttempt<2?`<button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma</button>`:''}
-      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🤚 YANLIŞ BAŞLATMA</div>
+      <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">🤚 Yanlış Başlattım — Baş Hakem Onayı</button>
       <div class="form-hint mt-1">Baş hakem / jüri onayı gerektirir</div>
     </div>`:''}
 
@@ -3185,10 +3182,11 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ℹ️ 2. uçuş 20 saniyenin altında — bu raund için deneme hakkı zaten kullanıldı. Skor kaydedilecek.
     </div>`:''}
 
-    ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed&&elapsed===0?`
+    ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed&&(stopped||elapsed===0)?`
     <div class="mt-3 card" style="background:var(--bg3)">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">ÇARPIŞMA / KAZA</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ KAZA / ÇARPIŞMA</div>
       <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
+      <div class="form-hint mt-1">Hakem kararı — onay gerekmez</div>
     </div>`:''}
 
     ${existing&&!isAutoZero?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
@@ -3393,10 +3391,9 @@ function confirmGrantAttempt(type,compId,roundId){
   bindJudgeEvents();
 }
 function requestExtraFlight(type,compId,roundId){
-  const typeLabel=type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma';
-  openModal('⚡ Ek Uçuş Talebi',`
+  openModal('🤚 Yanlış Başlatma — Baş Hakem Onayı',`
     <div class="alert alert-info mb-3">Bu talep baş hakem / jüriye iletilecek. Onaylarsa ek uçuş hakkı verilecek.</div>
-    <div class="form-group"><label>Sebep</label><input value="${typeLabel}" disabled></div>
+    <div class="form-group"><label>Sebep</label><input value="Yanlış başlatma — hakem hatası" disabled></div>
     <div class="form-group">
       <label>Açıklama *</label>
       <textarea id="efr-note" placeholder="Ne olduğunu kısaca açıklayın..." style="height:70px"></textarea>
