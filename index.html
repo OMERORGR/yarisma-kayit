@@ -3084,8 +3084,17 @@ function renderTimerPanel(comp,round,roundClosed=false){
   const elapsed=JUDGE_STATE.timerElapsed;
   const running=JUDGE_STATE.timerRunning;
   const stopped=!running&&elapsed>0;
-  // Can start a new flight only if round is active (not closed)
-  const canStart=!roundClosed&&!running&&elapsed===0&&(!existing||isAutoZero);
+
+  // Check if there's a pending extra flight request for THIS competitor in THIS round
+  const pendingExtraReq=(STATE.extraFlightRequests||[]).find(r=>
+    r.judgeId===CURRENT_JUDGE_ID&&
+    r.competitorId===comp.id&&
+    r.roundId===round.id&&
+    r.status==='pending'
+  );
+
+  // Can start ONLY if: round active, not running, elapsed=0, no existing score, NO pending request
+  const canStart=!roundClosed&&!running&&elapsed===0&&(!existing||isAutoZero)&&!pendingExtraReq;
 
   return `
   <div>
@@ -3100,6 +3109,16 @@ function renderTimerPanel(comp,round,roundClosed=false){
       <div class="alert alert-warn mt-3">
         🔒 Raund kapatıldı — yeni uçuş başlatılamaz.
         ${existing?'':'<div class="text-sm mt-1">Bu yarışmacı için skor girilmedi.</div>'}
+      </div>`:''}
+
+    ${pendingExtraReq?`
+      <div class="alert alert-warn mt-3" style="border-color:var(--red);">
+        ⏳ <strong>Ek uçuş onayı bekleniyor</strong><br>
+        <span style="font-size:12px;">Baş hakem onaylamadan yeni uçuş başlatılamaz.</span>
+        <div style="margin-top:8px;font-size:11px;color:var(--text2);">
+          Sebep: ${pendingExtraReq.type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma'}<br>
+          Not: ${pendingExtraReq.note}
+        </div>
       </div>`:''}
 
     ${JUDGE_STATE.currentAttempt>1?`<div class="alert alert-warn mb-3">⚠️ Deneme Hakkı ${JUDGE_STATE.currentAttempt-1} — ${JUDGE_STATE.attemptType==='sub20'?'20sn altı uçuş':'Kaza/Çarpışma'}</div>`:''}
@@ -3405,6 +3424,19 @@ function rejectExtraFlight(reqId){
 // Double-tap START protection
 // Instant START — no double tap needed
 function handleStartBtn(btn){
+  // Safety: block if pending extra flight request for selected competitor
+  const sel=JUDGE_STATE.selectedCompetitorId;
+  const activeRound=STATE.rounds.find(r=>r.status==='active');
+  if(sel&&activeRound){
+    const pending=(STATE.extraFlightRequests||[]).find(r=>
+      r.judgeId===CURRENT_JUDGE_ID&&r.competitorId===sel&&
+      r.roundId===activeRound.id&&r.status==='pending'
+    );
+    if(pending){
+      toast('⏳ Baş hakem onayı bekleniyor — onay gelmeden başlatamazsınız','warn');
+      return;
+    }
+  }
   timerStart();
 }
 
