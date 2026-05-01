@@ -3441,8 +3441,25 @@ function rejectExtraFlight(reqId){
   if(!req) return;
   req.status='rejected';req.rejectedAt=new Date().toISOString();req.rejectedBy=CURRENT_ROLE;
   STATE.logs.push({id:uid(),type:'extra_flight_rejected',reqId,ts:new Date().toISOString()});
+
+  // Auto-save the existing elapsed time as the final score for that competitor
+  const round=STATE.rounds.find(r=>r.id===req.roundId);
+  const existingScore=STATE.scores.find(s=>s.competitorId===req.competitorId&&s.roundId===req.roundId);
+  if(!existingScore&&round){
+    // No score yet — save whatever elapsed time was (could be 0 if accidental)
+    const elapsed=JUDGE_STATE.selectedCompetitorId===req.competitorId?Math.round(JUDGE_STATE.timerElapsed):0;
+    const finalTime=Math.min(elapsed, round.maxTime);
+    STATE.scores.push({
+      id:uid(),competitorId:req.competitorId,roundId:req.roundId,
+      attempts:[{time:elapsed,finalTime,type:'rejected_request',note:'Ek uçuş talebi reddedildi: '+req.note,judgeId:req.judgeId}],
+      finalTime,confirmed:false,disqualified:false,
+      rejectedRequest:true
+    });
+    STATE.logs.push({id:uid(),type:'score_auto_saved_on_reject',competitorId:req.competitorId,roundId:req.roundId,finalTime,ts:new Date().toISOString()});
+  }
+
   save();
-  toast('Talep reddedildi','info');
+  toast('Talep reddedildi — skor otomatik kaydedildi','info');
   document.getElementById('orgContent').innerHTML=renderOverview();
 }
 
@@ -4054,9 +4071,21 @@ function setupRealtime(){
             // Check for approved extra flight
             const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
             const nowApproved=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved');
-            if(prevPending.length>0&&nowApproved.length>prevPending.length){
-              toast('✅ Ek uçuş talebiniz onaylandı!','success');
-              navigate('judge');
+            const nowRejected=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='rejected');
+            if(prevPending.length>0){
+              const newlyApproved=nowApproved.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='approved'));
+              const newlyRejected=nowRejected.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='rejected'));
+              if(newlyApproved.length>0){
+                toast('✅ Ek uçuş talebiniz onaylandı!','success');
+                timerReset();JUDGE_STATE.currentAttempt=2;
+                navigate('judge');
+              }
+              if(newlyRejected.length>0){
+                toast('❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
+                timerReset();JUDGE_STATE.selectedCompetitorId=null;
+                JUDGE_STATE.currentAttempt=1;JUDGE_STATE.attemptType=null;
+                clearTimerState();navigate('judge');
+              }
             }
           }
         }
@@ -4112,9 +4141,21 @@ setInterval(async()=>{
         }
         const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
         const nowApproved=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved');
-        if(prevPending.length>0&&nowApproved.length>prevPending.length){
-          toast('✅ Ek uçuş talebiniz onaylandı!','success');
-          navigate('judge');
+        const nowRejected=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='rejected');
+        if(prevPending.length>0){
+          const newlyApproved=nowApproved.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='approved'));
+          const newlyRejected=nowRejected.filter(r=>!prevData.extraFlightRequests?.find(p=>p.id===r.id&&p.status==='rejected'));
+          if(newlyApproved.length>0){
+            toast('✅ Ek uçuş talebiniz onaylandı!','success');
+            timerReset();JUDGE_STATE.currentAttempt=2;
+            navigate('judge');
+          }
+          if(newlyRejected.length>0){
+            toast('❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
+            timerReset();JUDGE_STATE.selectedCompetitorId=null;
+            JUDGE_STATE.currentAttempt=1;JUDGE_STATE.attemptType=null;
+            clearTimerState();navigate('judge');
+          }
         }
       }
     }
