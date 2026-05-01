@@ -3008,8 +3008,9 @@ function selectCompetitor(id){
 }
 
 function timerStart(){
-  // If timer was already running and has elapsed time, ask for confirmation
-  if(JUDGE_STATE.timerElapsed>0&&!JUDGE_STATE.timerRunning){
+  // If elapsed>0 but not running AND not a restore situation — this is a manual restart
+  // Only ask confirmation if it's a fresh manual start on a stopped (non-restored) timer
+  if(JUDGE_STATE.timerElapsed>0&&!JUDGE_STATE.timerRunning&&!JUDGE_STATE._pendingAutoStart&&!JUDGE_STATE.roundId){
     if(!confirm('Kronometreyi sıfırlayıp yeniden başlatmak istiyor musunuz? Mevcut süre silinecek.')) return;
     JUDGE_STATE.timerElapsed=0;
     JUDGE_STATE.timerStart=null;
