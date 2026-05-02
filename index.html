@@ -362,7 +362,7 @@ body.daylight-mode .btn-ghost:hover { border-color:#1565C0; color:#1565C0; }
     <div class="topbar-logo">FF<span>CO</span></div>
     <div class="topbar-comp" id="topbarComp">Free Flight Competition Organizer</div>
     <nav class="topbar-nav" id="topbarNav"></nav>
-    <div class="topbar-role" id="topbarRole" onclick="showRoleSwitch()">🔄 Rol Değiştir</div>
+    <div class="topbar-role" id="topbarRole" onclick="showRoleSwitch()">🔄</div>
     <div style="display:flex;gap:4px;margin-left:8px;align-items:center;">
       <div id="syncDot" title="Supabase sync" style="width:10px;height:10px;border-radius:50%;background:var(--border2);transition:background .5s;cursor:help;flex-shrink:0;"></div>
       <button onclick="setLang('tr')" id="langTR" style="padding:4px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;" title="Türkçe">TR</button>
@@ -483,7 +483,7 @@ function createNewComp(){
   const id=uid();saveComp(id,getInitialState(id));
   const idx=loadIndex();
   const org=CURRENT_ROLE==='admin'?{id:'admin',name:'Admin'}:loadOrganizers().find(o=>o.id===ACTIVE_ORG_ID)||{id:ACTIVE_ORG_ID,name:'?'};
-  idx.push({id,name:'Yeni Yarışma',dateStart:'',location:'',organizerId:org.id,organizerName:org.name,archived:false,createdAt:new Date().toISOString()});
+  idx.push({id,name:L('New Competition','Yeni Yarışma'),dateStart:'',location:'',organizerId:org.id,organizerName:org.name,archived:false,createdAt:new Date().toISOString()});
   saveIndex(idx);return id;
 }
 function archiveComp(id){
@@ -501,8 +501,8 @@ function unarchiveComp(id){
   navigate('comp-select');toast(t('unarchiveSuccess'),'success');
 }
 function hardDeleteComp(id){
-  const comp=loadComp(id);const name=comp?.competition?.name||'Bu yarışma';
-  if(!confirm(`"${name}" yarışmasını kalıcı olarak silmek istiyor musunuz?`)) return;
+  const comp=loadComp(id);const name=comp?.competition?.name||L('This competition','Bu yarışma');
+  if(!confirm(CURRENT_LANG==='en'?`Do you want to permanently delete "${name}"?`:`"${name}" yarışmasını kalıcı olarak silmek istiyor musunuz?`)) return;
   saveIndex(loadIndex().filter(e=>e.id!==id));deleteComp(id);
   if(ACTIVE_COMP_ID===id){ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();}
   navigate('comp-select');toast(t('deleted'),'info');
@@ -514,7 +514,7 @@ function syncOK(){
   if(el){
     el.style.background='#00E87A';
     el.style.boxShadow='0 0 6px #00E87A';
-    el.title='Kaydedildi ✓';
+    el.title=L('Saved ✓','Kaydedildi ✓');
     setTimeout(()=>{el.style.background='#2a3d5a';el.style.boxShadow='none';},2500);
   }
 }
@@ -523,14 +523,14 @@ function syncERR(){
   if(el){
     el.style.background='#FF4757';
     el.style.boxShadow='0 0 6px #FF4757';
-    el.title='Bağlantı hatası!';
+    el.title=L('Connection error!','Bağlantı hatası!');
     setTimeout(()=>{el.style.background='#2a3d5a';el.style.boxShadow='none';},5000);
   }
 }
 
 // ---- STARTUP SYNC ----
 async function startupSync(){
-  document.getElementById('mainContent').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--blue);letter-spacing:3px;">FFCO</div><div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div><div style="font-size:12px;color:var(--text2);">Veriler yükleniyor...</div></div>`;
+  document.getElementById('mainContent').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;"><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--blue);letter-spacing:3px;">FFCO</div><div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div><div style="font-size:12px;color:var(--text2);">${L('Loading data...','Veriler yükleniyor...')}</div></div>`;
   try{
     // Sync admin & organizers (always trust Supabase for these)
     const adminRows=await sbGet('ffco_kv','?key=eq.admin');
@@ -568,14 +568,33 @@ async function startupSync(){
     }
 
     if(ACTIVE_COMP_ID) STATE=loadComp(ACTIVE_COMP_ID)||getInitialState();
-  }catch(e){toast('Supabase bağlantısı kurulamadı — yerel veri kullanılıyor','warn');}
+  }catch(e){toast(L('Could not connect to Supabase — using local data','Supabase bağlantısı kurulamadı — yerel veri kullanılıyor'),'warn');}
   renderApp();
 }
 
 // ==================== i18n ====================
 let CURRENT_LANG = localStorage.getItem('ffco_lang')||'tr';
-function setLang(l){CURRENT_LANG=l;localStorage.setItem('ffco_lang',l);renderApp();}
+document.documentElement.lang=CURRENT_LANG;
+function setLang(l){CURRENT_LANG=l;localStorage.setItem('ffco_lang',l);document.documentElement.lang=l;renderApp();}
 function t(key){return (LANGS[CURRENT_LANG]||LANGS['tr'])[key]||LANGS['tr'][key]||key;}
+function L(en,tr){return CURRENT_LANG==='en'?en:tr;}
+function roundName(r){return r?(r.isFlyoff?'Flyoff '+r.flyoffNum:L('Round ','Raund ')+r.number):'—';}
+function roleKeyFromLabel(role){
+  const map={
+    'Yarışmacı':'competitor','Competitor':'competitor',
+    'Jüri':'jury','Jury':'jury',
+    'Organizatör':'organizer','Organizer':'organizer',
+    'Baş Hakem':'chief','Chief Timekeeper':'chief',
+    'Jüri Başkanı':'jurychief','Jury President':'jurychief'
+  };
+  return map[role]||role;
+}
+function roleDisplay(role){
+  const key=roleKeyFromLabel(role);
+  const roles={competitor:L('Competitor','Yarışmacı'),jury:L('Jury','Jüri'),organizer:L('Organizer','Organizatör'),chief:L('Chief Timekeeper','Baş Hakem'),jurychief:L('Jury President','Jüri Başkanı')};
+  return roles[key]||role||'';
+}
+function catDisplay(cat){return roleDisplay(cat);}
 const LANGS={
   tr:{
     // Nav
@@ -867,7 +886,7 @@ async function judgeLoginWithSync(compId,judgeId){
   document.getElementById('mainContent').innerHTML=`
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;">
       <div style="width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;"></div>
-      <div style="font-size:12px;color:var(--text2);">Yarışma verisi güncelleniyor...</div>
+      <div style="font-size:12px;color:var(--text2);">${L('Updating competition data...','Yarışma verisi güncelleniyor...')}</div>
     </div>`;
   // Sync fresh data from Supabase
   try{
@@ -918,8 +937,8 @@ function updateTopbar(){
   if(CURRENT_ROLE==='admin'){
     nav.innerHTML=`
       <button class="nav-btn ${CURRENT_VIEW==='admin'?'active':''}" onclick="navigate('admin')">👑 Admin</button>
-      ${ACTIVE_COMP_ID?`<button class="nav-btn ${CURRENT_VIEW==='organizer'?'active':''}" onclick="navigate('organizer')">📋 Yönetim</button>`:''}
-      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 Sonuçlar</button>
+      ${ACTIVE_COMP_ID?`<button class="nav-btn ${CURRENT_VIEW==='organizer'?'active':''}" onclick="navigate('organizer')">📋 ${t('management')}</button>`:''}
+      <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
     `;
     roleEl.textContent='👑 Admin';roleEl.style.color='var(--purple)';
   } else if(CURRENT_ROLE==='organizer'){
@@ -929,7 +948,7 @@ function updateTopbar(){
       <button class="nav-btn ${CURRENT_VIEW==='organizer'?'active':''}" onclick="navigate('organizer')">📋 ${t('management')}</button>
       <button class="nav-btn ${CURRENT_VIEW==='scoreboard'?'active':''}" onclick="navigate('scoreboard')">🏆 ${t('results')}</button>
     `;
-    roleEl.textContent='👤 '+(org?org.name:'Organizatör');roleEl.style.color='var(--gold)';
+    roleEl.textContent='👤 '+(org?org.name:t('organizer'));roleEl.style.color='var(--gold)';
   } else if(CURRENT_ROLE==='judge'){
     const j=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
     nav.innerHTML=`
@@ -995,7 +1014,7 @@ function renderLoginSelect(){
     <div class="role-cards" style="grid-template-columns:repeat(3,1fr);max-width:580px;">
       <div class="role-card" onclick="navigate('admin-pin')" style="border-color:rgba(155,109,255,0.2);text-align:center;">
         <div class="role-icon">👑</div>
-        <div class="role-name" style="color:var(--purple)">ADMİN</div>
+        <div class="role-name" style="color:var(--purple)">${CURRENT_LANG==='en'?'ADMIN':'ADMİN'}</div>
         <div class="role-desc">${CURRENT_LANG==='en'?'Full system access':'Tüm sistemi yönet'}</div>
       </div>
       <div class="role-card" onclick="navigate('org-login')" style="text-align:center;">
@@ -1133,7 +1152,7 @@ function renderPartContent(compId){
       .forEach(c=>{
         const fullName=(c.name+' '+c.surname).trim();
         if(!officials.find(o=>o.name===fullName)){
-          officials.push({name:fullName,role:c.categories.join(', '),roleDetail:'',country:c.country||'—'});
+          officials.push({name:fullName,role:c.categories.map(cat=>catDisplay(cat)).join(', '),roleDetail:'',country:c.country||'—'});
         }
       });
     if(!officials.length) return `<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">${CURRENT_LANG==='en'?'No officials registered yet':'Henüz görevli kaydı yok'}</div></div>`;
@@ -1203,7 +1222,7 @@ function renderAdmin(){
     </div>
     <div class="grid-4 mb-4">
       <div class="stat-box" style="border-color:var(--purple)">
-        <div class="stat-label">${CURRENT_LANG==='en'?'COMPETITORS':t('statOrgs')}</div>
+        <div class="stat-label">${t('statOrgs')}</div>
         <div class="stat-val">${orgs.length}</div>
       </div>
       <div class="stat-box">
@@ -1212,7 +1231,7 @@ function renderAdmin(){
       </div>
       <div class="stat-box">
         <div class="stat-label">${t('statTotalComps')}</div>
-            ${activeRound?'<span class="badge badge-green">'+t('liveNow')+'</span>':''}
+        <div class="stat-val">${totalComps}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">${t('statTotalComps2')}</div>
@@ -1316,14 +1335,14 @@ function renderAdminSettings(){
     <button class="btn btn-primary" onclick="saveAdminSettings()">💾 ${t('save')}</button>
   </div>
   <div class="card" style="max-width:480px">
-    <div class="card-header"><div class="card-title">☁️ Supabase Kullanım Durumu</div></div>
+    <div class="card-header"><div class="card-title">☁️ ${L('Supabase Usage Status','Supabase Kullanım Durumu')}</div></div>
     <div id="sb-usage-panel">
-      <div class="text-sm text-muted">Yükleniyor...</div>
+      <div class="text-sm text-muted">${L('Loading...','Yükleniyor...')}</div>
     </div>
-    <button class="btn btn-ghost btn-sm mt-3" onclick="loadSBUsage()">🔄 Yenile</button>
+    <button class="btn btn-ghost btn-sm mt-3" onclick="loadSBUsage()">🔄 ${t('refresh')}</button>
     <div class="mt-3 alert alert-info" style="font-size:11px;">
-      💡 Supabase Free Plan: 500 MB database · 5 GB/ay bandwidth · 2 proje<br>
-      Detaylı kullanım için: <a href="https://app.supabase.com" target="_blank" style="color:var(--blue)">app.supabase.com</a> → Projen → Settings → Usage
+      💡 ${L('Supabase Free Plan: 500 MB database · 5 GB/month bandwidth · 2 projects','Supabase Free Plan: 500 MB database · 5 GB/ay bandwidth · 2 proje')}<br>
+      ${L('For detailed usage:','Detaylı kullanım için:')} <a href="https://app.supabase.com" target="_blank" style="color:var(--blue)">app.supabase.com</a> → ${L('Your Project','Projen')} → Settings → Usage
     </div>
   </div>
   </div>`;
@@ -1343,7 +1362,7 @@ async function renderAdminApplications(){
   panel.innerHTML=`
   <div>
     <div class="flex justify-between items-center mb-3">
-      <div class="text-sm text-muted">${apps.length} ${CURRENT_LANG==='en'?'total applications':CURRENT_LANG==='en'?'total applications':'toplam başvuru'} · ${pending.length} ${CURRENT_LANG==='en'?'pending':CURRENT_LANG==='en'?'pending':'bekliyor'}</div>
+      <div class="text-sm text-muted">${apps.length} ${CURRENT_LANG==='en'?'total applications':'toplam başvuru'} · ${pending.length} ${CURRENT_LANG==='en'?'pending':'bekliyor'}</div>
     </div>
     ${pending.length===0&&done.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No applications yet':'Henüz başvuru yok'}</div></div>`:''}
     ${pending.length>0?`
@@ -1394,10 +1413,10 @@ async function approveOrgApp(appId){
   // Mark approved
   app.status='approved';app.approvedAt=new Date().toISOString();app.assignedPin=pin;
   await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
-  toast(`${app.name} ${app.surname} onaylandı! PIN: ${pin} — not edin, kendisine iletin.`,'success');
+  toast(CURRENT_LANG==='en'?`${app.name} ${app.surname} approved! PIN: ${pin} — note it and forward it to them.`:`${app.name} ${app.surname} onaylandı! PIN: ${pin} — not edin, kendisine iletin.`,'success');
   openModal(CURRENT_LANG==='en'?'✅ Account Created':'✅ Hesap Oluşturuldu',`
     <div class="alert alert-success mb-3">${CURRENT_LANG==='en'?'Organizer account has been created!':'Organizatör hesabı oluşturuldu!'}</div>
-    <div class="form-group"><label>Ad Soyad</label><input value="${app.name} ${app.surname}" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Full Name':'Ad Soyad'}</label><input value="${app.name} ${app.surname}" disabled></div>
     <div class="form-group"><label>Email</label><input value="${app.email}" disabled></div>
     <div class="form-group">
       <label>${CURRENT_LANG==='en'?'Login PIN (Forward to Organizer)':'Giriş PIN Kodu (Organizatöre İletin)'}</label>
@@ -1415,14 +1434,14 @@ async function rejectOrgApp(appId){
   if(!app) return;
   app.status='rejected';app.rejectedAt=new Date().toISOString();
   await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
-  toast('Başvuru reddedildi','info');
+  toast(L('Application rejected','Başvuru reddedildi'),'info');
   renderAdminApplications();
 }
 
 async function loadSBUsage(){
   const panel=document.getElementById('sb-usage-panel');
   if(!panel) return;
-  panel.innerHTML='<div class="text-sm text-muted">Hesaplanıyor...</div>';
+  panel.innerHTML='<div class="text-sm text-muted">'+L('Calculating...','Hesaplanıyor...')+'</div>';
   try{
     // Count rows in ffco_comps
     const comps=await sbGet('ffco_comps','?select=id,data');
@@ -1437,24 +1456,24 @@ async function loadSBUsage(){
     panel.innerHTML=`
       <div class="grid-2 mb-3">
         <div class="stat-box">
-          <div class="stat-label">Yarışma Sayısı</div>
+          <div class="stat-label">${L('Competition Count','Yarışma Sayısı')}</div>
           <div class="stat-val" style="font-size:20px;">${compCount}</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">Veri Boyutu</div>
+          <div class="stat-label">${L('Data Size','Veri Boyutu')}</div>
           <div class="stat-val" style="font-size:20px;">${totalKB} KB</div>
           <div class="stat-sub">${totalMB} MB</div>
         </div>
       </div>
-      <div class="stat-label mb-1">Database Kullanımı (500 MB limit)</div>
+      <div class="stat-label mb-1">${L('Database Usage (500 MB limit)','Database Kullanımı (500 MB limit)')}</div>
       <div class="progress" style="height:10px;border-radius:5px;">
         <div class="progress-bar" style="width:${pct}%;background:${pct>80?'var(--red)':pct>50?'var(--gold)':'var(--green)'};"></div>
       </div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;">%${pct} kullanıldı · ${(500-parseFloat(totalMB)).toFixed(0)} MB kaldı</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">🟢 Realtime: ${SB_REALTIME_CHANNEL?'Bağlı (WebSocket)':'Bağlı değil (Polling)'}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">${L('Used','Kullanıldı')}: %${pct} · ${(500-parseFloat(totalMB)).toFixed(0)} MB ${L('remaining','kaldı')}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">🟢 Realtime: ${SB_REALTIME_CHANNEL?L('Connected (WebSocket)','Bağlı (WebSocket)'):L('Not connected (Polling)','Bağlı değil (Polling)')}</div>
     `;
   }catch(e){
-    panel.innerHTML='<div class="alert alert-warn">Kullanım bilgisi alınamadı</div>';
+    panel.innerHTML='<div class="alert alert-warn">'+L('Could not retrieve usage information','Kullanım bilgisi alınamadı')+'</div>';
   }
 }
 function saveAdminSettings(){
@@ -1501,7 +1520,7 @@ function adminEnterAsOrg(orgId){
   CURRENT_ROLE='organizer';
   navigate('comp-select');
   const org=loadOrganizers().find(o=>o.id===orgId);
-  toast(`${org?.name||''} olarak giriş yapıldı`,'info');
+  toast(`${org?.name||''} ${L('logged in','olarak giriş yapıldı')}`,'info');
 }
 function adminEnterComp(compId){
   selectComp(compId);CURRENT_ROLE='admin';ORG_TAB='overview';navigate('organizer');
@@ -1603,7 +1622,7 @@ function renderCompGrid(list,isArchive){
           <div class="flex gap-2 flex-wrap">
             ${activeRound?'<span class="badge badge-green">'+t('liveNow')+'</span>':''}
             ${isSelected&&!isArchive?'<span class="badge badge-blue">'+t('selectedComp')+'</span>':''}
-            ${isArchive?'<span class="badge badge-gray">📦 Arşiv</span>':''}
+            ${isArchive?'<span class="badge badge-gray">'+t('inArchive')+'</span>':''}
           </div>
           <div class="flex gap-1">
             ${!isArchive?`
@@ -1644,7 +1663,7 @@ function viewArchiveResults(compId){
   const oldState=STATE;
   const oldActiveId=ACTIVE_COMP_ID;
   const comp=loadComp(compId);
-  if(!comp){toast('Veri bulunamadı','error');return;}
+  if(!comp){toast(L('Data not found','Veri bulunamadı'),'error');return;}
   // Show results in modal
   STATE=comp;
   const cats=comp.competition.categories;
@@ -1665,7 +1684,7 @@ function viewArchiveResults(compId){
     html+=`</div>`;
   });
   STATE=oldState;
-  openModal(`📦 ${comp.competition.name} — Arşiv Sonuçları`,html,`<button class="btn btn-primary" onclick="closeModal()">Kapat</button>`);
+  openModal(`📦 ${comp.competition.name} — ${t('archiveResults')}`,html,`<button class="btn btn-primary" onclick="closeModal()">${t('closeBtn')}</button>`);
 }
 function exportArchiveCSV(compId){
   const comp=loadComp(compId);
@@ -1680,8 +1699,8 @@ function exportArchiveCSV(compId){
     });
   });
   STATE=oldState;
-  downloadCSV(`${comp.competition.name||'arsiv'}_sonuclar.csv`,lines.join('\n'));
-  toast('Arşiv CSV indirildi','info');
+  downloadCSV(CURRENT_LANG==='en'?`${comp.competition.name||'archive'}_results.csv`:`${comp.competition.name||'arsiv'}_sonuclar.csv`,lines.join('\n'));
+  toast(L('Archive CSV downloaded','Arşiv CSV indirildi'),'info');
 }
 
 function doCreateComp(){
@@ -1699,14 +1718,14 @@ function enterComp(id){
 }
 function confirmDeleteComp(id){
   const comp=loadComp(id);
-  const name=comp?.competition?.name||'Bu yarışma';
-  if(!confirm(`"${name}" yarışmasını ve tüm verilerini silmek istiyor musunuz? Bu işlem geri alınamaz.`)) return;
+  const name=comp?.competition?.name||L('This competition','Bu yarışma');
+  if(!confirm(CURRENT_LANG==='en'?`Do you want to delete "${name}" and all its data? This cannot be undone.`:`"${name}" yarışmasını ve tüm verilerini silmek istiyor musunuz? Bu işlem geri alınamaz.`)) return;
   const idx=loadIndex().filter(e=>e.id!==id);
   saveIndex(idx);
   deleteComp(id);
   if(ACTIVE_COMP_ID===id){ACTIVE_COMP_ID=null;sessionStorage.removeItem('ffco_active_comp');STATE=getInitialState();}
   navigate('comp-select');
-  toast(`${name} silindi`,'info');
+  toast(`${name} ${L('deleted','silindi')}`,'info');
 }
 
 // ==================== PIN SCREENS ====================
@@ -1891,23 +1910,23 @@ function renderOverview(){
       <span id="org-last-sync" class="text-xs text-muted"></span>
       <button class="btn btn-ghost btn-sm" onclick="orgManualRefresh()" title="${CURRENT_LANG==='en'?'Refresh from server':'Sunucudan güncelle'}">🔄 ${CURRENT_LANG==='en'?'Refresh':'Güncelle'}</button>
     </div>
-    ${!comp.name?`<div class="alert alert-warn">⚠️ Henüz yarışma kurulmadı. <a href="#" onclick="orgTab('setup')" style="color:var(--gold)">Ayarlar</a> sekmesinden başlayın.</div>`:''}
-    ${activeRound?`<div class="alert alert-success">🟢 ${CURRENT_LANG==='en'?'Active Round:':'Aktif Raund:'} <strong>RAUND ${activeRound.number}</strong> — ${CURRENT_LANG==='en'?'Max time:':'Max süre:'} ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">Raund Bitir</button></div>`:''}
+    ${!comp.name?`<div class="alert alert-warn">⚠️ ${CURRENT_LANG==='en'?'Competition is not set up yet. Start from the':'Henüz yarışma kurulmadı.'} <a href="#" onclick="orgTab('setup')" style="color:var(--gold)">${CURRENT_LANG==='en'?'Setup':'Ayarlar'}</a> ${CURRENT_LANG==='en'?'tab.':'sekmesinden başlayın.'}</div>`:''}
+    ${activeRound?`<div class="alert alert-success">🟢 ${CURRENT_LANG==='en'?'Active Round:':'Aktif Raund:'} <strong>${roundName(activeRound)}</strong> — ${CURRENT_LANG==='en'?'Max time:':'Max süre:'} ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">${t('endRound')}</button></div>`:''}
     ${comp.name&&!activeRound&&STATE.rounds.length>0&&STATE.rounds.every(r=>r.status==='done')?`
     <div class="alert alert-info flex justify-between items-center">
-      <span>🏁 Tüm raundlar tamamlandı. Yarışmayı arşivlemek ister misiniz?</span>
+      <span>🏁 ${t('archiveConfirm')}</span>
       <button class="btn btn-gold btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')">${CURRENT_LANG==='en'?'📦 Archive':'📦 Arşivle'}</button>
     </div>`:''}
     ${comp.name&&STATE.rounds.length===0?`<div style="text-align:right;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')" style="color:var(--text3)">${CURRENT_LANG==='en'?'📦 Archive':'📦 Arşivle'}</button></div>`:''}
     
     <div class="grid-4 mb-4">
       <div class="stat-box">
-        <div class="stat-label">Yarışmacılar</div>
+        <div class="stat-label">${t('competitors')}</div>
         <div class="stat-val">${STATE.competitors.length}</div>
         <div class="stat-sub">${STATE.competitors.filter(c=>c.categories.length>0).length} ${CURRENT_LANG==='en'?'active categories':'aktif kategori'}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Hakemler</div>
+        <div class="stat-label">${t('judges')}</div>
         <div class="stat-val">${STATE.judges.length}</div>
         <div class="stat-sub">${STATE.lanes.length} ${CURRENT_LANG==='en'?'lanes':'kulvar'}</div>
       </div>
@@ -1925,12 +1944,12 @@ function renderOverview(){
 
     ${(STATE.extraFlightRequests||[]).filter(r=>r.status==='pending').length>0?`
     <div style="background:rgba(255,71,87,0.08);border:1px solid var(--red);border-radius:var(--r);padding:16px;margin-bottom:16px;">
-      <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px;">🚨 EK UÇUŞ TALEPLERİ</div>
+      <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px;">🚨 ${CURRENT_LANG==='en'?'EXTRA FLIGHT REQUESTS':'EK UÇUŞ TALEPLERİ'}</div>
       ${STATE.extraFlightRequests.filter(r=>r.status==='pending').map(req=>`
         <div style="background:var(--bg3);border-radius:var(--r3);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:700;">${req.competitorName}</div>
-            <div style="font-size:11px;color:var(--text2);">Hakem: ${req.judgeName} · ${req.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}</div>
+            <div style="font-size:11px;color:var(--text2);">${CURRENT_LANG==='en'?'Timekeeper':'Hakem'}: ${req.judgeName} · ${req.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">${req.note}</div>
           </div>
           <div style="display:flex;gap:8px;">
@@ -1942,21 +1961,21 @@ function renderOverview(){
 
     ${flyoffInfo.length>0?`
     <div class="flyoff-banner mb-4">
-      <div class="flyoff-title">⚡ FLYOFF GEREKLİ</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Aşağıdaki yarışmacılar tüm raundları max sürede tamamladı veya toplam süre eşit. Flyoff raund açılması gerekiyor.</p>
+      <div class="flyoff-title">⚡ ${t('flyoffRequired')}</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">${t('flyoffDesc')} ${CURRENT_LANG==='en'?'A flyoff round must be opened.':'Flyoff raund açılması gerekiyor.'}</p>
       ${flyoffInfo.map(f=>`
         <div style="margin-bottom:8px;">
           <span class="badge badge-purple">${f.category}</span> 
           ${f.competitors.map(c=>`<span class="badge badge-gray ml-1">${c.name} ${c.surname}</span>`).join('')}
         </div>
       `).join('')}
-      <button class="btn btn-primary mt-2" onclick="openAddFlyoffModal()">+ Flyoff Raund Ekle</button>
+      <button class="btn btn-primary mt-2" onclick="openAddFlyoffModal()">${t('addFlyoffRound')}</button>
     </div>`:''}
     
     <div class="grid-2">
       <div class="card">
         <div class="card-header"><div class="card-title"><span class="icon">🏁</span>${CURRENT_LANG==='en'?'Round Status':'Raund Durumu'}</div></div>
-        ${STATE.rounds.length===0?'<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Raund tanımlanmadı</div></div>':
+        ${STATE.rounds.length===0?`<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">${CURRENT_LANG==='en'?'No rounds defined':'Raund tanımlanmadı'}</div></div>`:
           STATE.rounds.map(r=>`
           <div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
             <div class="round-num">${r.isFlyoff?'FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
@@ -1999,12 +2018,12 @@ function renderSetupForm(){
     <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>${t('setup').replace('⚙️ ','')}</div></div>
     <div class="form-row mb-3">
       <div class="form-group">
-        <label>Yarışma Adı *</label>
-        <input id="sf-name" value="${c.name||''}" placeholder="2026 İsmail Sarıoğlu Kupası">
+        <label>${t('compName')} *</label>
+        <input id="sf-name" value="${c.name||''}" placeholder="${CURRENT_LANG==='en'?'2026 Ismail Sarioglu Cup':'2026 İsmail Sarıoğlu Kupası'}">
       </div>
       <div class="form-group">
         <label>${CURRENT_LANG==='en'?'Location':'Konum'}</label>
-        <input id="sf-loc" value="${c.location||''}" placeholder="İstanbul / Türkiye">
+        <input id="sf-loc" value="${c.location||''}" placeholder="${CURRENT_LANG==='en'?'Istanbul / Turkey':'İstanbul / Türkiye'}">
       </div>
     </div>
     <div class="form-row mb-3">
@@ -2024,34 +2043,34 @@ function renderSetupForm(){
       <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://drive.google.com/... (TR)">
       <div class="form-hint mt-1">${CURRENT_LANG==='en'?'Turkish bulletin PDF link':'Türkçe bülten PDF linki'}</div>
       <div id="bulletin-help" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:14px;margin-top:8px;font-size:12px;">
-        <div style="font-weight:700;color:var(--blue);margin-bottom:10px;">☁️ PDF'inizi nasıl paylaşırsınız?</div>
+        <div style="font-weight:700;color:var(--blue);margin-bottom:10px;">☁️ ${CURRENT_LANG==='en'?'How to share your PDF?':"PDF'inizi nasıl paylaşırsınız?"}</div>
         <div style="margin-bottom:10px;">
-          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🟡 Google Drive (Önerilen)</div>
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🟡 Google Drive (${CURRENT_LANG==='en'?'Recommended':'Önerilen'})</div>
           <div style="color:var(--text2);line-height:1.7;">
-            1. drive.google.com'a git → PDF'i yükle<br>
-            2. Dosyaya sağ tık → <strong>Paylaş</strong><br>
-            3. "Bağlantısı olan herkes görüntüleyebilir" seç<br>
-            4. <strong>Bağlantıyı kopyala</strong> → buraya yapıştır
+            ${CURRENT_LANG==='en'?'1. Go to drive.google.com → upload the PDF':'1. drive.google.com\'a git → PDF\'i yükle'}<br>
+            ${CURRENT_LANG==='en'?'2. Right-click the file → <strong>Share</strong>':'2. Dosyaya sağ tık → <strong>Paylaş</strong>'}<br>
+            ${CURRENT_LANG==='en'?'3. Select “Anyone with the link can view”':'3. "Bağlantısı olan herkes görüntüleyebilir" seç'}<br>
+            ${CURRENT_LANG==='en'?'4. <strong>Copy link</strong> → paste it here':'4. <strong>Bağlantıyı kopyala</strong> → buraya yapıştır'}
           </div>
         </div>
         <div style="margin-bottom:10px;">
           <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🔵 Dropbox</div>
           <div style="color:var(--text2);line-height:1.7;">
-            1. dropbox.com'a yükle<br>
-            2. <strong>Paylaş → Bağlantı oluştur</strong><br>
-            3. Linki kopyala → buraya yapıştır
+            ${CURRENT_LANG==='en'?'1. Upload it to dropbox.com':'1. dropbox.com\'a yükle'}<br>
+            ${CURRENT_LANG==='en'?'2. <strong>Share → Create link</strong>':'2. <strong>Paylaş → Bağlantı oluştur</strong>'}<br>
+            ${CURRENT_LANG==='en'?'3. Copy the link → paste it here':'3. Linki kopyala → buraya yapıştır'}
           </div>
         </div>
         <div>
           <div style="font-weight:700;color:var(--text);margin-bottom:4px;">🟠 OneDrive</div>
           <div style="color:var(--text2);line-height:1.7;">
-            1. onedrive.com'a yükle<br>
-            2. Dosyaya sağ tık → <strong>Paylaş → Bağlantı kopyala</strong><br>
-            3. Buraya yapıştır
+            ${CURRENT_LANG==='en'?'1. Upload it to onedrive.com':'1. onedrive.com\'a yükle'}<br>
+            ${CURRENT_LANG==='en'?'2. Right-click the file → <strong>Share → Copy link</strong>':'2. Dosyaya sağ tık → <strong>Paylaş → Bağlantı kopyala</strong>'}<br>
+            ${CURRENT_LANG==='en'?'3. Paste it here':'3. Buraya yapıştır'}
           </div>
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--text3);font-size:11px;">
-          💡 WeTransfer, Yandex Disk, iCloud Drive gibi servisler de çalışır.
+          💡 ${CURRENT_LANG==='en'?'Services such as WeTransfer, Yandex Disk and iCloud Drive also work.':'WeTransfer, Yandex Disk, iCloud Drive gibi servisler de çalışır.'}
         </div>
       </div>
     </div>
@@ -2078,13 +2097,13 @@ function renderSetupForm(){
     <div class="mb-3"><strong>${CURRENT_LANG==='en'?'Round Settings':'Raund Ayarları'}</strong></div>
     <div id="roundsList">${renderRoundInputs()}</div>
     <div class="flex gap-2 mb-4">
-      <button class="btn btn-ghost btn-sm" onclick="addRound()">+ Raund Ekle</button>
+      <button class="btn btn-ghost btn-sm" onclick="addRound()">${t('addRound')}</button>
     </div>
     
     <div class="divider"></div>
     <div class="form-row mb-4">
       <div class="form-group">
-        <label>Organizatör PIN (Mevcut: ${c.organizerPin})</label>
+        <label>${t('orgPin')} (${CURRENT_LANG==='en'?'Current':'Mevcut'}: ${c.organizerPin})</label>
         <input id="sf-orgpin" type="password" placeholder="${t('newPinPlaceholder')}">
       </div>
     </div>
@@ -2095,14 +2114,14 @@ function renderRoundInputs(){
   return STATE.rounds.map((r,i)=>`
     <div class="form-row mb-2" id="round-row-${r.id}">
       <div style="display:flex;align-items:center;gap:8px;flex:1">
-        <span class="badge badge-blue" style="white-space:nowrap">${r.isFlyoff?'FLYOFF '+r.flyoffNum:'RAUND '+r.number}</span>
+        <span class="badge badge-blue" style="white-space:nowrap">${r.isFlyoff?'FLYOFF '+r.flyoffNum:(CURRENT_LANG==='en'?'ROUND ':'RAUND ')+r.number}</span>
         <input type="number" min="10" max="3600" value="${r.maxTime}" 
           onchange="updateRoundTime('${r.id}',this.value)" style="width:100px" ${r.status!=='pending'?'disabled':''}>
-        <span class="text-sm text-muted">saniye</span>
+        <span class="text-sm text-muted">${CURRENT_LANG==='en'?'seconds':'saniye'}</span>
         <span class="text-sm text-muted">(${fmtSec(r.maxTime)})</span>
       </div>
       <div style="display:flex;gap:6px;align-items:center">
-        <span class="badge ${r.status==='pending'?'badge-gray':r.status==='active'?'badge-green':'badge-blue'}">${r.status==='pending'?'Bekliyor':r.status==='active'?'Aktif':'Bitti'}</span>
+        <span class="badge ${r.status==='pending'?'badge-gray':r.status==='active'?'badge-green':'badge-blue'}">${r.status==='pending'?t('roundPending'):r.status==='active'?t('roundActive'):t('roundDone')}</span>
         ${r.status==='pending'?`<button class="btn btn-ghost btn-sm" onclick="removeRound('${r.id}')">✕</button>`:''}
       </div>
     </div>`).join('');
@@ -2137,7 +2156,7 @@ function addRound(){
   STATE.rounds.push({id:uid(),number:num,maxTime:240,status:'pending',isFlyoff:false,startedAt:null,endedAt:null});
   save();
   document.getElementById('roundsList').innerHTML=renderRoundInputs();
-  toast('Raund eklendi','info');
+  toast(CURRENT_LANG==='en'?'Round added':'Raund eklendi','info');
 }
 function removeRound(id){
   const idx=STATE.rounds.findIndex(r=>r.id===id);
@@ -2174,7 +2193,7 @@ function saveSetup(){
     saveIndex(idx);
   }
   save();
-  toast('Yarışma ayarları kaydedildi ✓','success');
+  toast(t('saved'),'success');
   updateTopbar();
 }
 
@@ -2186,8 +2205,8 @@ function renderCompetitorsList(){
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="flex gap-2 flex-wrap">
         <button class="btn btn-primary btn-sm" onclick="openAddCompetitorModal()">${t('addCompetitor')}</button>
-        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 CSV İçe Aktar</button>
-        <button class="btn btn-ghost btn-sm" onclick="exportCompetitors()">📤 CSV Dışa Aktar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">${t('importCSV')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCompetitors()">${t('exportCSV')}</button>
       </div>
       <div class="text-sm text-muted">${comps.length} ${CURRENT_LANG==='en'?'competitor':'yarışmacı'}</div>
     </div>
@@ -2196,13 +2215,13 @@ function renderCompetitorsList(){
       <table>
         <thead>
           <tr>
-            <th data-sort="name">Ad Soyad</th>
-            <th>Ülke</th>
+            <th data-sort="name">${CURRENT_LANG==='en'?'Full Name':'Ad Soyad'}</th>
+            <th>${t('country')}</th>
             <th>FAI ID</th>
             <th>THSF No</th>
-            <th>Kategoriler</th>
-            <th>Sınıf</th>
-            <th>Banket</th>
+            <th>${t('categories')}</th>
+            <th>${t('compClass')}</th>
+            <th>${t('banquet')}</th>
             <th></th>
           </tr>
         </thead>
@@ -2213,7 +2232,7 @@ function renderCompetitorsList(){
             <td>${c.country||'—'}</td>
             <td class="font-mono">${c.faiId||'—'}</td>
             <td class="font-mono">${c.thsfId||'—'}</td>
-            <td>${c.categories.map(cat=>`<span class="badge badge-blue">${cat}</span>`).join(' ')}</td>
+            <td>${c.categories.map(cat=>`<span class="badge badge-blue">${catDisplay(cat)}</span>`).join(' ')}</td>
             <td>${c.senior===false?'<span class="badge badge-purple">Junior</span>':'<span class="badge badge-gray">Senior</span>'}</td>
             <td>${c.banquet?'✅':'—'}</td>
             <td>
@@ -2234,15 +2253,15 @@ function openAddCompetitorModal(editId){
       <div class="form-group"><label>${CURRENT_LANG==='en'?'First Name *':'Ad *'}</label><input id="cm-name" value="${c.name||''}"></div>
       <div class="form-group"><label>${CURRENT_LANG==='en'?'Last Name *':'Soyad *'}</label><input id="cm-surname" value="${c.surname||''}"></div>
     </div>
-    <div class="form-group"><label>E-posta</label><input id="cm-email" type="email" value="${c.email||''}"></div>
+    <div class="form-group"><label>${t('email')}</label><input id="cm-email" type="email" value="${c.email||''}"></div>
     <div class="form-row">
-      <div class="form-group"><label>Ülke</label><input id="cm-country" value="${c.country||''}" placeholder="TUR"></div>
+      <div class="form-group"><label>${t('country')}</label><input id="cm-country" value="${c.country||''}" placeholder="TUR"></div>
       <div class="form-group"><label>FAI ID</label><input id="cm-fai" value="${c.faiId||''}"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>THSF Lisans No</label><input id="cm-thsf" value="${c.thsfId||''}"></div>
+      <div class="form-group"><label>${t('thsfNo')}</label><input id="cm-thsf" value="${c.thsfId||''}"></div>
       <div class="form-group">
-        <label>Sınıf</label>
+        <label>${t('compClass')}</label>
         <select id="cm-class">
           <option value="senior" ${c.senior!==false?'selected':''}>Senior</option>
           <option value="junior" ${c.senior===false?'selected':''}>Junior</option>
@@ -2250,13 +2269,13 @@ function openAddCompetitorModal(editId){
       </div>
     </div>
     <div class="form-group">
-      <label>Kategoriler</label>
+      <label>${t('categories')}</label>
       <div class="check-group" id="cm-cats">
         ${CATS.map(cat=>`<label class="check-item ${(c.categories||[]).includes(cat)?'checked':''}">
           <input type="checkbox" value="${cat}" ${(c.categories||[]).includes(cat)?'checked':''}> ${cat}</label>`).join('')}
       </div>
     </div>
-    <div class="form-group"><label><input type="checkbox" id="cm-banquet" ${c.banquet?'checked':''}> Bankete katılacak</label></div>
+    <div class="form-group"><label><input type="checkbox" id="cm-banquet" ${c.banquet?'checked':''}> ${CURRENT_LANG==='en'?'Will attend banquet':'Bankete katılacak'}</label></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="saveCompetitor('${editId||''}')">${CURRENT_LANG==='en'?'Save':'Kaydet'}</button>`);
   // bind check-items
@@ -2269,7 +2288,7 @@ function openAddCompetitorModal(editId){
 function saveCompetitor(editId){
   const name=document.getElementById('cm-name').value.trim();
   const surname=document.getElementById('cm-surname').value.trim();
-  if(!name||!surname){toast('Ad ve soyad zorunlu','error');return;}
+  if(!name||!surname){toast(t('nameRequired'),'error');return;}
   const cats=[...document.querySelectorAll('#cm-cats input:checked')].map(i=>i.value);
   const data={
     name,surname,
@@ -2291,11 +2310,11 @@ function saveCompetitor(editId){
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderCompetitorsList();
   bindOrgEvents();
-  toast(`${name} ${surname} kaydedildi ✓`,'success');
+  toast(`${name} ${surname} ${CURRENT_LANG==='en'?'saved ✓':'kaydedildi ✓'}`,'success');
 }
 function editCompetitor(id){openAddCompetitorModal(id);}
 function deleteCompetitor(id){
-  if(!confirm('Bu yarışmacıyı silmek istiyor musunuz?'))return;
+  if(!confirm(t('confirmDelete')))return;
   STATE.competitors=STATE.competitors.filter(c=>c.id!==id);
   STATE.scores=STATE.scores.filter(s=>s.competitorId!==id);
   save();
@@ -2303,13 +2322,13 @@ function deleteCompetitor(id){
   toast('Silindi','info');
 }
 function openImportModal(){
-  openModal('CSV İçe Aktar',`
-    <div class="alert alert-info mb-3">CSV formatı: <code>Ad,Soyad,Email,Ülke,FAI_ID,THSF_No,Kategoriler(F1A;F1B),Senior(true/false),Banket(true/false)</code></div>
-    <div class="form-group"><label>CSV Dosyası</label><input type="file" id="csvFile" accept=".csv" style="padding:8px;"></div>
-    <div class="form-group"><label>veya CSV Metni Yapıştır</label><textarea id="csvText" placeholder="Ad,Soyad,Email,..."></textarea></div>
+  openModal(CURRENT_LANG==='en'?'Import CSV':'CSV İçe Aktar',`
+    <div class="alert alert-info mb-3">${t('csvFormat')}</div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'CSV File':'CSV Dosyası'}</label><input type="file" id="csvFile" accept=".csv" style="padding:8px;"></div>
+    <div class="form-group"><label>${t('csvPaste')}</label><textarea id="csvText" placeholder="Ad,Soyad,Email,..."></textarea></div>
     <div id="csv-preview" class="mt-2"></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-primary" onclick="importCSV()">İçe Aktar</button>`);
+    <button class="btn btn-primary" onclick="importCSV()">${t('importBtn')}</button>`);
   document.getElementById('csvFile').onchange=(e)=>{
     const f=e.target.files[0];if(!f)return;
     const r=new FileReader();r.onload=(ev)=>document.getElementById('csvText').value=ev.target.result;r.readAsText(f);
@@ -2317,7 +2336,7 @@ function openImportModal(){
 }
 function importCSV(){
   const text=document.getElementById('csvText').value.trim();
-  if(!text){toast('CSV verisi boş','error');return;}
+  if(!text){toast(t('csvEmpty'),'error');return;}
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
   let start=0, added=0;
   if(lines[0].toLowerCase().includes('ad')||lines[0].toLowerCase().includes('name')) start=1;
@@ -2335,13 +2354,13 @@ function importCSV(){
   }
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderCompetitorsList();
-  toast(`${added} yarışmacı içe aktarıldı ✓`,'success');
+  toast(`${added} ${t('imported')}`,'success');
 }
 function exportCompetitors(){
-  const header='Ad,Soyad,Email,Ülke,FAI ID,THSF No,Kategoriler,Sınıf,Banket';
-  const rows=STATE.competitors.map(c=>[c.name,c.surname,c.email,c.country,c.faiId,c.thsfId,c.categories.join(';'),c.senior?'Senior':'Junior',c.banquet?'Evet':'Hayır'].join(','));
-  downloadCSV('yarismacilar.csv',[header,...rows].join('\n'));
-  toast('CSV indirildi','info');
+  const header=CURRENT_LANG==='en'?'Name,Surname,Email,Country,FAI ID,THSF No,Categories,Class,Banquet':'Ad,Soyad,Email,Ülke,FAI ID,THSF No,Kategoriler,Sınıf,Banket';
+  const rows=STATE.competitors.map(c=>[c.name,c.surname,c.email,c.country,c.faiId,c.thsfId,c.categories.join(';'),c.senior?'Senior':'Junior',c.banquet?t('yes'):t('no')].join(','));
+  downloadCSV(CURRENT_LANG==='en'?'competitors.csv':'yarismacilar.csv',[header,...rows].join('\n'));
+  toast(t('csvDownloaded'),'info');
 }
 
 // --- JUDGES ---
@@ -2355,7 +2374,7 @@ function renderJudgesList(){
     ${STATE.judges.length===0?`<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">${CURRENT_LANG==='en'?'No timekeepers defined':'Hakem tanımlanmadı'}</div></div>`:`
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>Ad Soyad</th><th>PIN</th><th>Kategori</th><th>Kulvar</th><th></th></tr></thead>
+        <thead><tr><th>${CURRENT_LANG==='en'?'Full Name':'Ad Soyad'}</th><th>PIN</th><th>${t('categories')}</th><th>${CURRENT_LANG==='en'?'Lane':'Kulvar'}</th><th></th></tr></thead>
         <tbody>
           ${STATE.judges.map(j=>{
             const assignedLanes=STATE.lanes.filter(l=>l.judgeIds.includes(j.id));
@@ -2363,7 +2382,7 @@ function renderJudgesList(){
               <td><strong>${j.name}</strong></td>
               <td class="font-mono">${j.pin}</td>
               <td>${j.category||(CURRENT_LANG==='en'?'All':'Tümü')}</td>
-              <td>${assignedLanes.map(l=>`<span class="badge badge-blue">Kulvar ${l.number}</span>`).join(' ')||'—'}</td>
+              <td>${assignedLanes.map(l=>`<span class="badge badge-blue">${CURRENT_LANG==='en'?'Lane ':'Kulvar '}${l.number}</span>`).join(' ')||'—'}</td>
               <td>
                 <button class="btn btn-ghost btn-sm" onclick="editJudge('${j.id}')">✏️</button>
                 <button class="btn btn-ghost btn-sm" onclick="deleteJudge('${j.id}')" style="color:var(--red)">🗑</button>
@@ -2375,9 +2394,9 @@ function renderJudgesList(){
     </div>`}
     ${STATE.judges.length>0?`<div class="mt-3 flex gap-2 flex-wrap">
       <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">${t('autoAssign')}</button>
-      <button class="btn btn-ghost btn-sm" onclick="exportJudges()">📤 CSV Dışa Aktar</button>
-      <button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button>
-    </div>`:`<div class="mt-3 flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button></div>`}
+      <button class="btn btn-ghost btn-sm" onclick="exportJudges()">${t('judgeExportBtn')}</button>
+      <button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">${t('judgeImportBtn')}</button>
+    </div>`:`<div class="mt-3 flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">${t('judgeImportBtn')}</button></div>`}
   </div>`;
 }
 function calcJudgesNeeded(){
@@ -2400,7 +2419,7 @@ function isPinUsedGlobally(pin, excludeJudgeId=''){
   }
   // Also check current STATE judges
   const conflict=STATE.judges.find(j=>j.pin===pin&&j.id!==excludeJudgeId);
-  if(conflict) return {comp:STATE.competition.name||'Bu yarışma', judge:conflict.name};
+  if(conflict) return {comp:STATE.competition.name||L('This competition','Bu yarışma'), judge:conflict.name};
   return null;
 }
 function generateRandomPin(length=6){
@@ -2424,15 +2443,15 @@ function openAddJudgeModal(editId){
   const j=editId?STATE.judges.find(x=>x.id===editId):{};
   const suggestPin=editId?j.pin:generateUniquePin();
   openModal(editId?CURRENT_LANG==='en'?'Edit Timekeeper':'Hakem Düzenle':CURRENT_LANG==='en'?'Add Timekeeper':'Hakem Ekle',`
-    <div class="form-group"><label>Ad Soyad *</label><input id="jm-name" value="${j.name||''}"></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Full Name':'Ad Soyad'} *</label><input id="jm-name" value="${j.name||''}"></div>
     <div class="form-row">
       <div class="form-group">
         <label>PIN *</label>
         <input id="jm-pin" value="${suggestPin}" oninput="checkPinUnique(this,'${editId||''}')">
-        <div class="form-hint" id="pin-hint" style="color:var(--text3)">Rastgele oluşturuldu — değiştirebilirsiniz</div>
+        <div class="form-hint" id="pin-hint" style="color:var(--text3)">${CURRENT_LANG==='en'?'Randomly generated — you may change it':'Rastgele oluşturuldu — değiştirebilirsiniz'}</div>
       </div>
       <div class="form-group">
-        <label>Kategori (opsiyonel)</label>
+        <label>${t('judgeCategory')}</label>
         <select id="jm-cat">
           <option value="">${CURRENT_LANG==='en'?'All':'Tümü'}</option>
           ${STATE.competition.categories.map(cat=>`<option value="${cat}" ${j.category===cat?'selected':''}>${cat}</option>`).join('')}
@@ -2449,20 +2468,20 @@ function checkPinUnique(input, excludeId){
   const conflict=isPinUsedGlobally(pin, excludeId);
   if(conflict){
     hint.style.color='var(--red)';
-    hint.textContent=`❌ Bu PIN zaten kullanımda: "${conflict.judge}" (${conflict.comp})`;
+    hint.textContent=CURRENT_LANG==='en'?`❌ This PIN is already in use: "${conflict.judge}" (${conflict.comp})`:`❌ Bu PIN zaten kullanımda: "${conflict.judge}" (${conflict.comp})`;
   } else {
     hint.style.color='var(--green)';
-    hint.textContent='✓ Bu PIN benzersiz, kullanılabilir';
+    hint.textContent=CURRENT_LANG==='en'?'✓ This PIN is unique and available':'✓ Bu PIN benzersiz, kullanılabilir';
   }
 }
 function saveJudge(editId){
   const name=document.getElementById('jm-name').value.trim();
   const pin=document.getElementById('jm-pin').value.trim();
-  if(!name||!pin){toast('Ad ve PIN zorunlu','error');return;}
+  if(!name||!pin){toast(t('pinRequired'),'error');return;}
   // Final uniqueness check
   const conflict=isPinUsedGlobally(pin, editId);
   if(conflict){
-    toast(`❌ PIN zaten kullanımda: ${conflict.judge} (${conflict.comp})`,'error');
+    toast(CURRENT_LANG==='en'?`❌ PIN is already in use: ${conflict.judge} (${conflict.comp})`:`❌ PIN zaten kullanımda: ${conflict.judge} (${conflict.comp})`,'error');
     return;
   }
   const data={name,pin,category:document.getElementById('jm-cat').value||null};
@@ -2474,11 +2493,11 @@ function saveJudge(editId){
   }
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderJudgesList();
-  toast(`${name} kaydedildi ✓`,'success');
+  toast(`${name} ${CURRENT_LANG==='en'?'saved ✓':'kaydedildi ✓'}`,'success');
 }
 function editJudge(id){openAddJudgeModal(id);}
 function deleteJudge(id){
-  if(!confirm('Bu hakemi silmek istiyor musunuz?'))return;
+  if(!confirm(t('confirmJudgeDelete')))return;
   STATE.judges=STATE.judges.filter(j=>j.id!==id);
   STATE.lanes.forEach(l=>{l.judgeIds=l.judgeIds.filter(jid=>jid!==id);});
   save();
@@ -2486,18 +2505,18 @@ function deleteJudge(id){
   toast('Silindi','info');
 }
 function exportJudges(){
-  const header='Ad Soyad,PIN,Kategori';
+  const header=CURRENT_LANG==='en'?'Full Name,PIN,Category':'Ad Soyad,PIN,Kategori';
   const rows=STATE.judges.map(j=>[j.name,j.pin,j.category||''].join(','));
-  downloadCSV('hakemler.csv',[header,...rows].join('\n'));
+  downloadCSV(CURRENT_LANG==='en'?'timekeepers.csv':'hakemler.csv',[header,...rows].join('\n'));
   toast(t('judgesCSV'),'info');
 }
 function openImportJudgesModal(){
-  openModal('Hakem CSV İçe Aktar',`
-    <div class="alert alert-info mb-3">CSV formatı: <code>Ad Soyad,PIN,Kategori(opsiyonel)</code><br>Örnek: <code>Ahmet Yılmaz,43211,F1A</code></div>
-    <div class="form-group"><label>CSV Dosyası</label><input type="file" id="jCsvFile" accept=".csv" style="padding:8px;"></div>
-    <div class="form-group"><label>veya Metin Yapıştır</label><textarea id="jCsvText" placeholder="Ad Soyad,PIN,Kategori"></textarea></div>
+  openModal(CURRENT_LANG==='en'?'Import Timekeepers CSV':'Hakem CSV İçe Aktar',`
+    <div class="alert alert-info mb-3">${t('judgeCSVFormat')}<br>${t('judgeCSVExample')}</div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'CSV File':'CSV Dosyası'}</label><input type="file" id="jCsvFile" accept=".csv" style="padding:8px;"></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'or Paste CSV Text':'veya Metin Yapıştır'}</label><textarea id="jCsvText" placeholder="${CURRENT_LANG==='en'?'Full Name,PIN,Category':'Ad Soyad,PIN,Kategori'}"></textarea></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-primary" onclick="importJudgesCSV()">İçe Aktar</button>`);
+    <button class="btn btn-primary" onclick="importJudgesCSV()">${t('importBtn')}</button>`);
   document.getElementById('jCsvFile').onchange=(e)=>{
     const f=e.target.files[0];if(!f)return;
     const r=new FileReader();r.onload=(ev)=>document.getElementById('jCsvText').value=ev.target.result;r.readAsText(f);
@@ -2505,7 +2524,7 @@ function openImportJudgesModal(){
 }
 function importJudgesCSV(){
   const text=document.getElementById('jCsvText').value.trim();
-  if(!text){toast('CSV verisi boş','error');return;}
+  if(!text){toast(t('csvEmpty'),'error');return;}
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
   let start=0,added=0;
   if(lines[0].toLowerCase().includes('ad')||lines[0].toLowerCase().includes('name')) start=1;
@@ -2514,13 +2533,13 @@ function importJudgesCSV(){
     if(cols.length<2) continue;
     const name=cols[0];const pin=cols[1];const cat=cols[2]||null;
     if(!name||!pin) continue;
-    if(isPinUsedGlobally(pin)){toast(`PIN ${pin} zaten kullanımda, atlandı`,'warn');continue;}
+    if(isPinUsedGlobally(pin)){toast(CURRENT_LANG==='en'?`PIN ${pin} is already in use, skipped`:`PIN ${pin} zaten kullanımda, atlandı`,'warn');continue;}
     STATE.judges.push({id:uid(),name,pin,category:cat&&CATS.includes(cat.toUpperCase())?cat.toUpperCase():null});
     added++;
   }
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderJudgesList();
-  toast(`${added} hakem içe aktarıldı ✓`,'success');
+  toast(`${added} ${t('judgeImported')}`,'success');
 }
 
 // --- LANE ASSIGNMENT ---
@@ -2549,7 +2568,7 @@ function autoAssignLanes(){
 
   // 2. Hakem sayısı kulvar sayısından azsa imkansız
   if(totalJudges<totalLanes){
-    toast(`❌ ${totalLanes} kulvar için en az ${totalLanes} hakem gerekli. Şu an ${totalJudges} hakem var — ${totalLanes-totalJudges} hakem daha ekleyin.`,'error');
+    toast(CURRENT_LANG==='en'?`❌ ${totalLanes} lanes require at least ${totalLanes} timekeepers. Currently ${totalJudges} timekeepers — add ${totalLanes-totalJudges} more.`:`❌ ${totalLanes} kulvar için en az ${totalLanes} hakem gerekli. Şu an ${totalJudges} hakem var — ${totalLanes-totalJudges} hakem daha ekleyin.`,'error');
     return;
   }
 
@@ -2602,9 +2621,9 @@ function autoAssignLanes(){
   const with2=STATE.lanes.filter(l=>l.judgeIds.length===2).length;
   const with1=STATE.lanes.filter(l=>l.judgeIds.length===1).length;
   if(with1===0){
-    toast(`${totalLanes} kulvar oluşturuldu ✓ — Tüm kulvarlar çift hakem`,'success');
+    toast(`${totalLanes} ${CURRENT_LANG==='en'?'lanes created ✓ — All lanes have two timekeepers':'kulvar oluşturuldu ✓ — Tüm kulvarlar çift hakem'}`,'success');
   } else {
-    toast(`${totalLanes} kulvar oluşturuldu ✓ — ${with2} kulvar çift hakem, ${with1} kulvar tek hakem`,'info');
+    toast(CURRENT_LANG==='en'?`${totalLanes} lanes created ✓ — ${with2} lanes double TK, ${with1} single TK lanes`:`${totalLanes} kulvar oluşturuldu ✓ — ${with2} kulvar çift hakem, ${with1} kulvar tek hakem`,'info');
   }
   document.getElementById('orgContent').innerHTML=renderLaneManager();
 }
@@ -2628,7 +2647,7 @@ function renderLaneManager(){
             <div class="lane-num">${CURRENT_LANG==='en'?'LANE ':'KULVAR '}${l.number}</div>
             <span class="badge badge-blue">${l.category}</span>
           </div>
-          <div class="lane-judges">⚖️ ${judges.join(' · ')||CURRENT_LANG==='en'?'No TK assigned':'Hakem atanmadı'} ${judges.length===1?'<span class="badge badge-gold">'+t('singleJudgeLane')+'</span>':judges.length===0?'<span class="badge badge-red">'+t('noJudgeLane')+'</span>':''}</div>
+          <div class="lane-judges">⚖️ ${judges.length?judges.join(' · '):t('noJudgeAssigned')} ${judges.length===1?'<span class="badge badge-gold">'+t('singleJudgeLane')+'</span>':judges.length===0?'<span class="badge badge-red">'+t('noJudgeLane')+'</span>':''}</div>
           ${comps.map(c=>`<div class="lane-comp">${c.name} ${c.surname}</div>`).join('')}
         </div>`;
       }).join('')}
@@ -2660,7 +2679,7 @@ function renderRoundManager(){
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="text-sm text-muted">${STATE.rounds.length} ${CURRENT_LANG==='en'?'rounds defined':'raund tanımlı'}</div>
       <div class="flex gap-2 flex-wrap">
-        <button class="btn btn-ghost btn-sm" onclick="orgTab('setup')">⚙️ ${CURRENT_LANG==='en'?t('roundEditNote'):'Raund Ekle/Düzenle'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="orgTab('setup')">⚙️ ${CURRENT_LANG==='en'?'Add/Edit Rounds':'Raund Ekle/Düzenle'}</button>
         <button class="btn btn-ghost btn-sm" onclick="openAddFlyoffModal()">${CURRENT_LANG==='en'?'⚡ Add Flyoff':'⚡ Flyoff Ekle'}</button>
       </div>
     </div>
@@ -2669,32 +2688,32 @@ function renderRoundManager(){
       const compCount=STATE.competitors.length;
       return `<div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
         <div>
-          <div class="round-num">${r.isFlyoff?'⚡ FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
+          <div class="round-num">${r.isFlyoff?'⚡ FLYOFF '+r.flyoffNum:(CURRENT_LANG==='en'?'ROUND ':'RAUND ')+r.number}</div>
           <div class="text-sm text-muted">Max: ${fmtSec(r.maxTime)} · ${scoresCount}/${compCount} ${t('scores')}</div>
         </div>
         <div class="flex-1"></div>
         ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="startRound('${r.id}')">${CURRENT_LANG==='en'?'▶ Start':'▶ Başlat'}</button>`:''}
         ${r.status==='active'?`
-          <span class="badge badge-green">🟢 AKTİF</span>
+          <span class="badge badge-green">🟢 ${t('roundActive')}</span>
           <button class="btn btn-red btn-sm" onclick="endRound('${r.id}')">${CURRENT_LANG==='en'?'⏹ End':'⏹ Bitir'}</button>`:''}
         ${r.status==='done'?`<span class="badge badge-blue">✓ ${CURRENT_LANG==='en'?'Done':'Tamamlandı'}</span>`:''}
       </div>`;
     }).join('')}
-    ${STATE.rounds.length===0?`<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Ayarlar sekmesinden raund ekleyin</div></div>`:''}
+    ${STATE.rounds.length===0?`<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">${t('roundEditNote')}</div></div>`:''}
   </div>`;
 }
 function startRound(id){
   const active=STATE.rounds.find(r=>r.status==='active');
-  if(active){toast('Önce aktif raund bitirin: Raund '+active.number,'warn');return;}
+  if(active){toast(CURRENT_LANG==='en'?'End active round first: '+roundName(active):'Önce aktif raund bitirin: '+roundName(active),'warn');return;}
   const r=STATE.rounds.find(r=>r.id===id);
   if(!r) return;
   r.status='active';r.startedAt=new Date().toISOString();
   STATE.currentRoundId=id;save();
-  toast(`${r.isFlyoff?'Flyoff':'Raund '+r.number} başladı! 🚀`,'success');
+  toast(`${roundName(r)} ${CURRENT_LANG==='en'?'started':'başladı'}! 🚀`,'success');
   document.getElementById('orgContent').innerHTML=renderRoundManager();
 }
 function endRound(id){
-  if(!confirm('Raund bitmeden kaydedilmemiş skorlar sıfır olarak işaretlenir. Devam?')) return;
+  if(!confirm(t('endRoundConfirm'))) return;
   const r=STATE.rounds.find(r=>r.id===id);
   if(!r) return;
   // Auto-zero missing scores
@@ -2706,20 +2725,20 @@ function endRound(id){
   });
   r.status='done';r.endedAt=new Date().toISOString();
   STATE.currentRoundId=null;save();
-  toast(`Raund ${r.number||''} tamamlandı ✓`,'success');
+  toast(`${roundName(r)} ${CURRENT_LANG==='en'?'completed ✓':'tamamlandı ✓'}`,'success');
   document.getElementById('orgContent').innerHTML=renderRoundManager();
 }
 function openAddFlyoffModal(){
   const flyoffNum=(STATE.rounds.filter(r=>r.isFlyoff).length)+1;
-  openModal(`Flyoff ${flyoffNum} Ekle`,`
-    <div class="alert alert-info mb-3">Flyoff, tüm raundları max sürede tamamlayan yarışmacılar için açılır.</div>
+  openModal(CURRENT_LANG==='en'?`Add Flyoff ${flyoffNum}`:`Flyoff ${flyoffNum} Ekle`,`
+    <div class="alert alert-info mb-3">${CURRENT_LANG==='en'?'Flyoff is opened for competitors who completed all rounds at max time.':'Flyoff, tüm raundları max sürede tamamlayan yarışmacılar için açılır.'}</div>
     <div class="form-group">
-      <label>Flyoff Max Süresi (saniye)</label>
+      <label>${t('flyoffMaxTime')}</label>
       <input id="fo-time" type="number" value="360" min="60" max="3600">
     </div>
     <div class="form-group">
-      <label><input type="checkbox" id="fo-height"> Yükseklik ölçümü ekle (süre + metre)</label>
-      <div class="form-hint">Flyoff öncesi yükseklik girişi sistem tarafından hatırlatılır</div>
+      <label><input type="checkbox" id="fo-height"> ${t('flyoffHeightCheck')}</label>
+      <div class="form-hint">${t('flyoffHeightHint')}</div>
     </div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="addFlyoff()">${CURRENT_LANG==='en'?'Add Flyoff':'Flyoff Ekle'}</button>`);
@@ -2731,7 +2750,7 @@ function addFlyoff(){
   STATE.rounds.push({id:uid(),isFlyoff:true,flyoffNum,maxTime:t,status:'pending',useHeight,startedAt:null,endedAt:null});
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderRoundManager();
-  toast(`Flyoff ${flyoffNum} eklendi ✓`,'success');
+  toast(`Flyoff ${flyoffNum} ${CURRENT_LANG==='en'?'added ✓':'eklendi ✓'}`,'success');
 }
 
 // --- RESULTS ---
@@ -2741,17 +2760,17 @@ function renderResultsPanel(){
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
     <div class="text-sm text-muted">${CURRENT_LANG==='en'?'All categories · use ✏️ to edit scores':'Tüm kategoriler · ✏️ ile skor düzenleyebilirsiniz'}</div>
-      <button class="btn btn-ghost btn-sm" onclick="exportResults()">📤 CSV İndir</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportResults()">${t('exportResults')}</button>
     </div>
     ${cats.map(cat=>{
       const catComps=STATE.competitors.filter(c=>c.categories.includes(cat));
       if(catComps.length===0) return '';
       const ranked=rankCategory(cat);
       return `<div class="card mb-4">
-        <div class="card-header"><div class="card-title"><span class="icon">🏅</span>${cat} Sonuçları</div></div>
+        <div class="card-header"><div class="card-title"><span class="icon">🏅</span>${cat} ${CURRENT_LANG==='en'?'Results':'Sonuçları'}</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>#</th><th>Ad Soyad</th><th>Ülke</th>${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>`<th>R${r.number}</th>`).join('')}${STATE.rounds.filter(r=>r.isFlyoff).map(r=>`<th>F${r.flyoffNum}</th>`).join('')}<th>${t('total')}</th></tr></thead>
+            <thead><tr><th>#</th><th>Ad Soyad</th><th>${t('country')}</th>${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>`<th>R${r.number}</th>`).join('')}${STATE.rounds.filter(r=>r.isFlyoff).map(r=>`<th>F${r.flyoffNum}</th>`).join('')}<th>${t('total')}</th></tr></thead>
             <tbody>
               ${ranked.map((rc,i)=>{
                 const c=rc.competitor;
@@ -2787,7 +2806,7 @@ function renderResultsPanel(){
           </table>
         </div>
         ${STATE.scores.some(s=>s.juryEdited&&STATE.competitors.find(c=>c.categories.includes(cat)&&c.id===s.competitorId))
-          ?`<div style="padding:8px 14px;font-size:11px;color:var(--orange);">* Jüri/organizatör tarafından düzenlenmiş ${t('scores')}</div>`:''}
+          ?`<div style="padding:8px 14px;font-size:11px;color:var(--orange);">${CURRENT_LANG==='en'?'* Scores edited by jury/organizer':'* Jüri/organizatör tarafından düzenlenmiş '+t('scores')}</div>`:''}
       </div>`;
     }).join('')}
   </div>`;
@@ -2826,7 +2845,7 @@ function renderLogsPanel(){
   };
 
   const getComp=(id)=>{const c=STATE.competitors.find(x=>x.id===id);return c?c.name+' '+c.surname:'—';};
-  const getRound=(id)=>{const r=STATE.rounds.find(x=>x.id===id);return r?(r.isFlyoff?'Flyoff '+r.flyoffNum:'Raund '+r.number):'—';};
+  const getRound=(id)=>{const r=STATE.rounds.find(x=>x.id===id);return roundName(r);};
   const getJudge=(id)=>{const j=STATE.judges.find(x=>x.id===id);return j?j.name:'—';};
   const fmtTime=(ts)=>{try{return new Date(ts).toLocaleString(CURRENT_LANG==='en'?'en-GB':'tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}catch(e){return ts||'—';}};
 
@@ -2834,7 +2853,7 @@ function renderLogsPanel(){
   <div>
     <div class="flex justify-between items-center mb-3">
       <div class="text-sm text-muted">${allLogs.length} ${CURRENT_LANG==='en'?'event log entries':'olay kaydı'}</div>
-      <button class="btn btn-ghost btn-sm" onclick="exportLogs()">📤 CSV İndir</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportLogs()">${t('exportResults')}</button>
     </div>
     ${allLogs.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No event log entries yet':'Henüz olay kaydı yok'}</div></div>`:`
     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -2855,7 +2874,7 @@ function renderLogsPanel(){
             <span>🏁 ${roundName}</span>
             <span>⚖️ ${judgeName}</span>
             ${log.prevTime!==undefined?`<span>📊 ${fmtSec(log.prevTime)} → ${fmtSec(log.newTime)}</span>`:''}
-            ${log.kept!==undefined?`<span>📊 Korunan: ${fmtSec(log.kept)} | Yoksayılan: ${fmtSec(log.ignored)}</span>`:''}
+            ${log.kept!==undefined?`<span>📊 ${CURRENT_LANG==='en'?'Kept':'Korunan'}: ${fmtSec(log.kept)} | ${CURRENT_LANG==='en'?'Ignored':'Yoksayılan'}: ${fmtSec(log.ignored)}</span>`:''}
           </div>
           ${log.note?`<div style="margin-top:6px;font-size:11px;color:var(--text3);font-style:italic;">"${log.note}"</div>`:''}
         </div>`;
@@ -2864,7 +2883,7 @@ function renderLogsPanel(){
   </div>`;
 }
 function exportLogs(){
-  const lines=['Zaman,Tür,Yarışmacı,Raund,Hakem,Not'];
+  const lines=[CURRENT_LANG==='en'?'Time,Type,Competitor,Round,Timekeeper,Note':'Zaman,Tür,Yarışmacı,Raund,Hakem,Not'];
   const allLogs=[...STATE.logs,...(STATE.extraFlightRequests||[]).map(r=>({
     ts:r.requestedAt,type:'extra_flight_'+r.status,competitorId:r.competitorId,
     roundId:r.roundId,judgeId:r.judgeId,note:r.note
@@ -2876,13 +2895,13 @@ function exportLogs(){
     lines.push([
       l.ts||'',l.type,
       c?c.name+' '+c.surname:'',
-      r?(r.isFlyoff?'Flyoff '+r.flyoffNum:'Raund '+r.number):'',
+      roundName(r),
       j?j.name:'',
       (l.note||'').replace(/,/g,' ')
     ].join(','));
   });
-  downloadCSV('olay_kaydi.csv',lines.join('\n'));
-  toast('Log CSV indirildi','info');
+  downloadCSV(CURRENT_LANG==='en'?'event_log.csv':'olay_kaydi.csv',lines.join('\n'));
+  toast(CURRENT_LANG==='en'?'Event log CSV downloaded':'Log CSV indirildi','info');
 }
 let JUDGE_STATE={
   selectedCompetitorId:null,
@@ -2934,11 +2953,11 @@ function restoreTimerState(){
       JUDGE_STATE.timerRunning=false;
       // Auto-restart timer after DOM renders
       JUDGE_STATE._pendingAutoStart=true;
-      toast('🔄 Uçuş devam ediyor...','info');
+      toast(CURRENT_LANG==='en'?'🔄 Flight in progress...':'🔄 Uçuş devam ediyor...','info');
     } else {
       JUDGE_STATE.timerElapsed=ts.timerElapsed||0;
       JUDGE_STATE.timerRunning=false;
-      if(ts.timerElapsed>0) toast('⚠️ Durdurulmuş uçuş bulundu — kaydedin veya sıfırlayın','warn');
+      if(ts.timerElapsed>0) toast(CURRENT_LANG==='en'?'⚠️ Paused flight found — save or reset it':'⚠️ Durdurulmuş uçuş bulundu — kaydedin veya sıfırlayın','warn');
     }
   }catch(e){}
 }
@@ -2950,7 +2969,7 @@ window.addEventListener('beforeunload',()=>{if(CURRENT_ROLE==='judge'&&(JUDGE_ST
 
 function renderJudge(){
   const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
-  if(!judge) return '<div class="empty">Hakem bulunamadı</div>';
+  if(!judge) return `<div class="empty">${t('noRoundFound')}</div>`;
   if(!JUDGE_STATE.timerRunning&&!JUDGE_STATE.selectedCompetitorId) restoreTimerState();
   const activeRound=STATE.rounds.find(r=>r.status==='active');
   const compName=STATE.competition.name||'—';
@@ -2998,25 +3017,24 @@ function renderJudge(){
       </div>
       <div>
         ${activeRound
-          ?`<span class="badge badge-green">🟢 ${activeRound.isFlyoff?'Flyoff '+activeRound.flyoffNum:'Raund '+activeRound.number} · Max ${fmtSec(activeRound.maxTime)}</span>`
+          ?`<span class="badge badge-green">🟢 ${roundName(activeRound)} · Max ${fmtSec(activeRound.maxTime)}</span>`
           :roundClosed
-            ?`<span class="badge badge-gold">⚠️ Raund Kapandı</span>`
-            :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':CURRENT_LANG==='en'?'Waiting for round':'Raund bekleniyor'}</span>`}
+            ?`<span class="badge badge-gold">⚠️ ${CURRENT_LANG==='en'?'Round Closed':'Raund Kapandı'}</span>`
+            :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':'Raund bekleniyor'}</span>`}
       </div>
       <button class="btn btn-ghost btn-sm" onclick="judgeSyncComp()" title="${CURRENT_LANG==='en'?'Sync from server':'Sunucudan güncelle'}">🔄</button>
-      <button class="btn btn-ghost btn-sm" id="daylightBtn" onclick="toggleDaylight()" title="Gün Işığı Modu" style="font-size:16px;padding:4px 8px;">☀️</button>
+      <button class="btn btn-ghost btn-sm" id="daylightBtn" onclick="toggleDaylight()" title="${CURRENT_LANG==='en'?'Daylight Mode':'Gün Işığı Modu'}" style="font-size:16px;padding:4px 8px;">☀️</button>
     </div>
 
-    ${roundClosed?`<div class="alert alert-warn">⚠️ Raund organizatör tarafından kapatıldı. <strong>Devam eden uçuşunuzu kaydedebilirsiniz</strong> ancak yeni uçuş başlatamazsınız.</div>`:''}
+    ${roundClosed?`<div class="alert alert-warn">⚠️ ${CURRENT_LANG==='en'?'Round was closed by the organizer. You can save your ongoing flight, but you cannot start a new flight.':'Raund organizatör tarafından kapatıldı. <strong>Devam eden uçuşunuzu kaydedebilirsiniz</strong> ancak yeni uçuş başlatamazsınız.'}</div>`:''}
     ${pendingReq?`
     <div class="alert alert-warn">
-      ⏳ <strong>${pendingReq.competitorName}</strong> için ek uçuş talebi gönderildi — baş hakem onayı bekleniyor...
-      <div style="font-size:11px;margin-top:4px;color:var(--text2)">Onaylanırsa bu ekran otomatik güncellenecek</div>
+      ⏳ <strong>${pendingReq.competitorName}</strong> ${CURRENT_LANG==='en'?'extra flight request sent — waiting for chief TK approval...':'için ek uçuş talebi gönderildi — baş hakem onayı bekleniyor...'}
+      <div style="font-size:11px;margin-top:4px;color:var(--text2)">${CURRENT_LANG==='en'?'This screen will update automatically if approved':'Onaylanırsa bu ekran otomatik güncellenecek'}</div>
     </div>`:''}
     ${approvedReq?`
     <div class="alert alert-success">
-      ✅ <strong>${approvedReq.competitorName}</strong> için ek uçuş <strong>ONAYLANDI!</strong>
-      Yarışmacıyı seçip yeniden başlatın.
+      ✅ <strong>${approvedReq.competitorName}</strong> ${CURRENT_LANG==='en'?'extra flight <strong>APPROVED!</strong><br>Select the competitor and start again.':'için ek uçuş <strong>ONAYLANDI!</strong><br>Yarışmacıyı seçip yeniden başlatın.'}
     </div>`:''}
     ${!workingRound&&!flightInProgress?`<div class="alert alert-warn">⏳ ${t('waitRound')}</div>`:renderJudgePanel(judge,workingRound,roundClosed)}
   </div>`;
@@ -3026,7 +3044,7 @@ async function judgeSyncComp(){
   if(!ACTIVE_COMP_ID) return;
   // If timer is running or flight in progress, block sync to avoid losing the flight
   if(JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0){
-    toast('⚠️ Uçuş devam ediyor — önce durdurun ve kaydedin','warn');
+    toast(CURRENT_LANG==='en'?'⚠️ Flight in progress — stop and save it first':'⚠️ Uçuş devam ediyor — önce durdurun ve kaydedin','warn');
     return;
   }
   const rows=await sbGet('ffco_comps',`?id=eq.${ACTIVE_COMP_ID}`);
@@ -3061,16 +3079,16 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
     <div>
       <div class="card mb-3">
         <div class="card-header"><div class="card-title"><span class="icon">👥</span>${t('myCompetitors')} (${myCompetitors.length})</div></div>
-        ${myCompetitors.length===0?`<div class="alert alert-warn">Bu raund için size atanmış yarışmacı bulunamadı. Kulvar atamaları kontrol edin.</div>`:''}
+        ${myCompetitors.length===0?`<div class="alert alert-warn">${CURRENT_LANG==='en'?'No competitors assigned to you for this round. Check lane assignments.':'Bu raund için size atanmış yarışmacı bulunamadı. Kulvar atamaları kontrol edin.'}</div>`:''}
         ${myCompetitors.map(c=>{
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
           const memKey=c.id+'_'+activeRound.id;
           const hasPendingAttempt=!!(JUDGE_STATE.attemptMemory[memKey]||
             (JUDGE_STATE.selectedCompetitorId===c.id&&JUDGE_STATE.currentAttempt>1));
           return `<div class="competitor-chip ${sel===c.id?'selected':''} ${score&&!score.autoZero?'scored':''}" onclick="selectCompetitor('${c.id}')">
-            <div class="chip-cats">${c.categories.slice(0,2).map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}</div>
+            <div class="chip-cats">${c.categories.slice(0,2).map(cat=>`<span class="badge badge-blue">${catDisplay(cat)}</span>`).join('')}</div>
             <div class="chip-name">${c.name} ${c.surname}</div>
-            ${hasPendingAttempt?`<span class="badge badge-gold" style="font-size:9px;white-space:nowrap;">2.UÇUŞ</span>`:''}
+            ${hasPendingAttempt?`<span class="badge badge-gold" style="font-size:9px;white-space:nowrap;">${CURRENT_LANG==='en'?'2ND FLIGHT':'2.UÇUŞ'}</span>`:''}
             ${score&&!score.autoZero?`<div class="chip-time ${score.finalTime>=activeRound.maxTime?'text-green':''}">${fmtSec(score.finalTime)} ${score.finalTime>=activeRound.maxTime?'✅':''}</div>`:''}
           </div>`;
         }).join('')}
@@ -3082,7 +3100,7 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
           if(!score){
             // Round closed + no score = auto 0
-            const label=roundClosed?`<span class="font-mono" style="color:var(--text3)">0:00</span><span class="text-xs text-muted" style="margin-left:4px">otomatik</span>`:`<span style="color:var(--text3)">— ${t('waiting')}</span>`;
+            const label=roundClosed?`<span class="font-mono" style="color:var(--text3)">0:00</span><span class="text-xs text-muted" style="margin-left:4px">${CURRENT_LANG==='en'?'automatic':'otomatik'}</span>`:`<span style="color:var(--text3)">— ${t('waiting')}</span>`;
             return `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;">
               <span style="flex:1">${c.name} ${c.surname}</span>${label}</div>`;
           }
@@ -3090,7 +3108,7 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
             <span style="flex:1">${c.name} ${c.surname}</span>
             <span class="font-mono ${score.finalTime>=activeRound.maxTime?'text-green':'text-gold'}">${fmtSec(score.finalTime)}</span>
             ${score.disqualified?'<span class="badge badge-red">DQ</span>':''}
-            ${score.autoZero?'<span class="badge badge-gray">oto</span>':''}
+            ${score.autoZero?`<span class="badge badge-gray">${CURRENT_LANG==='en'?'auto':'oto'}</span>`:''}
             <button class="btn btn-ghost btn-sm" onclick="editScore('${score.id}')" style="padding:2px 6px">✏️</button>
           </div>`;
         }).join('')}
@@ -3132,14 +3150,14 @@ function renderTimerPanel(comp,round,roundClosed=false){
     <div class="card-header">
       <div class="card-title"><span class="icon">⏱</span>${comp.name} ${comp.surname}</div>
       <div class="flex gap-2">
-        ${comp.categories.map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}
+        ${comp.categories.map(cat=>`<span class="badge badge-blue">${catDisplay(cat)}</span>`).join('')}
       </div>
     </div>
 
     ${roundClosed&&!running&&elapsed===0?`
       <div class="alert alert-warn mt-3">
-        🔒 Raund kapatıldı — yeni uçuş başlatılamaz.
-        ${existing?'':'<div class="text-sm mt-1">Bu yarışmacı için skor girilmedi.</div>'}
+        🔒 ${CURRENT_LANG==='en'?'Round closed — new flight cannot be started.':'Raund kapatıldı — yeni uçuş başlatılamaz.'}
+        ${existing?'':`<div class="text-sm mt-1">${CURRENT_LANG==='en'?'No score was entered for this competitor.':'Bu yarışmacı için skor girilmedi.'}</div>`}
       </div>`:''}
 
     ${pendingExtraReq?`
@@ -3147,17 +3165,17 @@ function renderTimerPanel(comp,round,roundClosed=false){
         ⏳ <strong>${CURRENT_LANG==='en'?'Extra flight approval pending':'Ek uçuş onayı bekleniyor'}</strong><br>
         <span style="font-size:12px;">${CURRENT_LANG==='en'?'Cannot start a new flight until chief TK approves.':'Baş hakem onaylamadan yeni uçuş başlatılamaz.'}</span>
         <div style="margin-top:8px;font-size:11px;color:var(--text2);">
-          Sebep: ${pendingExtraReq.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}<br>
-          Not: ${pendingExtraReq.note}
+          ${CURRENT_LANG==='en'?'Reason':'Sebep'}: ${pendingExtraReq.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}<br>
+          ${t('note')}: ${pendingExtraReq.note}
         </div>
       </div>`:''}
 
-    ${JUDGE_STATE.currentAttempt>1?`<div class="alert alert-warn mb-3">⚠️ Deneme Hakkı ${JUDGE_STATE.currentAttempt-1} — ${JUDGE_STATE.attemptType==='sub20'?'20sn altı uçuş':'Kaza/Çarpışma'}</div>`:''}
+    ${JUDGE_STATE.currentAttempt>1?`<div class="alert alert-warn mb-3">⚠️ ${t('attemptInfo')} ${JUDGE_STATE.currentAttempt-1} — ${JUDGE_STATE.attemptType==='sub20'?t('sub20'):t('crash')}</div>`:''}
 
     <div class="timer-hero">
       <div class="timer-display ${running?'running':stopped?'stopped':''}" id="timerDisplay">${fmtTimer(elapsed)}</div>
       <div class="text-sm text-muted mt-2">Max: ${fmtSec(round.maxTime)} ${elapsed>=round.maxTime?'<span style="color:var(--green)">✅ MAX</span>':''}</div>
-      ${elapsed>=round.maxTime&&stopped?'<div class="alert alert-success mt-3">🏆 Maksimum süre tamamlandı!</div>':''}
+      ${elapsed>=round.maxTime&&stopped?`<div class="alert alert-success mt-3">🏆 ${CURRENT_LANG==='en'?'Maximum time completed!':'Maksimum süre tamamlandı!'}</div>`:''}
     </div>
 
     <div class="timer-controls">
@@ -3179,7 +3197,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ⚠️ ${t('attemptWarning')}
       <div class="mt-2 flex gap-2 flex-wrap">
         <button class="btn btn-gold btn-sm" onclick="grantAttempt('sub20','${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Grant Attempt':'Deneme Hakkı Ver'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Save':'Kaydet'} (${fmtTimer(elapsed)})></button
+        <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Save':'Kaydet'} (${fmtTimer(elapsed)})</button>
       </div>
     </div>`:''}
 
@@ -3239,7 +3257,7 @@ function timerStart(){
   // If elapsed>0 but not running AND not a restore situation — this is a manual restart
   // Only ask confirmation if it's a fresh manual start on a stopped (non-restored) timer
   if(JUDGE_STATE.timerElapsed>0&&!JUDGE_STATE.timerRunning&&!JUDGE_STATE._pendingAutoStart&&!JUDGE_STATE.roundId){
-    if(!confirm('Kronometreyi sıfırlayıp yeniden başlatmak istiyor musunuz? Mevcut süre silinecek.')) return;
+    if(!confirm(CURRENT_LANG==='en'?'Do you want to reset and restart the timer? The current time will be deleted.':'Kronometreyi sıfırlayıp yeniden başlatmak istiyor musunuz? Mevcut süre silinecek.')) return;
     JUDGE_STATE.timerElapsed=0;
     JUDGE_STATE.timerStart=null;
   }
@@ -3369,11 +3387,11 @@ async function timerSave(compId,roundId){
 }
 
 function grantAttempt(type,compId,roundId){
-  if(JUDGE_STATE.currentAttempt>1){toast('Bu raund için zaten bir deneme hakkı kullanıldı','error');return;}
+  if(JUDGE_STATE.currentAttempt>1){toast(t('alreadyAttempt'),'error');return;}
   const typeLabel=type==='sub20'?(CURRENT_LANG==='en'?'Under 20s flight':'20 saniye altı uçuş'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza / Çarpışma');
   openModal(CURRENT_LANG==='en'?'⚠️ Grant Attempt':'⚠️ Deneme Hakkı Ver',`
     <div class="alert alert-warn mb-3">${CURRENT_LANG==='en'?'This action <strong>cannot be undone</strong>. Are you sure?':'Bu işlem <strong>geri alınamaz</strong>. Emin misiniz?'}</div>
-    <div class="form-group"><label>Sebep</label><input value="${typeLabel}" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Reason':'Sebep'}</label><input value="${typeLabel}" disabled></div>
     <div class="form-group">
       <label>${CURRENT_LANG==='en'?'Description (required) *':'Açıklama (zorunlu) *'}</label>
       <textarea id="attempt-note" placeholder="${CURRENT_LANG==='en'?'Briefly explain the reason for granting the attempt...':'Deneme hakkı verilme sebebini kısaca açıklayın...'}" style="height:80px"></textarea>
@@ -3410,12 +3428,12 @@ function requestExtraFlight(type,compId,roundId){
 }
 function submitExtraFlightRequest(type,compId,roundId){
   const note=document.getElementById('efr-note')?.value.trim();
-  if(!note){toast('Açıklama zorunlu','error');return;}
+  if(!note){toast(CURRENT_LANG==='en'?'Description required':'Açıklama zorunlu','error');return;}
   const judge=STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID);
   const comp=STATE.competitors.find(c=>c.id===compId);
   const req={
     id:uid(),type,roundId,
-    judgeId:CURRENT_JUDGE_ID,judgeName:judge?.name||'Hakem',
+    judgeId:CURRENT_JUDGE_ID,judgeName:judge?.name||t('judge'),
     competitorId:compId,competitorName:comp?comp.name+' '+comp.surname:'?',
     note,status:'pending',requestedAt:new Date().toISOString()
   };
@@ -3428,7 +3446,7 @@ function submitExtraFlightRequest(type,compId,roundId){
   JUDGE_STATE.timerElapsed=0;
   JUDGE_STATE.timerStart=null;
   save();closeModal();
-  toast('📨 Talep gönderildi — baş hakem onayı bekleniyor...','info');
+  toast(CURRENT_LANG==='en'?'📨 Request sent — waiting for chief TK approval...':'📨 Talep gönderildi — baş hakem onayı bekleniyor...','info');
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
@@ -3439,7 +3457,7 @@ function approveExtraFlight(reqId){
   // Set attempt memory so judge can do second flight
   const memKey=req.competitorId+'_'+req.roundId;
   if(!JUDGE_STATE.attemptMemory) JUDGE_STATE.attemptMemory={};
-  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:'Onaylandı: '+req.note,used:false};
+  JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:req.type==='accidental'?'accidental':'crash',note:(CURRENT_LANG==='en'?'Approved: ':'Onaylandı: ')+req.note,used:false};
   // If this judge is currently logged in on same device, reset timer immediately
   if(CURRENT_JUDGE_ID===req.judgeId){
     JUDGE_STATE.currentAttempt=2;
@@ -3451,7 +3469,7 @@ function approveExtraFlight(reqId){
   }
   STATE.logs.push({id:uid(),type:'extra_flight_approved',reqId,competitorId:req.competitorId,roundId:req.roundId,judgeId:req.judgeId,note:req.note,ts:new Date().toISOString()});
   save();
-  toast(`${req.competitorName} için ek uçuş onaylandı ✓`,'success');
+  toast(`${req.competitorName} ${CURRENT_LANG==='en'?'extra flight approved ✓':'için ek uçuş onaylandı ✓'}`,'success');
   document.getElementById('orgContent').innerHTML=renderOverview();
 }
 function rejectExtraFlight(reqId){
@@ -3469,7 +3487,7 @@ function rejectExtraFlight(reqId){
     const finalTime=Math.min(elapsed, round.maxTime);
     STATE.scores.push({
       id:uid(),competitorId:req.competitorId,roundId:req.roundId,
-      attempts:[{time:elapsed,finalTime,type:'rejected_request',note:'Ek uçuş talebi reddedildi: '+req.note,judgeId:req.judgeId}],
+      attempts:[{time:elapsed,finalTime,type:'rejected_request',note:(CURRENT_LANG==='en'?'Extra flight request rejected: ':'Ek uçuş talebi reddedildi: ')+req.note,judgeId:req.judgeId}],
       finalTime,confirmed:false,disqualified:false,
       rejectedRequest:true
     });
@@ -3477,7 +3495,7 @@ function rejectExtraFlight(reqId){
   }
 
   save();
-  toast('Talep reddedildi — skor otomatik kaydedildi','info');
+  toast(CURRENT_LANG==='en'?'Request rejected — score saved automatically':'Talep reddedildi — skor otomatik kaydedildi','info');
   document.getElementById('orgContent').innerHTML=renderOverview();
 }
 
@@ -3505,16 +3523,16 @@ function editScore(scoreId){
   if(!sc) return;
   const c=STATE.competitors.find(x=>x.id===sc.competitorId);
   const round=STATE.rounds.find(r=>r.id===sc.roundId);
-  openModal('✏️ Skor Düzenle',`
-    <div class="alert alert-warn mb-3">⚠️ Skor değişikliği log'a kaydedilir ve skorbordta işaretlenir.</div>
-    <div class="form-group"><label>Yarışmacı</label><input value="${c?c.name+' '+c.surname:''}" disabled></div>
-    <div class="form-group"><label>Raund</label><input value="${round?'Raund '+round.number:'—'}" disabled></div>
-    <div class="form-group"><label>Mevcut Süre</label><input value="${fmtSec(sc.finalTime)}" disabled></div>
-    <div class="form-group"><label>Yeni Süre (saniye) *</label><input id="es-time" type="number" value="${sc.finalTime}" step="1" min="0" max="${round?round.maxTime:999}"></div>
-    <div class="form-group"><label><input type="checkbox" id="es-dq" ${sc.disqualified?'checked':''}> Diskalifiye</label></div>
-    <div class="form-group"><label>Değişiklik Sebebi (zorunlu) *</label><textarea id="es-note" style="height:70px" placeholder="Jüri kararı, hata düzeltmesi...">${sc.editNote||''}</textarea></div>
+  openModal(t('editScore'),`
+    <div class="alert alert-warn mb-3">${t('scoreEditWarn')} ${CURRENT_LANG==='en'?'and marked on the scoreboard.':'ve skorbordta işaretlenir.'}</div>
+    <div class="form-group"><label>${t('competitor')}</label><input value="${c?c.name+' '+c.surname:''}" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Round':'Raund'}</label><input value="${round?roundName(round):'—'}" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Current Time':'Mevcut Süre'}</label><input value="${fmtSec(sc.finalTime)}" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'New Time (seconds) *':'Yeni Süre (saniye) *'}</label><input id="es-time" type="number" value="${sc.finalTime}" step="1" min="0" max="${round?round.maxTime:999}"></div>
+    <div class="form-group"><label><input type="checkbox" id="es-dq" ${sc.disqualified?'checked':''}> ${t('disqualify')}</label></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Reason for Change (required) *':'Değişiklik Sebebi (zorunlu) *'}</label><textarea id="es-note" style="height:70px" placeholder="${CURRENT_LANG==='en'?'Jury decision, error correction...':'Jüri kararı, hata düzeltmesi...'}">${sc.editNote||''}</textarea></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">💾 Değişikliği Kaydet</button>`);
+    <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">💾 ${t('saveChange')}</button>`);
   setTimeout(()=>document.getElementById('es-time')?.focus(),100);
 }
 function saveEditScore(id){
@@ -3529,10 +3547,10 @@ function saveEditScore(id){
   sc.finalTime=cappedTime;sc.disqualified=dq;sc.editNote=note;
   sc.editedAt=new Date().toISOString();
   sc.juryEdited=true; // flag for scoreboard highlight
-  sc.editedBy=CURRENT_ROLE==='admin'?'Admin':(STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID)?.name||'Jüri');
+  sc.editedBy=CURRENT_ROLE==='admin'?'Admin':(STATE.judges.find(j=>j.id===CURRENT_JUDGE_ID)?.name||L('Jury','Jüri'));
   STATE.logs.push({id:uid(),type:'score_edit',scoreId:id,prevTime,newTime:cappedTime,dq,note,ts:new Date().toISOString(),editedBy:sc.editedBy});
   save();closeModal();
-  toast(`Skor güncellendi: ${fmtSec(prevTime)} → ${fmtSec(cappedTime)}`,'success');
+  toast(`${t('scoreUpdated')}: ${fmtSec(prevTime)} → ${fmtSec(cappedTime)}`,'success');
   // Refresh current view
   if(CURRENT_VIEW==='organizer') document.getElementById('orgContent').innerHTML=renderResultsPanel();
   else if(CURRENT_VIEW==='judge'){document.getElementById('mainContent').innerHTML=renderJudge();bindJudgeEvents();}
@@ -3570,9 +3588,9 @@ function renderScoreboard(){
     <div class="sb-header">
       <div class="sb-comp-name">${comp.name||'Free Flight Competition'}</div>
       <div class="sb-date">${comp.dateStart||''} ${comp.dateEnd&&comp.dateEnd!==comp.dateStart?'– '+comp.dateEnd:''} ${comp.location?'· '+comp.location:''}</div>
-      ${sbState.rounds.find(r=>r.status==='active')?`<div class="alert alert-success" style="display:inline-block;margin-bottom:12px;">🟢 ${sbState.rounds.find(r=>r.status==='active').isFlyoff?'Flyoff':'Raund '+sbState.rounds.find(r=>r.status==='active').number} ${t('activeRound')}</div>`:''}
+      ${sbState.rounds.find(r=>r.status==='active')?`<div class="alert alert-success" style="display:inline-block;margin-bottom:12px;">🟢 ${roundName(sbState.rounds.find(r=>r.status==='active'))} ${t('activeRound')}</div>`:''}
       <div class="sb-category-tabs">
-        ${cats.map(cat=>`<button class="sb-cat-btn ${SB_CAT===cat?'active':''}" onclick="sbCat('${cat}')">${cat}</button>`).join('')}
+        ${cats.map(cat=>`<button class="sb-cat-btn ${SB_CAT===cat?'active':''}" onclick="sbCat('${cat}')">${catDisplay(cat)}</button>`).join('')}
       </div>
     </div>
     <div id="sb-table">${renderSbTable(sbState)}</div>
@@ -3633,12 +3651,12 @@ function renderSbTable(sbState){
             ${normalRounds.map(r=>{
               const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
               const juryEdit=sc&&sc.juryEdited;
-              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':sc&&sc.finalTime>=r.maxTime?'var(--green)':'inherit'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?'⚠️ Jüri tarafından düzenlendi: '+sc.editedBy+' — '+sc.editNote:''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
+              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':sc&&sc.finalTime>=r.maxTime?'var(--green)':'inherit'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?(CURRENT_LANG==='en'?'⚠️ Edited by jury: ':'⚠️ Jüri tarafından düzenlendi: ')+sc.editedBy+' — '+sc.editNote:''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
             }).join('')}
             ${flyoffs.map(r=>{
               const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
               const juryEdit=sc&&sc.juryEdited;
-              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?'⚠️ Jüri tarafından düzenlendi':''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
+              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?(CURRENT_LANG==='en'?'⚠️ Edited by jury':'⚠️ Jüri tarafından düzenlendi'):''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
             }).join('')}
             <td class="font-mono bold" style="font-size:15px">${fmtSec(rc.total)}</td>
           </tr>`;
@@ -3679,7 +3697,7 @@ function renderPublicRegister(){
               <div style="font-weight:700;font-size:14px;">${c.name}</div>
               <div class="text-sm text-muted">${c.dateStart||''}${c.location?' · '+c.location:''}</div>
               <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-                ${c.categories.slice(0,5).map(cat=>`<span class="badge badge-blue">${cat}</span>`).join('')}
+                ${c.categories.slice(0,5).map(cat=>`<span class="badge badge-blue">${catDisplay(cat)}</span>`).join('')}
               </div>
             </div>
             <div style="color:var(--blue);font-size:20px;">→</div>
@@ -3888,8 +3906,8 @@ function exportResults(){
       lines.push(`${cat},${i+1},${c.name},${c.surname},${c.country||''},${c.faiId||''},${rc.total.toFixed(2)}`);
     });
   });
-  downloadCSV('sonuclar.csv',lines.join('\n'));
-  toast('Sonuçlar CSV olarak indirildi','info');
+  downloadCSV(CURRENT_LANG==='en'?'results.csv':'sonuclar.csv',lines.join('\n'));
+  toast(t('resultsDownloaded'),'info');
 }
 
 // ==================== MODAL ====================
@@ -3936,7 +3954,7 @@ function toggleDaylight(){
   applyDaylight();
   const btn=document.getElementById('daylightBtn');
   if(btn) btn.style.background=DAYLIGHT_MODE?'#FFC107':'';
-  toast(DAYLIGHT_MODE?'☀️ Gün Işığı Modu açık':'🌙 Normal Mod','info');
+  toast(DAYLIGHT_MODE?(CURRENT_LANG==='en'?'☀️ Daylight Mode on':'☀️ Gün Işığı Modu açık'):(CURRENT_LANG==='en'?'🌙 Normal Mode':'🌙 Normal Mod'),'info');
 }
 function applyDaylight(){
   if(DAYLIGHT_MODE) document.body.classList.add('daylight-mode');
@@ -3983,7 +4001,7 @@ function renderOrgApply(){
         <div class="form-group"><label>${CURRENT_LANG==='en'?'First Name':'Ad'} *</label><input id="oa-name" placeholder="${CURRENT_LANG==='en'?'Your name':'Adınız'}"></div>
         <div class="form-group"><label>${CURRENT_LANG==='en'?'Last Name':'Soyad'} *</label><input id="oa-surname" placeholder="${CURRENT_LANG==='en'?'Your surname':'Soyadınız'}"></div>
       </div>
-      <div class="form-group mb-3"><label>${CURRENT_LANG==='en'?'Email':'E-posta'} *</label><input id="oa-email" type="email" placeholder="ornek@email.com"></div>
+      <div class="form-group mb-3"><label>${CURRENT_LANG==='en'?'Email':'E-posta'} *</label><input id="oa-email" type="email" placeholder="${CURRENT_LANG==='en'?'example@email.com':'ornek@email.com'}"></div>
       <div class="form-row mb-3">
         <div class="form-group"><label>${CURRENT_LANG==='en'?'Country':'Ülke'} *</label><input id="oa-country" maxlength="3" placeholder="TUR"></div>
         <div class="form-group"><label>${CURRENT_LANG==='en'?'Club / Federation':'Kulüp / Federasyon'}</label><input id="oa-club" placeholder="${CURRENT_LANG==='en'?'e.g. FAI TUR':'örn: THSF'}"></div>
@@ -4193,7 +4211,7 @@ setInterval(async()=>{
   }
   // Update realtime connection indicator
   const dot=document.getElementById('syncDot');
-  if(dot) dot.title=SB_REALTIME_CHANNEL?'🟢 Realtime bağlı':'🟡 Polling modu';
+  if(dot) dot.title=SB_REALTIME_CHANNEL?(CURRENT_LANG==='en'?'🟢 Realtime connected':'🟢 Realtime bağlı'):(CURRENT_LANG==='en'?'🟡 Polling mode':'🟡 Polling modu');
 
   // Organizer overview auto-refresh
   if(CURRENT_VIEW==='organizer'&&ACTIVE_COMP_ID&&(CURRENT_ROLE==='organizer'||CURRENT_ROLE==='admin')){
