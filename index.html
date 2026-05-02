@@ -1203,7 +1203,7 @@ function renderAdmin(){
     </div>
     <div class="grid-4 mb-4">
       <div class="stat-box" style="border-color:var(--purple)">
-        <div class="stat-label">${t('statOrgs')}</div>
+        <div class="stat-label">${CURRENT_LANG==='en'?'COMPETITORS':t('statOrgs')}</div>
         <div class="stat-val">${orgs.length}</div>
       </div>
       <div class="stat-box">
@@ -1212,7 +1212,7 @@ function renderAdmin(){
       </div>
       <div class="stat-box">
         <div class="stat-label">${t('statTotalComps')}</div>
-        <div class="stat-val">${totalComps}</div>
+            ${activeRound?'<span class="badge badge-green">'+t('liveNow')+'</span>':''}
       </div>
       <div class="stat-box">
         <div class="stat-label">${t('statTotalComps2')}</div>
@@ -1601,8 +1601,8 @@ function renderCompGrid(list,isArchive){
       <div class="card" style="border-color:${activeRound?'var(--green)':isSelected?'var(--blue)':isArchive?'var(--border)':'var(--border)'};${isArchive?'opacity:.85':''}">
         <div class="flex justify-between items-center mb-2">
           <div class="flex gap-2 flex-wrap">
-            ${activeRound?'<span class="badge badge-green">🟢 CANLI</span>':''}
-            ${isSelected&&!isArchive?'<span class="badge badge-blue">● Seçili</span>':''}
+            ${activeRound?'<span class="badge badge-green">'+t('liveNow')+'</span>':''}
+            ${isSelected&&!isArchive?'<span class="badge badge-blue">'+t('selectedComp')+'</span>':''}
             ${isArchive?'<span class="badge badge-gray">📦 Arşiv</span>':''}
           </div>
           <div class="flex gap-1">
@@ -1815,14 +1815,14 @@ function renderOrganizer(){
   return `
   <div>
     <div class="tabs">
-      <button class="tab ${ORG_TAB==='overview'?'active':''}" onclick="orgTab('overview')">${t('overview')}</button>
-      <button class="tab ${ORG_TAB==='setup'?'active':''}" onclick="orgTab('setup')">${t('setup')}</button>
-      <button class="tab ${ORG_TAB==='competitors'?'active':''}" onclick="orgTab('competitors')">${t('competitors')}</button>
-      <button class="tab ${ORG_TAB==='judges'?'active':''}" onclick="orgTab('judges')">${t('judges')}</button>
-      <button class="tab ${ORG_TAB==='lanes'?'active':''}" onclick="orgTab('lanes')">${t('lanes')}</button>
-      <button class="tab ${ORG_TAB==='rounds'?'active':''}" onclick="orgTab('rounds')">${t('rounds')}</button>
-      <button class="tab ${ORG_TAB==='results'?'active':''}" onclick="orgTab('results')">${t('resultsTab')}</button>
-      <button class="tab ${ORG_TAB==='logs'?'active':''}" onclick="orgTab('logs')">📋 ${CURRENT_LANG==='en'?'Event Log':'Olay Kaydı'}${STATE.logs.length>0?` (${STATE.logs.length})`:''}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='overview'?'active':''}" data-tab="overview" onclick="orgTab('overview')">${t('overview')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='setup'?'active':''}" data-tab="setup" onclick="orgTab('setup')">${t('setup')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='competitors'?'active':''}" data-tab="competitors" onclick="orgTab('competitors')">${t('competitors')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='judges'?'active':''}" data-tab="judges" onclick="orgTab('judges')">${t('judges')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='lanes'?'active':''}" data-tab="lanes" onclick="orgTab('lanes')">${t('lanes')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='rounds'?'active':''}" data-tab="rounds" onclick="orgTab('rounds')">${t('rounds')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='results'?'active':''}" data-tab="results" onclick="orgTab('results')">${t('resultsTab')}</button>
+      <button class="tab org-tab-btn ${ORG_TAB==='logs'?'active':''}" data-tab="logs" onclick="orgTab('logs')">📋 ${CURRENT_LANG==='en'?'Event Log':'Olay Kaydı'}${STATE.logs.length>0?` (${STATE.logs.length})`:''}</button>
     </div>
     <div id="orgContent">${renderOrgTab()}</div>
   </div>`;
@@ -1850,6 +1850,10 @@ async function orgManualRefresh(){
 }
 function orgTab(tab){
   ORG_TAB=tab;
+  // Update active tab button highlighting
+  document.querySelectorAll('.org-tab-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.tab===tab);
+  });
   document.getElementById('orgContent').innerHTML=renderOrgTab();
   if(tab==='competitors'||tab==='judges'||tab==='lanes'||tab==='results') bindOrgEvents();
 }
@@ -1888,7 +1892,7 @@ function renderOverview(){
       <button class="btn btn-ghost btn-sm" onclick="orgManualRefresh()" title="${CURRENT_LANG==='en'?'Refresh from server':'Sunucudan güncelle'}">🔄 ${CURRENT_LANG==='en'?'Refresh':'Güncelle'}</button>
     </div>
     ${!comp.name?`<div class="alert alert-warn">⚠️ Henüz yarışma kurulmadı. <a href="#" onclick="orgTab('setup')" style="color:var(--gold)">Ayarlar</a> sekmesinden başlayın.</div>`:''}
-    ${activeRound?`<div class="alert alert-success">🟢 Aktif Raund: <strong>RAUND ${activeRound.number}</strong> — Max süre: ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">Raund Bitir</button></div>`:''}
+    ${activeRound?`<div class="alert alert-success">🟢 ${CURRENT_LANG==='en'?'Active Round:':'Aktif Raund:'} <strong>RAUND ${activeRound.number}</strong> — ${CURRENT_LANG==='en'?'Max time:':'Max süre:'} ${fmtSec(activeRound.maxTime)} — <button class="btn btn-sm btn-red" onclick="endRound('${activeRound.id}')">Raund Bitir</button></div>`:''}
     ${comp.name&&!activeRound&&STATE.rounds.length>0&&STATE.rounds.every(r=>r.status==='done')?`
     <div class="alert alert-info flex justify-between items-center">
       <span>🏁 Tüm raundlar tamamlandı. Yarışmayı arşivlemek ister misiniz?</span>
@@ -1969,7 +1973,7 @@ function renderOverview(){
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title"><span class="icon">📋</span>${CURRENT_LANG==='en'?'Recent Scores':'Son Skorlar'}</div></div>
-        ${STATE.scores.length===0?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Henüz skor yok</div></div>':
+        ${STATE.scores.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No scores yet':'Henüz skor yok'}</div></div>`:
           STATE.scores.slice(-8).reverse().map(sc=>{
             const c=STATE.competitors.find(x=>x.id===sc.competitorId);
             const r=STATE.rounds.find(x=>x.id===sc.roundId);
@@ -1992,7 +1996,7 @@ function renderSetupForm(){
   const c=STATE.competition;
   return `
   <div class="card">
-    <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>Yarışma Ayarları</div></div>
+    <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>${t('setup').replace('⚙️ ','')}</div></div>
     <div class="form-row mb-3">
       <div class="form-group">
         <label>Yarışma Adı *</label>
@@ -2015,10 +2019,10 @@ function renderSetupForm(){
     </div>
     <div class="form-group mb-3">
       <label>${CURRENT_LANG==='en'?'Bulletin PDF — Turkish':'Bülten PDF — Türkçe'}
-        <span onclick="toggleBulletinHelp()" style="cursor:pointer;margin-left:6px;font-size:11px;color:var(--blue);font-weight:400;">❓ Nasıl eklerim?</span>
+        <span onclick="toggleBulletinHelp()" style="cursor:pointer;margin-left:6px;font-size:11px;color:var(--blue);font-weight:400;">${CURRENT_LANG==='en'?'❓ How to add?':'❓ Nasıl eklerim?'}</span>
       </label>
       <input id="sf-bulletin" value="${c.bulletinUrl||''}" placeholder="https://drive.google.com/... (TR)">
-      <div class="form-hint mt-1">Türkçe bülten PDF linki</div>
+      <div class="form-hint mt-1">${CURRENT_LANG==='en'?'Turkish bulletin PDF link':'Türkçe bülten PDF linki'}</div>
       <div id="bulletin-help" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:14px;margin-top:8px;font-size:12px;">
         <div style="font-weight:700;color:var(--blue);margin-bottom:10px;">☁️ PDF'inizi nasıl paylaşırsınız?</div>
         <div style="margin-bottom:10px;">
@@ -2054,7 +2058,7 @@ function renderSetupForm(){
     <div class="form-group mb-3">
       <label>${CURRENT_LANG==='en'?'Bulletin PDF — English':'Bülten PDF — İngilizce'}</label>
       <input id="sf-bulletin-en" value="${c.bulletinUrlEn||''}" placeholder="https://drive.google.com/... (EN)">
-      <div class="form-hint mt-1">İngilizce bülten PDF linki (opsiyonel)</div>
+      <div class="form-hint mt-1">${CURRENT_LANG==='en'?'English bulletin PDF link (optional)':'İngilizce bülten PDF linki (opsiyonel)'}</div>
     </div>
     <div class="form-group mb-3">
       <label>${t('categories')}</label>
@@ -2071,7 +2075,7 @@ function renderSetupForm(){
     </div>
     
     <div class="divider"></div>
-    <div class="mb-3"><strong>Raund Ayarları</strong></div>
+    <div class="mb-3"><strong>${CURRENT_LANG==='en'?'Round Settings':'Raund Ayarları'}</strong></div>
     <div id="roundsList">${renderRoundInputs()}</div>
     <div class="flex gap-2 mb-4">
       <button class="btn btn-ghost btn-sm" onclick="addRound()">+ Raund Ekle</button>
@@ -2081,10 +2085,10 @@ function renderSetupForm(){
     <div class="form-row mb-4">
       <div class="form-group">
         <label>Organizatör PIN (Mevcut: ${c.organizerPin})</label>
-        <input id="sf-orgpin" type="password" placeholder="Yeni PIN (boş bırakırsan değişmez)">
+        <input id="sf-orgpin" type="password" placeholder="${t('newPinPlaceholder')}">
       </div>
     </div>
-    <button class="btn btn-primary" onclick="saveSetup()">💾 Ayarları Kaydet</button>
+    <button class="btn btn-primary" onclick="saveSetup()">${t('saveSettings')}</button>
   </div>`;
 }
 function renderRoundInputs(){
@@ -2181,13 +2185,13 @@ function renderCompetitorsList(){
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="flex gap-2 flex-wrap">
-        <button class="btn btn-primary btn-sm" onclick="openAddCompetitorModal()">+ Yarışmacı Ekle</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddCompetitorModal()">${t('addCompetitor')}</button>
         <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 CSV İçe Aktar</button>
         <button class="btn btn-ghost btn-sm" onclick="exportCompetitors()">📤 CSV Dışa Aktar</button>
       </div>
-      <div class="text-sm text-muted">${comps.length} yarışmacı</div>
+      <div class="text-sm text-muted">${comps.length} ${CURRENT_LANG==='en'?'competitor':'yarışmacı'}</div>
     </div>
-    ${comps.length===0?`<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Henüz yarışmacı yok</div></div>`:`
+    ${comps.length===0?`<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">${CURRENT_LANG==='en'?'No competitors yet':'Henüz yarışmacı yok'}</div></div>`:`
     <div class="tbl-wrap">
       <table>
         <thead>
@@ -2224,11 +2228,11 @@ function renderCompetitorsList(){
 }
 function openAddCompetitorModal(editId){
   const c=editId?STATE.competitors.find(x=>x.id===editId):{};
-  const title=editId?'Yarışmacı Düzenle':'Yarışmacı Ekle';
+  const title=editId?CURRENT_LANG==='en'?'Edit Competitor':'Yarışmacı Düzenle':CURRENT_LANG==='en'?'Add Competitor':'Yarışmacı Ekle';
   openModal(title,`
     <div class="form-row">
-      <div class="form-group"><label>Ad *</label><input id="cm-name" value="${c.name||''}"></div>
-      <div class="form-group"><label>Soyad *</label><input id="cm-surname" value="${c.surname||''}"></div>
+      <div class="form-group"><label>${CURRENT_LANG==='en'?'First Name *':'Ad *'}</label><input id="cm-name" value="${c.name||''}"></div>
+      <div class="form-group"><label>${CURRENT_LANG==='en'?'Last Name *':'Soyad *'}</label><input id="cm-surname" value="${c.surname||''}"></div>
     </div>
     <div class="form-group"><label>E-posta</label><input id="cm-email" type="email" value="${c.email||''}"></div>
     <div class="form-row">
@@ -2254,7 +2258,7 @@ function openAddCompetitorModal(editId){
     </div>
     <div class="form-group"><label><input type="checkbox" id="cm-banquet" ${c.banquet?'checked':''}> Bankete katılacak</label></div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-primary" onclick="saveCompetitor('${editId||''}')">Kaydet</button>`);
+    <button class="btn btn-primary" onclick="saveCompetitor('${editId||''}')">${CURRENT_LANG==='en'?'Save':'Kaydet'}</button>`);
   // bind check-items
   setTimeout(()=>{
     document.querySelectorAll('#cm-cats .check-item').forEach(ci=>{
@@ -2345,10 +2349,10 @@ function renderJudgesList(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-      <button class="btn btn-primary btn-sm" onclick="openAddJudgeModal()">+ Hakem Ekle</button>
-      <div class="text-sm text-muted">${STATE.judges.length} hakem · İhtiyaç: ${calcJudgesNeeded()} hakem</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddJudgeModal()">${t('addJudge')}</button>
+      <div class="text-sm text-muted">${STATE.judges.length} ${CURRENT_LANG==='en'?'timekeepers':'hakem'} · ${CURRENT_LANG==='en'?'Need:':'İhtiyaç:'} ${calcJudgesNeeded()} ${CURRENT_LANG==='en'?'timekeepers needed':'hakem gerekli'}</div>
     </div>
-    ${STATE.judges.length===0?`<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">Hakem tanımlanmadı</div></div>`:`
+    ${STATE.judges.length===0?`<div class="empty"><div class="empty-icon">⚖️</div><div class="empty-text">${CURRENT_LANG==='en'?'No timekeepers defined':'Hakem tanımlanmadı'}</div></div>`:`
     <div class="tbl-wrap">
       <table>
         <thead><tr><th>Ad Soyad</th><th>PIN</th><th>Kategori</th><th>Kulvar</th><th></th></tr></thead>
@@ -2358,7 +2362,7 @@ function renderJudgesList(){
             return `<tr>
               <td><strong>${j.name}</strong></td>
               <td class="font-mono">${j.pin}</td>
-              <td>${j.category||'<span class="text-muted">Tümü</span>'}</td>
+              <td>${j.category||(CURRENT_LANG==='en'?'All':'Tümü')}</td>
               <td>${assignedLanes.map(l=>`<span class="badge badge-blue">Kulvar ${l.number}</span>`).join(' ')||'—'}</td>
               <td>
                 <button class="btn btn-ghost btn-sm" onclick="editJudge('${j.id}')">✏️</button>
@@ -2370,7 +2374,7 @@ function renderJudgesList(){
       </table>
     </div>`}
     ${STATE.judges.length>0?`<div class="mt-3 flex gap-2 flex-wrap">
-      <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">⚡ Otomatik Kulvar Ata</button>
+      <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">${t('autoAssign')}</button>
       <button class="btn btn-ghost btn-sm" onclick="exportJudges()">📤 CSV Dışa Aktar</button>
       <button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button>
     </div>`:`<div class="mt-3 flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openImportJudgesModal()">📥 CSV İçe Aktar</button></div>`}
@@ -2419,7 +2423,7 @@ function generateUniquePin(){
 function openAddJudgeModal(editId){
   const j=editId?STATE.judges.find(x=>x.id===editId):{};
   const suggestPin=editId?j.pin:generateUniquePin();
-  openModal(editId?'Hakem Düzenle':'Hakem Ekle',`
+  openModal(editId?CURRENT_LANG==='en'?'Edit Timekeeper':'Hakem Düzenle':CURRENT_LANG==='en'?'Add Timekeeper':'Hakem Ekle',`
     <div class="form-group"><label>Ad Soyad *</label><input id="jm-name" value="${j.name||''}"></div>
     <div class="form-row">
       <div class="form-group">
@@ -2430,13 +2434,13 @@ function openAddJudgeModal(editId){
       <div class="form-group">
         <label>Kategori (opsiyonel)</label>
         <select id="jm-cat">
-          <option value="">Tümü</option>
+          <option value="">${CURRENT_LANG==='en'?'All':'Tümü'}</option>
           ${STATE.competition.categories.map(cat=>`<option value="${cat}" ${j.category===cat?'selected':''}>${cat}</option>`).join('')}
         </select>
       </div>
     </div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-primary" onclick="saveJudge('${editId||''}')">Kaydet</button>`);
+    <button class="btn btn-primary" onclick="saveJudge('${editId||''}')">${CURRENT_LANG==='en'?'Save':'Kaydet'}</button>`);
 }
 function checkPinUnique(input, excludeId){
   const pin=input.value.trim();
@@ -2611,20 +2615,20 @@ function renderLaneManager(){
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
       <div class="text-sm text-muted">${STATE.lanes.length} ${CURRENT_LANG==='en'?'lanes':'kulvar'}</div>
       <div class="flex gap-2">
-        <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">⚡ Yeniden Ata</button>
+        <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">${CURRENT_LANG==='en'?'⚡ Reassign':'⚡ Yeniden Ata'}</button>
       </div>
     </div>
-    ${STATE.lanes.length===0?`<div class="empty"><div class="empty-icon">🏟</div><div class="empty-text">Kulvar tanımlanmadı — Otomatik Ata butonuna basın</div></div>`:`
+    ${STATE.lanes.length===0?`<div class="empty"><div class="empty-icon">🏟</div><div class="empty-text">${CURRENT_LANG==='en'?'No lanes defined — click Auto Assign':'Kulvar tanımlanmadı — Otomatik Ata butonuna basın'}</div></div>`:`
     <div class="lane-grid">
       ${STATE.lanes.map(l=>{
         const judges=l.judgeIds.map(jid=>{const j=STATE.judges.find(x=>x.id===jid);return j?j.name:'?';});
         const comps=getCompetitorsForLaneRound(l.id, STATE.rounds.find(r=>r.status==='active')?.id||null);
         return `<div class="lane-card">
           <div class="lane-header">
-            <div class="lane-num">KULVAR ${l.number}</div>
+            <div class="lane-num">${CURRENT_LANG==='en'?'LANE ':'KULVAR '}${l.number}</div>
             <span class="badge badge-blue">${l.category}</span>
           </div>
-          <div class="lane-judges">⚖️ ${judges.join(' · ')||'Hakem atanmadı'} ${judges.length===1?'<span class="badge badge-gold">Tek Hakem</span>':judges.length===0?'<span class="badge badge-red">Hakem Yok</span>':''}</div>
+          <div class="lane-judges">⚖️ ${judges.join(' · ')||CURRENT_LANG==='en'?'No TK assigned':'Hakem atanmadı'} ${judges.length===1?'<span class="badge badge-gold">'+t('singleJudgeLane')+'</span>':judges.length===0?'<span class="badge badge-red">'+t('noJudgeLane')+'</span>':''}</div>
           ${comps.map(c=>`<div class="lane-comp">${c.name} ${c.surname}</div>`).join('')}
         </div>`;
       }).join('')}
@@ -2654,10 +2658,10 @@ function renderRoundManager(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-      <div class="text-sm text-muted">${STATE.rounds.length} raund tanımlı</div>
+      <div class="text-sm text-muted">${STATE.rounds.length} ${CURRENT_LANG==='en'?'rounds defined':'raund tanımlı'}</div>
       <div class="flex gap-2 flex-wrap">
-        <button class="btn btn-ghost btn-sm" onclick="orgTab('setup')">⚙️ Raund Ekle/Düzenle</button>
-        <button class="btn btn-ghost btn-sm" onclick="openAddFlyoffModal()">⚡ Flyoff Ekle</button>
+        <button class="btn btn-ghost btn-sm" onclick="orgTab('setup')">⚙️ ${CURRENT_LANG==='en'?t('roundEditNote'):'Raund Ekle/Düzenle'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAddFlyoffModal()">${CURRENT_LANG==='en'?'⚡ Add Flyoff':'⚡ Flyoff Ekle'}</button>
       </div>
     </div>
     ${STATE.rounds.map(r=>{
@@ -2666,7 +2670,7 @@ function renderRoundManager(){
       return `<div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
         <div>
           <div class="round-num">${r.isFlyoff?'⚡ FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
-          <div class="text-sm text-muted">Max: ${fmtSec(r.maxTime)} · ${scoresCount}/${compCount} skor</div>
+          <div class="text-sm text-muted">Max: ${fmtSec(r.maxTime)} · ${scoresCount}/${compCount} ${t('scores')}</div>
         </div>
         <div class="flex-1"></div>
         ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="startRound('${r.id}')">${CURRENT_LANG==='en'?'▶ Start':'▶ Başlat'}</button>`:''}
@@ -2718,7 +2722,7 @@ function openAddFlyoffModal(){
       <div class="form-hint">Flyoff öncesi yükseklik girişi sistem tarafından hatırlatılır</div>
     </div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
-    <button class="btn btn-primary" onclick="addFlyoff()">Flyoff Ekle</button>`);
+    <button class="btn btn-primary" onclick="addFlyoff()">${CURRENT_LANG==='en'?'Add Flyoff':'Flyoff Ekle'}</button>`);
 }
 function addFlyoff(){
   const t=parseInt(document.getElementById('fo-time').value)||360;
@@ -2736,7 +2740,7 @@ function renderResultsPanel(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-      <div class="text-sm text-muted">Tüm kategoriler · ✏️ ile skor düzenleyebilirsiniz</div>
+    <div class="text-sm text-muted">${CURRENT_LANG==='en'?'All categories · use ✏️ to edit scores':'Tüm kategoriler · ✏️ ile skor düzenleyebilirsiniz'}</div>
       <button class="btn btn-ghost btn-sm" onclick="exportResults()">📤 CSV İndir</button>
     </div>
     ${cats.map(cat=>{
@@ -2747,7 +2751,7 @@ function renderResultsPanel(){
         <div class="card-header"><div class="card-title"><span class="icon">🏅</span>${cat} Sonuçları</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>#</th><th>Ad Soyad</th><th>Ülke</th>${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>`<th>R${r.number}</th>`).join('')}${STATE.rounds.filter(r=>r.isFlyoff).map(r=>`<th>F${r.flyoffNum}</th>`).join('')}<th>TOPLAM</th></tr></thead>
+            <thead><tr><th>#</th><th>Ad Soyad</th><th>Ülke</th>${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>`<th>R${r.number}</th>`).join('')}${STATE.rounds.filter(r=>r.isFlyoff).map(r=>`<th>F${r.flyoffNum}</th>`).join('')}<th>${t('total')}</th></tr></thead>
             <tbody>
               ${ranked.map((rc,i)=>{
                 const c=rc.competitor;
@@ -2783,7 +2787,7 @@ function renderResultsPanel(){
           </table>
         </div>
         ${STATE.scores.some(s=>s.juryEdited&&STATE.competitors.find(c=>c.categories.includes(cat)&&c.id===s.competitorId))
-          ?`<div style="padding:8px 14px;font-size:11px;color:var(--orange);">* Jüri/organizatör tarafından düzenlenmiş skor</div>`:''}
+          ?`<div style="padding:8px 14px;font-size:11px;color:var(--orange);">* Jüri/organizatör tarafından düzenlenmiş ${t('scores')}</div>`:''}
       </div>`;
     }).join('')}
   </div>`;
@@ -2829,10 +2833,10 @@ function renderLogsPanel(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3">
-      <div class="text-sm text-muted">${allLogs.length} olay kaydı</div>
+      <div class="text-sm text-muted">${allLogs.length} ${CURRENT_LANG==='en'?'event log entries':'olay kaydı'}</div>
       <button class="btn btn-ghost btn-sm" onclick="exportLogs()">📤 CSV İndir</button>
     </div>
-    ${allLogs.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Henüz olay kaydı yok</div></div>`:`
+    ${allLogs.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No event log entries yet':'Henüz olay kaydı yok'}</div></div>`:`
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${allLogs.map(log=>{
         const {icon,label,color}=typeLabel(log.type);
@@ -3056,7 +3060,7 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
   <div class="grid-2">
     <div>
       <div class="card mb-3">
-        <div class="card-header"><div class="card-title"><span class="icon">👥</span>Yarışmacılarım (${myCompetitors.length})</div></div>
+        <div class="card-header"><div class="card-title"><span class="icon">👥</span>${t('myCompetitors')} (${myCompetitors.length})</div></div>
         ${myCompetitors.length===0?`<div class="alert alert-warn">Bu raund için size atanmış yarışmacı bulunamadı. Kulvar atamaları kontrol edin.</div>`:''}
         ${myCompetitors.map(c=>{
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
@@ -3073,7 +3077,7 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
       </div>
       
       <div class="card">
-        <div class="card-header"><div class="card-title"><span class="icon">📋</span>Bu Raund Skorları</div></div>
+        <div class="card-header"><div class="card-title"><span class="icon">📋</span>${t('roundScores')}</div></div>
         ${myCompetitors.map(c=>{
           const score=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===activeRound.id);
           if(!score){
@@ -3102,7 +3106,7 @@ function renderJudgePanel(judge,activeRound,roundClosed=false){
 }
 
 function renderTimerEmpty(){
-  return `<div class="empty"><div class="empty-icon">⏱</div><div class="empty-text">Sol taraftan yarışmacı seçin</div></div>`;
+  return `<div class="empty"><div class="empty-icon">⏱</div><div class="empty-text">${CURRENT_LANG==='en'?'Select a competitor from the left':'Sol taraftan yarışmacı seçin'}</div></div>`;
 }
 
 function renderTimerPanel(comp,round,roundClosed=false){
@@ -3172,16 +3176,16 @@ function renderTimerPanel(comp,round,roundClosed=false){
 
     ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===1&&!roundClosed&&!JUDGE_STATE._pendingAutoStart?`
     <div class="alert alert-warn mt-3">
-      ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
+      ⚠️ ${t('attemptWarning')}
       <div class="mt-2 flex gap-2 flex-wrap">
         <button class="btn btn-gold btn-sm" onclick="grantAttempt('sub20','${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Grant Attempt':'Deneme Hakkı Ver'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">Kaydet (${fmtTimer(elapsed)})</button>
+        <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Save':'Kaydet'} (${fmtTimer(elapsed)})></button
       </div>
     </div>`:''}
 
     ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===2&&!roundClosed?`
     <div class="alert alert-info mt-3">
-      ℹ️ 2. uçuş 20 saniyenin altında — bu raund için deneme hakkı zaten kullanıldı. Skor kaydedilecek.
+      ℹ️ ${CURRENT_LANG==='en'?'2nd flight under 20s — attempt already used this round. Score will be saved.':'2. uçuş 20 saniyenin altında — bu raund için deneme hakkı zaten kullanıldı. Skor kaydedilecek.'}
     </div>`:''}
 
     ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed&&(stopped||elapsed===0)?`
@@ -3194,7 +3198,7 @@ function renderTimerPanel(comp,round,roundClosed=false){
     ${existing&&!isAutoZero?`<div class="alert alert-success mt-3">${CURRENT_LANG==='en'?'✓ Saved: ':'✓ Kaydedildi: '}<strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
 
     <div class="mt-3">
-      <textarea id="judge-note" placeholder="Opsiyonel not..." style="height:50px;font-size:12px;"></textarea>
+      <textarea id="judge-note" placeholder="opt" style="height:50px;font-size:12px;"></textarea>
     </div>
   </div>`;
 }
@@ -3263,7 +3267,7 @@ function timerStart(){
     if(saveCounter>=50){saveCounter=0;saveTimerState();}
   },100);
   const btn=document.querySelector('.timer-btn.timer-start');
-  if(btn){btn.textContent='⏸ DURAKLATILDI';btn.className='timer-btn timer-stop';btn.onclick=timerStop;}
+  if(btn){btn.textContent=CURRENT_LANG==='en'?'⏸ PAUSED':'⏸ DURAKLATILDI';btn.className='timer-btn timer-stop';btn.onclick=timerStop;}
 }
 
 function timerStop(){
@@ -3374,8 +3378,8 @@ function grantAttempt(type,compId,roundId){
       <label>${CURRENT_LANG==='en'?'Description (required) *':'Açıklama (zorunlu) *'}</label>
       <textarea id="attempt-note" placeholder="${CURRENT_LANG==='en'?'Briefly explain the reason for granting the attempt...':'Deneme hakkı verilme sebebini kısaca açıklayın...'}" style="height:80px"></textarea>
     </div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">❌ İptal</button>
-    <button class="btn btn-gold" onclick="confirmGrantAttempt('${type}','${compId}','${roundId}')">✅ Evet, Deneme Hakkı Ver</button>`);
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'❌ Cancel':'❌ İptal'}</button>
+    <button class="btn btn-gold" onclick="confirmGrantAttempt('${type}','${compId}','${roundId}')">${CURRENT_LANG==='en'?'✅ Yes, Grant Attempt':'✅ Evet, Deneme Hakkı Ver'}</button>`);
   setTimeout(()=>document.getElementById('attempt-note')?.focus(),100);
 }
 function confirmGrantAttempt(type,compId,roundId){
@@ -3393,8 +3397,8 @@ function confirmGrantAttempt(type,compId,roundId){
   bindJudgeEvents();
 }
 function requestExtraFlight(type,compId,roundId){
-  openModal('🤚 Yanlış Başlatma — Baş Hakem Onayı',`
-    <div class="alert alert-info mb-3">Bu talep baş hakem / jüriye iletilecek. Onaylarsa ek uçuş hakkı verilecek.</div>
+  openModal(CURRENT_LANG==='en'?'🤚 Accidental Start — Chief TK Approval':'🤚 Yanlış Başlatma — Baş Hakem Onayı',`
+    <div class="alert alert-info mb-3">${CURRENT_LANG==='en'?'This request will be sent to the chief TK / jury. If approved, an extra flight will be granted.':'Bu talep baş hakem / jüriye iletilecek. Onaylarsa ek uçuş hakkı verilecek.'}</div>
     <div class="form-group"><label>${CURRENT_LANG==='en'?'Reason':'Sebep'}</label><input value="${CURRENT_LANG==='en'?'Accidental start — timekeeper error':'Yanlış başlatma — hakem hatası'}" disabled></div>
     <div class="form-group">
       <label>${CURRENT_LANG==='en'?'Description *':'Açıklama *'}</label>
@@ -3534,7 +3538,9 @@ function saveEditScore(id){
   else if(CURRENT_VIEW==='judge'){document.getElementById('mainContent').innerHTML=renderJudge();bindJudgeEvents();}
 }
 
-function bindJudgeEvents(){}
+function bindJudgeEvents(){
+  const noteArea = document.getElementById('judge-note');
+  if(noteArea) noteArea.placeholder = CURRENT_LANG==='en'?'Optional note...':'Opsiyonel not...';}
 
 // ==================== SCOREBOARD ====================
 let SB_COMP_ID=null;
