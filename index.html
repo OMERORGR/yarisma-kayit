@@ -1400,9 +1400,9 @@ async function approveOrgApp(appId){
     <div class="form-group"><label>Ad Soyad</label><input value="${app.name} ${app.surname}" disabled></div>
     <div class="form-group"><label>Email</label><input value="${app.email}" disabled></div>
     <div class="form-group">
-      <label>${CURRENT_LANG==='en'?'Login PIN (Forward to Organizer)':'Giriş PIN\'i (Organizatöre İletin)'}</label>
+      <label>${CURRENT_LANG==='en'?'Login PIN (Forward to Organizer)':'Giriş PIN Kodu (Organizatöre İletin)'}</label>
       <input value="${pin}" style="font-size:24px;font-family:monospace;font-weight:700;color:var(--blue);letter-spacing:4px;" readonly onclick="this.select()">
-      <div class="form-hint">Bu PIN'i WhatsApp, email veya başka bir yolla organizatöre iletin.</div>
+      <div class="form-hint">${CURRENT_LANG==='en'?'Send this PIN to the organizer via WhatsApp, email or any other method.':"Bu PIN'i WhatsApp, email veya başka bir yolla organizatöre iletin."}</div>
     </div>
   `,`<button class="btn btn-primary" onclick="closeModal()">${CURRENT_LANG==='en'?'OK, Noted':'Tamam, Not Aldım'}</button>`);
   renderAdminApplications();
@@ -3380,7 +3380,7 @@ function grantAttempt(type,compId,roundId){
 }
 function confirmGrantAttempt(type,compId,roundId){
   const note=document.getElementById('attempt-note')?.value.trim();
-  if(!note){toast('${CURRENT_LANG==='en'?'Description required — please provide a reason':'Açıklama zorunlu — sebebi yazın'}','error');return;}
+  if(!note){toast(CURRENT_LANG==="en"?"Description required — please provide a reason":"Açıklama zorunlu — sebebi yazın",'error');return;}
   JUDGE_STATE.currentAttempt=2;
   JUDGE_STATE.attemptType=type;
   JUDGE_STATE.attemptNote=note;
