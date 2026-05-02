@@ -1343,7 +1343,7 @@ async function renderAdminApplications(){
   panel.innerHTML=`
   <div>
     <div class="flex justify-between items-center mb-3">
-      <div class="text-sm text-muted">${apps.length} ${CURRENT_LANG==='en'?'total applications':'toplam başvuru'} · ${pending.length} ${CURRENT_LANG==='en'?'pending':'bekliyor'}</div>
+      <div class="text-sm text-muted">${apps.length} ${CURRENT_LANG==='en'?'total applications':CURRENT_LANG==='en'?'total applications':'toplam başvuru'} · ${pending.length} ${CURRENT_LANG==='en'?'pending':CURRENT_LANG==='en'?'pending':'bekliyor'}</div>
     </div>
     ${pending.length===0&&done.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">${CURRENT_LANG==='en'?'No applications yet':'Henüz başvuru yok'}</div></div>`:''}
     ${pending.length>0?`
@@ -1374,7 +1374,7 @@ async function renderAdminApplications(){
             <td>${a.name} ${a.surname}</td>
             <td class="text-sm">${a.email}</td>
             <td class="text-sm">${a.competition}</td>
-            <td>${a.status==='approved'?'<span class="badge badge-green">✅ Onaylandı</span>':'<span class="badge badge-red">❌ Reddedildi</span>'}</td>
+            <td>${a.status==='approved'?'<span class="badge badge-green">✅ '+(CURRENT_LANG==='en'?'Approved':'Onaylandı')+'</span>':'<span class="badge badge-red">❌ '+(CURRENT_LANG==='en'?'Rejected':'Reddedildi')+'</span>'}</td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -1395,20 +1395,20 @@ async function approveOrgApp(appId){
   app.status='approved';app.approvedAt=new Date().toISOString();app.assignedPin=pin;
   await sbUpsert('ffco_kv',{key:'org_applications',value:apps,updated_at:new Date().toISOString()});
   toast(`${app.name} ${app.surname} onaylandı! PIN: ${pin} — not edin, kendisine iletin.`,'success');
-  openModal('✅ Hesap Oluşturuldu',`
-    <div class="alert alert-success mb-3">Organizatör hesabı oluşturuldu!</div>
+  openModal(CURRENT_LANG==='en'?'✅ Account Created':'✅ Hesap Oluşturuldu',`
+    <div class="alert alert-success mb-3">${CURRENT_LANG==='en'?'Organizer account has been created!':'Organizatör hesabı oluşturuldu!'}</div>
     <div class="form-group"><label>Ad Soyad</label><input value="${app.name} ${app.surname}" disabled></div>
     <div class="form-group"><label>Email</label><input value="${app.email}" disabled></div>
     <div class="form-group">
-      <label>Giriş PIN'i (Organizatöre İletin)</label>
+      <label>${CURRENT_LANG==='en'?'Login PIN (Forward to Organizer)':'Giriş PIN\'i (Organizatöre İletin)'}</label>
       <input value="${pin}" style="font-size:24px;font-family:monospace;font-weight:700;color:var(--blue);letter-spacing:4px;" readonly onclick="this.select()">
       <div class="form-hint">Bu PIN'i WhatsApp, email veya başka bir yolla organizatöre iletin.</div>
     </div>
-  `,`<button class="btn btn-primary" onclick="closeModal()">Tamam, Not Aldım</button>`);
+  `,`<button class="btn btn-primary" onclick="closeModal()">${CURRENT_LANG==='en'?'OK, Noted':'Tamam, Not Aldım'}</button>`);
   renderAdminApplications();
 }
 async function rejectOrgApp(appId){
-  if(!confirm('Bu başvuruyu reddetmek istiyor musunuz?')) return;
+  if(!confirm(CURRENT_LANG==='en'?'Reject this application?':'Bu başvuruyu reddetmek istiyor musunuz?')) return;
   const rows=await sbGet('ffco_kv','?key=eq.org_applications');
   const apps=rows&&rows.length>0?rows[0].value:[];
   const app=apps.find(a=>a.id===appId);
@@ -1672,7 +1672,7 @@ function exportArchiveCSV(compId){
   if(!comp) return;
   const oldState=STATE;
   STATE=comp;
-  const lines=['Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
+  const lines=[CURRENT_LANG==='en'?'Category,Rank,Name,Surname,Country,FAI ID,Total Time':'Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
   comp.competition.categories.forEach(cat=>{
     rankCategory(cat).forEach((rc,i)=>{
       const c=rc.competitor;
@@ -1892,30 +1892,30 @@ function renderOverview(){
     ${comp.name&&!activeRound&&STATE.rounds.length>0&&STATE.rounds.every(r=>r.status==='done')?`
     <div class="alert alert-info flex justify-between items-center">
       <span>🏁 Tüm raundlar tamamlandı. Yarışmayı arşivlemek ister misiniz?</span>
-      <button class="btn btn-gold btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')">📦 Arşivle</button>
+      <button class="btn btn-gold btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')">${CURRENT_LANG==='en'?'📦 Archive':'📦 Arşivle'}</button>
     </div>`:''}
-    ${comp.name&&STATE.rounds.length===0?`<div style="text-align:right;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')" style="color:var(--text3)">📦 Arşivle</button></div>`:''}
+    ${comp.name&&STATE.rounds.length===0?`<div style="text-align:right;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="archiveComp('${ACTIVE_COMP_ID}')" style="color:var(--text3)">${CURRENT_LANG==='en'?'📦 Archive':'📦 Arşivle'}</button></div>`:''}
     
     <div class="grid-4 mb-4">
       <div class="stat-box">
         <div class="stat-label">Yarışmacılar</div>
         <div class="stat-val">${STATE.competitors.length}</div>
-        <div class="stat-sub">${STATE.competitors.filter(c=>c.categories.length>0).length} aktif kategori</div>
+        <div class="stat-sub">${STATE.competitors.filter(c=>c.categories.length>0).length} ${CURRENT_LANG==='en'?'active categories':'aktif kategori'}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Hakemler</div>
         <div class="stat-val">${STATE.judges.length}</div>
-        <div class="stat-sub">${STATE.lanes.length} kulvar</div>
+        <div class="stat-sub">${STATE.lanes.length} ${CURRENT_LANG==='en'?'lanes':'kulvar'}</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Tamamlanan Raund</div>
+        <div class="stat-label">${CURRENT_LANG==='en'?'Completed Rounds':'Tamamlanan Raund'}</div>
         <div class="stat-val">${doneRounds}/${STATE.rounds.length}</div>
         <div class="progress mt-1"><div class="progress-bar" style="width:${STATE.rounds.length?Math.round(doneRounds/STATE.rounds.length*100):0}%"></div></div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Kayıtlı Skor</div>
+        <div class="stat-label">${CURRENT_LANG==='en'?'Recorded Scores':'Kayıtlı Skor'}</div>
         <div class="stat-val">${totalScores}</div>
-        <div class="stat-sub">toplam uçuş</div>
+        <div class="stat-sub">${CURRENT_LANG==='en'?'total flights':'toplam uçuş'}</div>
       </div>
     </div>
 
@@ -1926,12 +1926,12 @@ function renderOverview(){
         <div style="background:var(--bg3);border-radius:var(--r3);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:700;">${req.competitorName}</div>
-            <div style="font-size:11px;color:var(--text2);">Hakem: ${req.judgeName} · ${req.type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma'}</div>
+            <div style="font-size:11px;color:var(--text2);">Hakem: ${req.judgeName} · ${req.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">${req.note}</div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-green btn-sm" onclick="approveExtraFlight('${req.id}')">✅ Onayla</button>
-            <button class="btn btn-red btn-sm" onclick="rejectExtraFlight('${req.id}')">❌ Reddet</button>
+            <button class="btn btn-green btn-sm" onclick="approveExtraFlight('${req.id}')">${CURRENT_LANG==='en'?'✅ Approve':'✅ Onayla'}</button>
+            <button class="btn btn-red btn-sm" onclick="rejectExtraFlight('${req.id}')">${CURRENT_LANG==='en'?'❌ Reject':'❌ Reddet'}</button>
           </div>
         </div>`).join('')}
     </div>`:''}
@@ -1951,24 +1951,24 @@ function renderOverview(){
     
     <div class="grid-2">
       <div class="card">
-        <div class="card-header"><div class="card-title"><span class="icon">🏁</span>Raund Durumu</div></div>
+        <div class="card-header"><div class="card-title"><span class="icon">🏁</span>${CURRENT_LANG==='en'?'Round Status':'Raund Durumu'}</div></div>
         ${STATE.rounds.length===0?'<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Raund tanımlanmadı</div></div>':
           STATE.rounds.map(r=>`
           <div class="round-card ${r.status==='active'?'active':r.status==='done'?'done':''}">
             <div class="round-num">${r.isFlyoff?'FLYOFF '+r.flyoffNum:'RAUND '+r.number}</div>
             <div class="round-time">Max: ${fmtSec(r.maxTime)}</div>
             <div class="round-status">
-              ${r.status==='pending'?'<span class="badge badge-gray">Bekliyor</span>':''}
-              ${r.status==='active'?'<span class="badge badge-green">AKTİF 🟢</span>':''}
-              ${r.status==='done'?'<span class="badge badge-blue">Tamamlandı</span>':''}
+              ${r.status==='pending'?'<span class="badge badge-gray">'+( CURRENT_LANG==="en"?"Pending":"Bekliyor")+'</span>':''}
+              ${r.status==='active'?'<span class="badge badge-green">'+(CURRENT_LANG==='en'?'ACTIVE':'AKTİF')+' 🟢</span>':''}
+              ${r.status==='done'?'<span class="badge badge-blue">'+( CURRENT_LANG==="en"?"Done":"Tamamlandı")+'</span>':''}
             </div>
-            ${r.status==='pending'?`<button class="btn btn-sm btn-green" onclick="startRound('${r.id}')">▶ Başlat</button>`:''}
-            ${r.status==='active'?`<button class="btn btn-sm btn-red" onclick="endRound('${r.id}')">⏹ Bitir</button>`:''}
+            ${r.status==='pending'?`<button class="btn btn-sm btn-green" onclick="startRound('${r.id}')">${CURRENT_LANG==='en'?'▶ Start':'▶ Başlat'}</button>`:''}
+            ${r.status==='active'?`<button class="btn btn-sm btn-red" onclick="endRound('${r.id}')">${CURRENT_LANG==='en'?'⏹ End':'⏹ Bitir'}</button>`:''}
           </div>`).join('')
         }
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title"><span class="icon">📋</span>Son Skorlar</div></div>
+        <div class="card-header"><div class="card-title"><span class="icon">📋</span>${CURRENT_LANG==='en'?'Recent Scores':'Son Skorlar'}</div></div>
         ${STATE.scores.length===0?'<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Henüz skor yok</div></div>':
           STATE.scores.slice(-8).reverse().map(sc=>{
             const c=STATE.competitors.find(x=>x.id===sc.competitorId);
@@ -1999,17 +1999,17 @@ function renderSetupForm(){
         <input id="sf-name" value="${c.name||''}" placeholder="2026 İsmail Sarıoğlu Kupası">
       </div>
       <div class="form-group">
-        <label>Konum</label>
+        <label>${CURRENT_LANG==='en'?'Location':'Konum'}</label>
         <input id="sf-loc" value="${c.location||''}" placeholder="İstanbul / Türkiye">
       </div>
     </div>
     <div class="form-row mb-3">
       <div class="form-group">
-        <label>Başlangıç Tarihi</label>
+        <label>${CURRENT_LANG==='en'?'Start Date':'Başlangıç Tarihi'}</label>
         <input id="sf-date-s" type="date" value="${c.dateStart||''}">
       </div>
       <div class="form-group">
-        <label>Bitiş Tarihi</label>
+        <label>${CURRENT_LANG==='en'?'End Date':'Bitiş Tarihi'}</label>
         <input id="sf-date-e" type="date" value="${c.dateEnd||''}">
       </div>
     </div>
@@ -2253,7 +2253,7 @@ function openAddCompetitorModal(editId){
       </div>
     </div>
     <div class="form-group"><label><input type="checkbox" id="cm-banquet" ${c.banquet?'checked':''}> Bankete katılacak</label></div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="saveCompetitor('${editId||''}')">Kaydet</button>`);
   // bind check-items
   setTimeout(()=>{
@@ -2304,7 +2304,7 @@ function openImportModal(){
     <div class="form-group"><label>CSV Dosyası</label><input type="file" id="csvFile" accept=".csv" style="padding:8px;"></div>
     <div class="form-group"><label>veya CSV Metni Yapıştır</label><textarea id="csvText" placeholder="Ad,Soyad,Email,..."></textarea></div>
     <div id="csv-preview" class="mt-2"></div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="importCSV()">İçe Aktar</button>`);
   document.getElementById('csvFile').onchange=(e)=>{
     const f=e.target.files[0];if(!f)return;
@@ -2435,7 +2435,7 @@ function openAddJudgeModal(editId){
         </select>
       </div>
     </div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="saveJudge('${editId||''}')">Kaydet</button>`);
 }
 function checkPinUnique(input, excludeId){
@@ -2492,7 +2492,7 @@ function openImportJudgesModal(){
     <div class="alert alert-info mb-3">CSV formatı: <code>Ad Soyad,PIN,Kategori(opsiyonel)</code><br>Örnek: <code>Ahmet Yılmaz,43211,F1A</code></div>
     <div class="form-group"><label>CSV Dosyası</label><input type="file" id="jCsvFile" accept=".csv" style="padding:8px;"></div>
     <div class="form-group"><label>veya Metin Yapıştır</label><textarea id="jCsvText" placeholder="Ad Soyad,PIN,Kategori"></textarea></div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="importJudgesCSV()">İçe Aktar</button>`);
   document.getElementById('jCsvFile').onchange=(e)=>{
     const f=e.target.files[0];if(!f)return;
@@ -2609,7 +2609,7 @@ function renderLaneManager(){
   return `
   <div>
     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-      <div class="text-sm text-muted">${STATE.lanes.length} kulvar</div>
+      <div class="text-sm text-muted">${STATE.lanes.length} ${CURRENT_LANG==='en'?'lanes':'kulvar'}</div>
       <div class="flex gap-2">
         <button class="btn btn-gold btn-sm" onclick="autoAssignLanes()">⚡ Yeniden Ata</button>
       </div>
@@ -2669,11 +2669,11 @@ function renderRoundManager(){
           <div class="text-sm text-muted">Max: ${fmtSec(r.maxTime)} · ${scoresCount}/${compCount} skor</div>
         </div>
         <div class="flex-1"></div>
-        ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="startRound('${r.id}')">▶ Başlat</button>`:''}
+        ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="startRound('${r.id}')">${CURRENT_LANG==='en'?'▶ Start':'▶ Başlat'}</button>`:''}
         ${r.status==='active'?`
           <span class="badge badge-green">🟢 AKTİF</span>
-          <button class="btn btn-red btn-sm" onclick="endRound('${r.id}')">⏹ Bitir</button>`:''}
-        ${r.status==='done'?`<span class="badge badge-blue">✓ Tamamlandı</span>`:''}
+          <button class="btn btn-red btn-sm" onclick="endRound('${r.id}')">${CURRENT_LANG==='en'?'⏹ End':'⏹ Bitir'}</button>`:''}
+        ${r.status==='done'?`<span class="badge badge-blue">✓ ${CURRENT_LANG==='en'?'Done':'Tamamlandı'}</span>`:''}
       </div>`;
     }).join('')}
     ${STATE.rounds.length===0?`<div class="empty"><div class="empty-icon">🏁</div><div class="empty-text">Ayarlar sekmesinden raund ekleyin</div></div>`:''}
@@ -2717,7 +2717,7 @@ function openAddFlyoffModal(){
       <label><input type="checkbox" id="fo-height"> Yükseklik ölçümü ekle (süre + metre)</label>
       <div class="form-hint">Flyoff öncesi yükseklik girişi sistem tarafından hatırlatılır</div>
     </div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-primary" onclick="addFlyoff()">Flyoff Ekle</button>`);
 }
 function addFlyoff(){
@@ -2807,14 +2807,16 @@ function renderLogsPanel(){
   ].sort((a,b)=>new Date(b.ts||0)-new Date(a.ts||0));
 
   const typeLabel=(type)=>{
+    const e=CURRENT_LANG==='en';
     switch(type){
-      case 'score_edit': return {icon:'✏️',label:'Skor Düzenlendi',color:'var(--gold)'};
-      case 'score_higher_wins': return {icon:'⬆️',label:'Yüksek Skor Alındı',color:'var(--green)'};
-      case 'score_lower_ignored': return {icon:'⬇️',label:'Düşük Skor Yok Sayıldı',color:'var(--text2)'};
-      case 'extra_flight_pending': return {icon:'⏳',label:'Ek Uçuş Talebi',color:'var(--gold)'};
-      case 'extra_flight_approved': return {icon:'✅',label:'Ek Uçuş Onaylandı',color:'var(--green)'};
-      case 'extra_flight_rejected': return {icon:'❌',label:'Ek Uçuş Reddedildi',color:'var(--red)'};
-      case 'attempt_reset': return {icon:'🔄',label:'Deneme Hakkı Sıfırlandı',color:'var(--blue)'};
+      case 'score_edit': return {icon:'✏️',label:e?'Score Edited':'Skor Düzenlendi',color:'var(--gold)'};
+      case 'score_higher_wins': return {icon:'⬆️',label:e?'Higher Score Applied':'Yüksek Skor Alındı',color:'var(--green)'};
+      case 'score_lower_ignored': return {icon:'⬇️',label:e?'Lower Score Ignored':'Düşük Skor Yok Sayıldı',color:'var(--text2)'};
+      case 'extra_flight_pending': return {icon:'⏳',label:e?'Extra Flight Request':'Ek Uçuş Talebi',color:'var(--gold)'};
+      case 'extra_flight_approved': return {icon:'✅',label:e?'Extra Flight Approved':'Ek Uçuş Onaylandı',color:'var(--green)'};
+      case 'extra_flight_rejected': return {icon:'❌',label:e?'Extra Flight Rejected':'Ek Uçuş Reddedildi',color:'var(--red)'};
+      case 'attempt_reset': return {icon:'🔄',label:e?'Attempt Reset':'Deneme Hakkı Sıfırlandı',color:'var(--blue)'};
+      case 'score_auto_saved_on_reject': return {icon:'💾',label:e?'Score Auto-Saved (Request Rejected)':'Ret Sonrası Otomatik Kayıt',color:'var(--orange)'};
       default: return {icon:'📋',label:type,color:'var(--text2)'};
     }
   };
@@ -2995,9 +2997,9 @@ function renderJudge(){
           ?`<span class="badge badge-green">🟢 ${activeRound.isFlyoff?'Flyoff '+activeRound.flyoffNum:'Raund '+activeRound.number} · Max ${fmtSec(activeRound.maxTime)}</span>`
           :roundClosed
             ?`<span class="badge badge-gold">⚠️ Raund Kapandı</span>`
-            :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':'Raund bekleniyor'}</span>`}
+            :`<span class="badge badge-gray">⏳ ${CURRENT_LANG==='en'?'No active round':CURRENT_LANG==='en'?'Waiting for round':'Raund bekleniyor'}</span>`}
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="judgeSyncComp()" title="Sunucudan güncelle">🔄</button>
+      <button class="btn btn-ghost btn-sm" onclick="judgeSyncComp()" title="${CURRENT_LANG==='en'?'Sync from server':'Sunucudan güncelle'}">🔄</button>
       <button class="btn btn-ghost btn-sm" id="daylightBtn" onclick="toggleDaylight()" title="Gün Işığı Modu" style="font-size:16px;padding:4px 8px;">☀️</button>
     </div>
 
@@ -3027,10 +3029,10 @@ async function judgeSyncComp(){
   if(rows&&rows.length>0){
     STATE=rows[0].data;
     localStorage.setItem('ffco_comp_'+ACTIVE_COMP_ID,JSON.stringify(STATE));
-    toast('Güncellendi ✓','success');
+    toast(CURRENT_LANG==='en'?'Updated ✓':'Güncellendi ✓','success');
     navigate('judge');
   } else {
-    toast('Bağlantı hatası','error');
+    toast(CURRENT_LANG==='en'?'Connection error':'Bağlantı hatası','error');
   }
 }
 
@@ -3138,10 +3140,10 @@ function renderTimerPanel(comp,round,roundClosed=false){
 
     ${pendingExtraReq?`
       <div class="alert alert-warn mt-3" style="border-color:var(--red);">
-        ⏳ <strong>Ek uçuş onayı bekleniyor</strong><br>
-        <span style="font-size:12px;">Baş hakem onaylamadan yeni uçuş başlatılamaz.</span>
+        ⏳ <strong>${CURRENT_LANG==='en'?'Extra flight approval pending':'Ek uçuş onayı bekleniyor'}</strong><br>
+        <span style="font-size:12px;">${CURRENT_LANG==='en'?'Cannot start a new flight until chief TK approves.':'Baş hakem onaylamadan yeni uçuş başlatılamaz.'}</span>
         <div style="margin-top:8px;font-size:11px;color:var(--text2);">
-          Sebep: ${pendingExtraReq.type==='accidental'?'Yanlış başlatma':'Kaza/Çarpışma'}<br>
+          Sebep: ${pendingExtraReq.type==='accidental'?(CURRENT_LANG==='en'?'Accidental start':'Yanlış başlatma'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza/Çarpışma')}<br>
           Not: ${pendingExtraReq.note}
         </div>
       </div>`:''}
@@ -3155,24 +3157,24 @@ function renderTimerPanel(comp,round,roundClosed=false){
     </div>
 
     <div class="timer-controls">
-      ${canStart?`<button class="timer-btn timer-start" id="startBtn" onclick="handleStartBtn(this)">▶ BAŞLAT</button>`:''}
-      ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">⏹ DURDUR</button>`:''}
-      ${stopped&&(!existing||isAutoZero)?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">💾 KAYDET</button>`:''}
-      ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">↺ Sıfırla</button>`:''}
+      ${canStart?`<button class="timer-btn timer-start" id="startBtn" onclick="handleStartBtn(this)">${CURRENT_LANG==='en'?'▶ START':'▶ BAŞLAT'}</button>`:''}
+      ${running?`<button class="timer-btn timer-stop" onclick="timerStop()">${CURRENT_LANG==='en'?'⏹ STOP':'⏹ DURDUR'}</button>`:''}
+      ${stopped&&(!existing||isAutoZero)?`<button class="timer-btn timer-save" onclick="timerSave('${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'💾 SAVE':'💾 KAYDET'}</button>`:''}
+      ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">${CURRENT_LANG==='en'?'↺ Reset':'↺ Sıfırla'}</button>`:''}
     </div>
 
     ${(stopped||running)&&!roundClosed?`
     <div class="mt-3 card" style="background:var(--bg3);border-color:var(--border2);">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🤚 YANLIŞ BAŞLATMA</div>
-      <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">🤚 Yanlış Başlattım — Baş Hakem Onayı</button>
-      <div class="form-hint mt-1">Baş hakem / jüri onayı gerektirir</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🤚 ${CURRENT_LANG==='en'?'ACCIDENTAL START':'YANLIŞ BAŞLATMA'}</div>
+      <button class="btn btn-ghost btn-sm" onclick="requestExtraFlight('accidental','${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'🤚 Accidental Start — Chief TK Approval':'🤚 Yanlış Başlattım — Baş Hakem Onayı'}</button>
+      <div class="form-hint mt-1">${CURRENT_LANG==='en'?'Chief TK / jury approval required':'Baş hakem / jüri onayı gerektirir'}</div>
     </div>`:''}
 
     ${stopped&&elapsed<20&&elapsed>0&&JUDGE_STATE.currentAttempt===1&&!roundClosed&&!JUDGE_STATE._pendingAutoStart?`
     <div class="alert alert-warn mt-3">
       ⚠️ 20 saniyenin altında uçuş! Deneme hakkı verilebilir.
       <div class="mt-2 flex gap-2 flex-wrap">
-        <button class="btn btn-gold btn-sm" onclick="grantAttempt('sub20','${comp.id}','${round.id}')">Deneme Hakkı Ver</button>
+        <button class="btn btn-gold btn-sm" onclick="grantAttempt('sub20','${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'Grant Attempt':'Deneme Hakkı Ver'}</button>
         <button class="btn btn-ghost btn-sm" onclick="timerSave('${comp.id}','${round.id}')">Kaydet (${fmtTimer(elapsed)})</button>
       </div>
     </div>`:''}
@@ -3184,12 +3186,12 @@ function renderTimerPanel(comp,round,roundClosed=false){
 
     ${JUDGE_STATE.currentAttempt===1&&!running&&!roundClosed&&(stopped||elapsed===0)?`
     <div class="mt-3 card" style="background:var(--bg3)">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ KAZA / ÇARPIŞMA</div>
-      <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">⚡ Kaza/Çarpışma — Deneme Hakkı Ver</button>
-      <div class="form-hint mt-1">Hakem kararı — onay gerekmez</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">⚡ ${CURRENT_LANG==='en'?'CRASH / COLLISION':'KAZA / ÇARPIŞMA'}</div>
+      <button class="btn btn-ghost btn-sm" onclick="grantAttempt('crash','${comp.id}','${round.id}')">${CURRENT_LANG==='en'?'⚡ Crash/Collision — Grant Attempt':'⚡ Kaza/Çarpışma — Deneme Hakkı Ver'}</button>
+      <div class="form-hint mt-1">${CURRENT_LANG==='en'?'Timekeeper decision — no approval needed':'Hakem kararı — onay gerekmez'}</div>
     </div>`:''}
 
-    ${existing&&!isAutoZero?`<div class="alert alert-success mt-3">✓ Kaydedildi: <strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
+    ${existing&&!isAutoZero?`<div class="alert alert-success mt-3">${CURRENT_LANG==='en'?'✓ Saved: ':'✓ Kaydedildi: '}<strong class="font-mono">${fmtSec(existing.finalTime)}</strong>${existing.finalTime>=round.maxTime?' 🏆 MAX':''}</div>`:''}
 
     <div class="mt-3">
       <textarea id="judge-note" placeholder="Opsiyonel not..." style="height:50px;font-size:12px;"></textarea>
@@ -3364,13 +3366,13 @@ async function timerSave(compId,roundId){
 
 function grantAttempt(type,compId,roundId){
   if(JUDGE_STATE.currentAttempt>1){toast('Bu raund için zaten bir deneme hakkı kullanıldı','error');return;}
-  const typeLabel=type==='sub20'?'20 saniye altı uçuş':'Kaza / Çarpışma';
-  openModal('⚠️ Deneme Hakkı Ver',`
-    <div class="alert alert-warn mb-3">Bu işlem <strong>geri alınamaz</strong>. Emin misiniz?</div>
+  const typeLabel=type==='sub20'?(CURRENT_LANG==='en'?'Under 20s flight':'20 saniye altı uçuş'):(CURRENT_LANG==='en'?'Crash/Collision':'Kaza / Çarpışma');
+  openModal(CURRENT_LANG==='en'?'⚠️ Grant Attempt':'⚠️ Deneme Hakkı Ver',`
+    <div class="alert alert-warn mb-3">${CURRENT_LANG==='en'?'This action <strong>cannot be undone</strong>. Are you sure?':'Bu işlem <strong>geri alınamaz</strong>. Emin misiniz?'}</div>
     <div class="form-group"><label>Sebep</label><input value="${typeLabel}" disabled></div>
     <div class="form-group">
-      <label>Açıklama (zorunlu) *</label>
-      <textarea id="attempt-note" placeholder="Deneme hakkı verilme sebebini kısaca açıklayın..." style="height:80px"></textarea>
+      <label>${CURRENT_LANG==='en'?'Description (required) *':'Açıklama (zorunlu) *'}</label>
+      <textarea id="attempt-note" placeholder="${CURRENT_LANG==='en'?'Briefly explain the reason for granting the attempt...':'Deneme hakkı verilme sebebini kısaca açıklayın...'}" style="height:80px"></textarea>
     </div>
   `,`<button class="btn btn-ghost" onclick="closeModal()">❌ İptal</button>
     <button class="btn btn-gold" onclick="confirmGrantAttempt('${type}','${compId}','${roundId}')">✅ Evet, Deneme Hakkı Ver</button>`);
@@ -3378,7 +3380,7 @@ function grantAttempt(type,compId,roundId){
 }
 function confirmGrantAttempt(type,compId,roundId){
   const note=document.getElementById('attempt-note')?.value.trim();
-  if(!note){toast('Açıklama zorunlu — sebebi yazın','error');return;}
+  if(!note){toast('${CURRENT_LANG==='en'?'Description required — please provide a reason':'Açıklama zorunlu — sebebi yazın'}','error');return;}
   JUDGE_STATE.currentAttempt=2;
   JUDGE_STATE.attemptType=type;
   JUDGE_STATE.attemptNote=note;
@@ -3386,20 +3388,20 @@ function confirmGrantAttempt(type,compId,roundId){
   JUDGE_STATE.attemptMemory[compId+'_'+roundId]={attempt:2,type,note,used:false};
   timerReset();
   closeModal();
-  toast('Deneme hakkı verildi — Yeni uçuş başlatılabilir','info');
+  toast(CURRENT_LANG==='en'?'Attempt granted — new flight can begin':'Deneme hakkı verildi — Yeni uçuş başlatılabilir','info');
   document.getElementById('mainContent').innerHTML=renderJudge();
   bindJudgeEvents();
 }
 function requestExtraFlight(type,compId,roundId){
   openModal('🤚 Yanlış Başlatma — Baş Hakem Onayı',`
     <div class="alert alert-info mb-3">Bu talep baş hakem / jüriye iletilecek. Onaylarsa ek uçuş hakkı verilecek.</div>
-    <div class="form-group"><label>Sebep</label><input value="Yanlış başlatma — hakem hatası" disabled></div>
+    <div class="form-group"><label>${CURRENT_LANG==='en'?'Reason':'Sebep'}</label><input value="${CURRENT_LANG==='en'?'Accidental start — timekeeper error':'Yanlış başlatma — hakem hatası'}" disabled></div>
     <div class="form-group">
-      <label>Açıklama *</label>
-      <textarea id="efr-note" placeholder="Ne olduğunu kısaca açıklayın..." style="height:70px"></textarea>
+      <label>${CURRENT_LANG==='en'?'Description *':'Açıklama *'}</label>
+      <textarea id="efr-note" placeholder="${CURRENT_LANG==='en'?'Briefly describe what happened...':'Ne olduğunu kısaca açıklayın...'}" style="height:70px"></textarea>
     </div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
-    <button class="btn btn-primary" onclick="submitExtraFlightRequest('${type}','${compId}','${roundId}')">📨 Talep Gönder</button>`);
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
+    <button class="btn btn-primary" onclick="submitExtraFlightRequest('${type}','${compId}','${roundId}')">${CURRENT_LANG==='en'?'📨 Send Request':'📨 Talep Gönder'}</button>`);
   setTimeout(()=>document.getElementById('efr-note')?.focus(),100);
 }
 function submitExtraFlightRequest(type,compId,roundId){
@@ -3487,7 +3489,7 @@ function handleStartBtn(btn){
       r.roundId===activeRound.id&&r.status==='pending'
     );
     if(pending){
-      toast('⏳ Baş hakem onayı bekleniyor — onay gelmeden başlatamazsınız','warn');
+      toast(CURRENT_LANG==='en'?'⏳ Chief TK approval pending — cannot start until approved':'⏳ Baş hakem onayı bekleniyor — onay gelmeden başlatamazsınız','warn');
       return;
     }
   }
@@ -3507,14 +3509,14 @@ function editScore(scoreId){
     <div class="form-group"><label>Yeni Süre (saniye) *</label><input id="es-time" type="number" value="${sc.finalTime}" step="1" min="0" max="${round?round.maxTime:999}"></div>
     <div class="form-group"><label><input type="checkbox" id="es-dq" ${sc.disqualified?'checked':''}> Diskalifiye</label></div>
     <div class="form-group"><label>Değişiklik Sebebi (zorunlu) *</label><textarea id="es-note" style="height:70px" placeholder="Jüri kararı, hata düzeltmesi...">${sc.editNote||''}</textarea></div>
-  `,`<button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">${CURRENT_LANG==='en'?'Cancel':'İptal'}</button>
     <button class="btn btn-gold" onclick="saveEditScore('${scoreId}')">💾 Değişikliği Kaydet</button>`);
   setTimeout(()=>document.getElementById('es-time')?.focus(),100);
 }
 function saveEditScore(id){
   const sc=STATE.scores.find(s=>s.id===id);if(!sc) return;
   const note=document.getElementById('es-note').value.trim();
-  if(!note){toast('Değişiklik sebebi zorunlu','error');return;}
+  if(!note){toast(CURRENT_LANG==='en'?'Reason for change is required':'Değişiklik sebebi zorunlu','error');return;}
   const newTime=parseInt(document.getElementById('es-time').value)||0;
   const round=STATE.rounds.find(r=>r.id===sc.roundId);
   const cappedTime=round?Math.min(newTime,round.maxTime):newTime;
@@ -3585,7 +3587,7 @@ async function sbForceRefresh(){
   if(rows&&rows.length>0){
     localStorage.setItem('ffco_comp_'+SB_COMP_ID,JSON.stringify(rows[0].data));
     document.getElementById('mainContent').innerHTML=renderScoreboard();
-    toast('Güncellendi ✓','success');
+    toast(CURRENT_LANG==='en'?'Updated ✓':'Güncellendi ✓','success');
   }
 }
 function sbCat(cat){
@@ -3747,7 +3749,7 @@ function renderPublicRegister(){
       </div>
       <button class="btn btn-primary w-full" onclick="submitPublicRegister()">📩 ${CURRENT_LANG==='en'?'Submit Registration':'Kaydı Gönder'}</button>
     </div>
-    ${(c.bulletinUrl||c.bulletinUrlEn)?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>Yarışma Bülteni</div></div>
+    ${(c.bulletinUrl||c.bulletinUrlEn)?`<div class="card"><div class="card-header"><div class="card-title"><span class="icon">📄</span>${CURRENT_LANG==='en'?'Competition Bulletin':'Yarışma Bülteni'}</div></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         ${c.bulletinUrl?`<a href="${c.bulletinUrl}" target="_blank" class="btn btn-ghost">📥 ${CURRENT_LANG==='en'?'Bulletin (TR)':'Bülten (TR)'}</a>`:''}
         ${c.bulletinUrlEn?`<a href="${c.bulletinUrlEn}" target="_blank" class="btn btn-ghost">📥 ${CURRENT_LANG==='en'?'Bulletin (EN)':'Bülten (EN)'}</a>`:''}
@@ -3872,7 +3874,7 @@ function getFlyoffCandidates(){
 }
 
 function exportResults(){
-  const lines=['Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
+  const lines=[CURRENT_LANG==='en'?'Category,Rank,Name,Surname,Country,FAI ID,Total Time':'Kategori,Sıra,Ad,Soyad,Ülke,FAI ID,Toplam Süre'];
   STATE.competition.categories.forEach(cat=>{
     const ranked=rankCategory(cat);
     ranked.forEach((rc,i)=>{
@@ -4079,11 +4081,11 @@ function setupRealtime(){
             const flight=JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0;
             if(oldRoundId!==newRoundId&&!flight){
               navigate('judge');
-              if(newRoundId) toast('🏁 Yeni raund başladı!','success');
-              else toast('⏹ Raund kapandı','info');
+              if(newRoundId) toast(CURRENT_LANG==='en'?'🏁 New round started!':'🏁 Yeni raund başladı!','success');
+              else toast(CURRENT_LANG==='en'?'⏹ Round ended':'⏹ Raund kapandı','info');
             } else if(oldRoundId!==newRoundId&&flight){
-              if(newRoundId) toast('🏁 Yeni raund başladı — uçuşu tamamlayın','warn');
-              else toast('⏹ Raund kapandı — uçuşu tamamlayın','warn');
+              if(newRoundId) toast(CURRENT_LANG==='en'?'🏁 New round started — finish your flight':'🏁 Yeni raund başladı — uçuşu tamamlayın','warn');
+              else toast(CURRENT_LANG==='en'?'⏹ Round ended — finish your flight':'⏹ Raund kapandı — uçuşu tamamlayın','warn');
             }
             // Check for approved extra flight
             const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
@@ -4096,12 +4098,12 @@ function setupRealtime(){
                 const app=newlyApproved[0];
                 const memKey=(app.competitorId||JUDGE_STATE.selectedCompetitorId)+'_'+(app.roundId||JUDGE_STATE.roundId);
                 if(memKey!=='undefined_undefined') JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:app.type||'accidental',note:app.note||'',used:false};
-                toast('✅ Ek uçuş talebiniz onaylandı!','success');
+                toast(CURRENT_LANG==='en'?'✅ Extra flight request approved!':'✅ Ek uçuş talebiniz onaylandı!','success');
                 timerReset();JUDGE_STATE.currentAttempt=2;
                 navigate('judge');
               }
               if(newlyRejected.length>0){
-                toast('❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
+                toast(CURRENT_LANG==='en'?'❌ Request rejected — current time has been saved':'❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
                 timerReset();JUDGE_STATE.selectedCompetitorId=null;
                 JUDGE_STATE.currentAttempt=1;JUDGE_STATE.attemptType=null;
                 clearTimerState();navigate('judge');
@@ -4153,11 +4155,11 @@ setInterval(async()=>{
         const flight=JUDGE_STATE.timerRunning||JUDGE_STATE.timerElapsed>0;
         if(oldRoundId!==newRoundId&&!flight){
           navigate('judge');
-          if(newRoundId) toast('🏁 Yeni raund başladı!','success');
-          else toast('⏹ Raund kapandı','info');
+          if(newRoundId) toast(CURRENT_LANG==='en'?'🏁 New round started!':'🏁 Yeni raund başladı!','success');
+          else toast(CURRENT_LANG==='en'?'⏹ Round ended':'⏹ Raund kapandı','info');
         } else if(oldRoundId!==newRoundId&&flight){
-          if(newRoundId) toast('🏁 Yeni raund başladı — uçuşu tamamlayın','warn');
-          else toast('⏹ Raund kapandı — uçuşu tamamlayın','warn');
+          if(newRoundId) toast(CURRENT_LANG==='en'?'🏁 New round started — finish your flight':'🏁 Yeni raund başladı — uçuşu tamamlayın','warn');
+          else toast(CURRENT_LANG==='en'?'⏹ Round ended — finish your flight':'⏹ Raund kapandı — uçuşu tamamlayın','warn');
         }
         const prevPending=(prevData?.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='pending');
         const nowApproved=(STATE.extraFlightRequests||[]).filter(r=>r.judgeId===CURRENT_JUDGE_ID&&r.status==='approved');
@@ -4169,12 +4171,12 @@ setInterval(async()=>{
             const app=newlyApproved[0];
             const memKey=(app.competitorId||JUDGE_STATE.selectedCompetitorId)+'_'+(app.roundId||JUDGE_STATE.roundId);
             JUDGE_STATE.attemptMemory[memKey]={attempt:2,type:app.type||'accidental',note:app.note||'',used:false};
-            toast('✅ Ek uçuş talebiniz onaylandı!','success');
+            toast(CURRENT_LANG==='en'?'✅ Extra flight request approved!':'✅ Ek uçuş talebiniz onaylandı!','success');
             timerReset();JUDGE_STATE.currentAttempt=2;
             navigate('judge');
           }
           if(newlyRejected.length>0){
-            toast('❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
+            toast(CURRENT_LANG==='en'?'❌ Request rejected — current time has been saved':'❌ Talebiniz reddedildi — mevcut süre kaydedildi','error');
             timerReset();JUDGE_STATE.selectedCompetitorId=null;
             JUDGE_STATE.currentAttempt=1;JUDGE_STATE.attemptType=null;
             clearTimerState();navigate('judge');
