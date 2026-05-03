@@ -2718,10 +2718,14 @@ function endRound(id){
   if(!r) return;
   // Auto-zero missing scores
   STATE.competitors.forEach(c=>{
-    const hasScore=STATE.scores.some(s=>s.competitorId===c.id&&s.roundId===id);
-    if(!hasScore&&c.categories.some(cat=>STATE.competition.categories.includes(cat))){
-      STATE.scores.push({id:uid(),competitorId:c.id,roundId:id,attempts:[],finalTime:0,confirmed:false,disqualified:false,autoZero:true});
-    }
+    // Create one auto-zero per category the competitor participates in
+    const compCats=c.categories.filter(cat=>STATE.competition.categories.includes(cat));
+    compCats.forEach(cat=>{
+      const hasScore=STATE.scores.some(s=>s.competitorId===c.id&&s.roundId===id&&(s.category===cat||(!s.category&&compCats.length===1)));
+      if(!hasScore){
+        STATE.scores.push({id:uid(),competitorId:c.id,roundId:id,category:cat,attempts:[],finalTime:0,confirmed:false,disqualified:false,autoZero:true});
+      }
+    });
   });
   r.status='done';r.endedAt=new Date().toISOString();
   STATE.currentRoundId=null;save();
@@ -2779,7 +2783,7 @@ function renderResultsPanel(){
                   <td>${c.name} ${c.surname}${rc.disqualified?'<span class="badge badge-red" style="margin-left:4px">DQ</span>':''}</td>
                   <td>${c.country||'—'}</td>
                   ${STATE.rounds.filter(r=>!r.isFlyoff).map(r=>{
-                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id&&(s.category===cat||!s.category));
                     const juryEdit=sc&&sc.juryEdited;
                     return `<td>
                       <span class="font-mono ${sc&&sc.finalTime>=r.maxTime?'text-green':''}" 
@@ -2790,7 +2794,7 @@ function renderResultsPanel(){
                     </td>`;
                   }).join('')}
                   ${STATE.rounds.filter(r=>r.isFlyoff).map(r=>{
-                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+                    const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id&&(s.category===cat||!s.category));
                     const juryEdit=sc&&sc.juryEdited;
                     return `<td>
                       <span class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'}">
@@ -3185,6 +3189,17 @@ function renderTimerPanel(comp,round,roundClosed=false){
       ${(stopped||(existing&&!isAutoZero))?`<button class="timer-btn timer-reset" onclick="timerReset()">${CURRENT_LANG==='en'?'↺ Reset':'↺ Sıfırla'}</button>`:''}
     </div>
 
+    ${round&&round.isFlyoff&&round.withHeight&&stopped?`
+    <div class="mt-3 card" style="background:var(--bg3);border-color:var(--blue);max-width:320px;margin:12px auto 0;">
+      <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px;text-align:center;">
+        📐 ${CURRENT_LANG==='en'?'Height (metres)':'Yükseklik (metre)'}
+      </div>
+      <input id="flyoff-height" type="number" min="0" max="9999" step="1"
+        placeholder="${CURRENT_LANG==='en'?'Enter height in metres':'Metreyi girin'}"
+        style="width:100%;text-align:center;font-size:28px;font-weight:700;color:var(--blue);background:var(--bg2);border:2px solid var(--blue);border-radius:8px;padding:10px 0;box-sizing:border-box;">
+      <div class="form-hint mt-1" style="text-align:center;">${CURRENT_LANG==='en'?'Enter 0 if not measured':'Ölçülmediyse 0 girin'}</div>
+    </div>`:''}
+
     ${(stopped||running)&&!roundClosed?`
     <div class="mt-3 card" style="background:var(--bg3);border-color:var(--border2);">
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🤚 ${CURRENT_LANG==='en'?'ACCIDENTAL START':'YANLIŞ BAŞLATMA'}</div>
@@ -3314,6 +3329,12 @@ async function timerSave(compId,roundId){
   const round=STATE.rounds.find(r=>r.id===roundId);
   const finalTime=Math.min(Math.round(elapsed), round?round.maxTime:elapsed);
   const note=document.getElementById('judge-note')?.value||'';
+  // Get judge's lane category — this is the category the score belongs to
+  const judgeLane=STATE.lanes.find(l=>l.judgeIds&&l.judgeIds.includes(CURRENT_JUDGE_ID));
+  const scoreCategory=judgeLane?.category||null;
+  // Get height if flyoff with height measurement
+  const heightInput=document.getElementById('flyoff-height');
+  const heightM=heightInput&&round?.withHeight?parseFloat(heightInput.value)||null:null;
 
   // Sync latest data from Supabase before saving to get other judge's score
   try{
@@ -3337,12 +3358,14 @@ async function timerSave(compId,roundId){
     if(existing.autoZero&&existing.finalTime===0){
       // Overwrite auto-zero with real score
       STATE.scores[existIdx]={...existing,finalTime,autoZero:false,
+        category:scoreCategory,heightM,
         attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',
           attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}]};
-      toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
+      toast(`${fmtSec(finalTime)}${heightM?' +'+heightM+'m':''} kaydedildi ✓`,'success');
     } else if(finalTime>existing.finalTime){
       // Higher score wins
       STATE.scores[existIdx]={...existing,finalTime,
+        category:scoreCategory,heightM,
         attempts:[...existing.attempts,{time:elapsed,finalTime,
           type:JUDGE_STATE.attemptType||'normal',attempt:JUDGE_STATE.currentAttempt,
           note,judgeId:CURRENT_JUDGE_ID,replacedPrevious:existing.finalTime}]};
@@ -3361,10 +3384,11 @@ async function timerSave(compId,roundId){
   } else {
     // First score for this competitor+round
     STATE.scores.push({id:uid(),competitorId:compId,roundId,
+      category:scoreCategory,
       attempts:[{time:elapsed,finalTime,type:JUDGE_STATE.attemptType||'normal',
         attempt:JUDGE_STATE.currentAttempt,note,judgeId:CURRENT_JUDGE_ID}],
-      finalTime,confirmed:false,disqualified:false});
-    toast(`${fmtSec(finalTime)} kaydedildi ✓`,'success');
+      finalTime,heightM,confirmed:false,disqualified:false});
+    toast(`${fmtSec(finalTime)}${heightM?' +'+heightM+'m':''} kaydedildi ✓`,'success');
   }
 
   save();
@@ -3649,14 +3673,14 @@ function renderSbTable(sbState){
             <td><strong>${c.name} ${c.surname}</strong>${rc.disqualified?'<span class="badge badge-red" style="margin-left:4px">DQ</span>':''}</td>
             <td class="text-sm">${c.country||'—'}</td>
             ${normalRounds.map(r=>{
-              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id&&(s.category===SB_CAT||!s.category));
               const juryEdit=sc&&sc.juryEdited;
               return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':sc&&sc.finalTime>=r.maxTime?'var(--green)':'inherit'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?(CURRENT_LANG==='en'?'⚠️ Edited by jury: ':'⚠️ Jüri tarafından düzenlendi: ')+sc.editedBy+' — '+sc.editNote:''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
             }).join('')}
             ${flyoffs.map(r=>{
-              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+              const sc=sbState.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id&&(s.category===SB_CAT||!s.category));
               const juryEdit=sc&&sc.juryEdited;
-              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?(CURRENT_LANG==='en'?'⚠️ Edited by jury':'⚠️ Jüri tarafından düzenlendi'):''}">${sc?fmtSec(sc.finalTime)+(juryEdit?'*':''):'—'}</td>`;
+              return `<td class="font-mono" style="color:${juryEdit?'var(--orange)':'var(--purple)'};${juryEdit?'font-weight:700;':''}" title="${juryEdit?(CURRENT_LANG==='en'?'⚠️ Edited by jury':'⚠️ Jüri tarafından düzenlendi'):''}">${sc?fmtSec(sc.finalTime)+(sc.heightM?' +'+sc.heightM+'m':'')+(juryEdit?'*':''):'—'}</td>`;
             }).join('')}
             <td class="font-mono bold" style="font-size:15px">${fmtSec(rc.total)}</td>
           </tr>`;
@@ -3858,14 +3882,23 @@ function rankCategory(cat){
     let total=0;
     const dq=STATE.scores.some(s=>s.competitorId===c.id&&s.disqualified);
     countedRounds.forEach(r=>{
-      const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id);
+      // Match score by category — backward compatible (old scores without category field)
+      const sc=STATE.scores.find(s=>s.competitorId===c.id&&s.roundId===r.id&&(s.category===cat||!s.category));
       total+=sc?sc.finalTime:0;
     });
     return {competitor:c,total,disqualified:dq};
   }).sort((a,b)=>{
     if(a.disqualified&&!b.disqualified) return 1;
     if(!a.disqualified&&b.disqualified) return -1;
-    return b.total-a.total; // highest total first
+    if(b.total!==a.total) return b.total-a.total; // highest total first
+    // Tiebreak by flyoff height (if applicable)
+    const flyoffRound=STATE.rounds.find(r=>r.isFlyoff&&r.withHeight&&(r.status==='done'||r.status==='active'));
+    if(flyoffRound){
+      const aFlyH=STATE.scores.find(s=>s.competitorId===a.competitor.id&&s.roundId===flyoffRound.id&&(s.category===cat||!s.category))?.heightM||0;
+      const bFlyH=STATE.scores.find(s=>s.competitorId===b.competitor.id&&s.roundId===flyoffRound.id&&(s.category===cat||!s.category))?.heightM||0;
+      return bFlyH-aFlyH; // higher altitude wins tiebreak
+    }
+    return 0;
   });
 }
 
