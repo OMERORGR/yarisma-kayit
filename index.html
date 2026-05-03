@@ -2751,7 +2751,7 @@ function addFlyoff(){
   const t=parseInt(document.getElementById('fo-time').value)||360;
   const useHeight=document.getElementById('fo-height').checked;
   const flyoffNum=(STATE.rounds.filter(r=>r.isFlyoff).length)+1;
-  STATE.rounds.push({id:uid(),isFlyoff:true,flyoffNum,maxTime:t,status:'pending',useHeight,startedAt:null,endedAt:null});
+  STATE.rounds.push({id:uid(),isFlyoff:true,flyoffNum,maxTime:t,status:'pending',withHeight:useHeight,startedAt:null,endedAt:null});
   save();closeModal();
   document.getElementById('orgContent').innerHTML=renderRoundManager();
   toast(`Flyoff ${flyoffNum} ${CURRENT_LANG==='en'?'added ✓':'eklendi ✓'}`,'success');
@@ -3614,7 +3614,7 @@ function renderScoreboard(){
       <div class="sb-date">${comp.dateStart||''} ${comp.dateEnd&&comp.dateEnd!==comp.dateStart?'– '+comp.dateEnd:''} ${comp.location?'· '+comp.location:''}</div>
       ${sbState.rounds.find(r=>r.status==='active')?`<div class="alert alert-success" style="display:inline-block;margin-bottom:12px;">🟢 ${roundName(sbState.rounds.find(r=>r.status==='active'))} ${t('activeRound')}</div>`:''}
       <div class="sb-category-tabs">
-        ${cats.map(cat=>`<button class="sb-cat-btn ${SB_CAT===cat?'active':''}" onclick="sbCat('${cat}')">${catDisplay(cat)}</button>`).join('')}
+        ${cats.map(cat=>`<button class="sb-cat-btn ${SB_CAT===cat?'active':''}" data-cat="${cat}" onclick="sbCat('${cat}')">${catDisplay(cat)}</button>`).join('')}
       </div>
     </div>
     <div id="sb-table">${renderSbTable(sbState)}</div>
@@ -3643,6 +3643,10 @@ function sbCat(cat){
   const sbState=SB_COMP_ID?loadComp(SB_COMP_ID):null;
   const el=document.getElementById('sb-table');
   if(el&&sbState) el.innerHTML=renderSbTable(sbState);
+  // Update button highlights
+  document.querySelectorAll('.sb-cat-btn[data-cat]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.cat===cat);
+  });
 }
 function renderSbTable(sbState){
   if(!sbState) return '';
